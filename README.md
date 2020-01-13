@@ -1,4 +1,6 @@
 # vim-royale
 * Because Nano sucks.
 * Because Emacs sucks.
-* Becasue Rust sucks.
+* Because Rust sucks.
+
+**May the best man *vim*.**
