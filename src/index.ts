@@ -11,7 +11,7 @@ screen.title = 'Vim Royale';
 
 const renderer = createRenderer(screen);
 
-const player = new Player(15, 15, 'X');
+const player = new Player(15, 15, '@');
 const map = {
     width: 80,
     height: 24,
