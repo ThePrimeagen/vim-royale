@@ -17,7 +17,7 @@ const map = {
 const renderer = createRenderer(screen, map);
 
 // Entity player?
-const player = new Player(15, 15, 'X');
+const player = new Player(15, 15, '@');
 
 process.stderr.write(`Player: ${player}`);
 renderer.render();
