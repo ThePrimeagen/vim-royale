@@ -1,14 +1,16 @@
 import * as blessed from 'blessed';
 
 import {GameOptions} from './types';
-import {ObjectInfo} from './objects/types';
+
+import getEntityStore from './entities';
+import PositionComponent from './objects/components/position';
+
+const store = getEntityStore();
 
 class Renderer {
     private width: number;
     private height: number;
     private terminal: string[][];
-    private player: ObjectInfo;
-    private objects: ObjectInfo[];
     private screen;
     private box: blessed.Widgets.BoxElement;
     private swaps: string[][][];
@@ -23,7 +25,6 @@ class Renderer {
         this.screen = screen;
         this.swapsIdx = 0;
         this.swaps = [];
-        this.objects = [];
 
         this.terminal = [];
         for (let i = 0; i < this.height; ++i) {
@@ -36,8 +37,8 @@ class Renderer {
         this.box = blessed.box({
             top: 0,
             left: 0,
-            width: this.width,
-            height: this.height,
+            width: this.width + 2,
+            height: this.height + 2,
 
             content: this.renderToString(),
             tags: true,
@@ -51,14 +52,6 @@ class Renderer {
         screen.render();
     }
 
-    addPlayer(obj: ObjectInfo) {
-        this.player = obj;
-    }
-
-    addObject(obj: ObjectInfo) {
-        this.objects.push(obj);
-    }
-
     render() {
         this.box.setContent(this.renderToString());
         this.screen.render();
@@ -68,21 +61,23 @@ class Renderer {
     private renderToString(): string {
         const swapToUse = this.swaps[++this.swapsIdx % 2];
         this.apply(swapToUse, this.terminal);
-        this.appylyObjects(swapToUse);
 
-        if (this.player) {
-            this.apply(swapToUse, [[this.player.char]], this.player.x, this.player.y);
-        }
+        store.
+            toArray(PositionComponent.type).
+            sort((a: PositionComponent, b: PositionComponent) => a.z - b.z).
+            forEach((pos: PositionComponent) => {
+                // TODO: Map world vs player world.... how do we do that?
+                //
+                this.apply(swapToUse, pos.char, pos.x, pos.y);
+            });
 
-
-        return swapToUse.map(x => x.join('')).join('');
-    }
-
-    private appylyObjects(swap: string[][]) {
-        this.objects.forEach(obj => {
-            // TODO: LICK THE PERFORMANCE
-            this.apply(swap, [[obj.char]], obj.x, obj.y);
-        });
+        const out = swapToUse.map(x => x.join(''));
+        console.error('\n');
+        console.error(out.join('\n'));
+        console.error('\n');
+        console.error('\n');
+        console.error('\n');
+        return out.join('');
     }
 
     private apply(swap: string[][], toWrite: string[][], offsetX: number = 0, offsetY: number = 0) {

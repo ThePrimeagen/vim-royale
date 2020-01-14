@@ -2,6 +2,7 @@ import * as blessed from 'blessed';
 
 import createRenderer from './renderer';
 import Player from './objects/player';
+import EntityStore from './entities';
 
 const screen = blessed.screen({
     smartCSR: true
@@ -9,16 +10,16 @@ const screen = blessed.screen({
 
 screen.title = 'Vim Royale';
 
-const renderer = createRenderer(screen);
-
-const player = new Player(15, 15, 'X');
 const map = {
     width: 80,
     height: 24,
 };
+const renderer = createRenderer(screen, map);
+
+// Entity player?
+const player = new Player(15, 15, 'X');
 
 process.stderr.write(`Player: ${player}`);
-renderer.addPlayer(player);
 renderer.render();
 
 // Quit on Escape, q, or Control-C.
@@ -32,27 +33,27 @@ screen.key(['h', 'j', 'k', 'l'], function(ch, key) {
     switch (ch) {
         case 'h':
             process.stderr.write(`H?\n`);
-            if (player.x > 0) {
+            if (player.position.x > 0) {
                 process.stderr.write(`H YES?\n`);
-                player.x--;
-                process.stderr.write(`H YES ${player.x}\n`);
+                player.position.x--;
+                process.stderr.write(`H YES ${player.position.x}\n`);
             }
             break;
 
         case 'l':
-            if (player.x < map.width) {
-                player.x++;
+            if (player.position.x + 1 < map.width) {
+                player.position.x++;
             }
             break;
         case 'j':
-            if (player.y > 0) {
-                player.y--;
+            if (player.position.y > 0) {
+                player.position.y--;
             }
             break;
 
         case 'k':
-            if (player.y < map.height) {
-                player.y++;
+            if (player.position.y + 1 < map.height) {
+                player.position.y++;
             }
             break;
     }

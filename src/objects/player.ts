@@ -1,19 +1,18 @@
-import {ObjectInfo} from './types';
+import getEntityStore, {EntityItem} from '../entities';
+import PositionComponent from './components/position';
 
-export default class Player implements ObjectInfo {
-    x: number;
-    y: number;
-    char: string;
-    cb: (p: Player) => void;
+export default class Player {
+    private entity: EntityItem;
+    public position: PositionComponent;
 
     constructor(x: number, y: number, char: string) {
-        this.x = x;
-        this.y = y;
-        this.char = char;
-    }
+        const store = getEntityStore();
 
-    onUpdate(cb: (p: Player) => void) {
-        this.cb = cb;
+        this.entity = store.createNewEntity();
+
+        // TODO: HAHAH 100 hard coded Z? What is this css?
+        this.position = new PositionComponent(char, x, y, 100);
+        store.attachComponent(this.entity, this.position);
     }
 }
 
