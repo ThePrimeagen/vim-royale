@@ -1,13 +1,15 @@
 import * as blessed from 'blessed';
 
-import {GameOptions} from './types';
+import {GameOptions} from '../types';
 
-import getEntityStore from './entities';
-import PositionComponent from './objects/components/position';
+import System from './System';
+import {EventData} from '../events';
+import getEntityStore from '../entities';
+import PositionComponent from '../objects/components/position';
 
 const store = getEntityStore();
 
-class Renderer {
+class RendererSystem implements System {
     private width: number;
     private height: number;
     private terminal: string[][];
@@ -52,7 +54,7 @@ class Renderer {
         screen.render();
     }
 
-    render() {
+    run(e: EventData) {
         this.box.setContent(this.renderToString());
         this.screen.render();
     }
@@ -66,6 +68,8 @@ class Renderer {
             toArray(PositionComponent.type).
             sort((a: PositionComponent, b: PositionComponent) => a.z - b.z).
             forEach((pos: PositionComponent) => {
+                console.error("Renderto string", pos);
+
                 // TODO: Map world vs player world.... how do we do that?
                 //
                 this.apply(swapToUse, pos.char, pos.x, pos.y);
@@ -81,6 +85,7 @@ class Renderer {
     }
 
     private apply(swap: string[][], toWrite: string[][], offsetX: number = 0, offsetY: number = 0) {
+        debugger;
         for (let i = 0; i < toWrite.length; ++i) {
             for (let j = 0; j < toWrite[i].length; ++j) {
                 swap[i + offsetY][j + offsetX] = toWrite[i][j];
@@ -90,7 +95,7 @@ class Renderer {
 }
 
 export default function createRenderer(screen, opts?: GameOptions) {
-    return new Renderer(screen, opts);
+    return new RendererSystem(screen, opts);
 };
 
 

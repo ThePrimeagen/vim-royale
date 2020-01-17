@@ -1,8 +1,8 @@
 import {Component} from '../../entities';
 
 export default class PositionComponent implements Component {
-    static type: "position";
-    type: "position";
+    public static type: string = "position";
+    type: string = "position";
     x: number;
     y: number;
     z: number;
@@ -14,9 +14,6 @@ export default class PositionComponent implements Component {
         this.y = y;
         this.z = z;
     }
-
-    getData() {
-        return this;
-    }
 }
 
+console.error("PositionComponent", PositionComponent.type);

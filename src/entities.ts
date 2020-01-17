@@ -10,7 +10,6 @@
 
 export interface Component {
     type: string;
-    getData(): object;
 }
 
 export type EntityItem = number;
@@ -29,21 +28,48 @@ class EntityStore {
         this.currentId = 1;
     }
 
-    forEach(componentType: string, cb: (state: Component) => void) {
+    getComponent(entityId: EntityItem, type: string): Component {
+        const componentMap = this.entityMap.get(entityId);
+
+        if (!componentMap) {
+            return null;
+        }
+
+        const out = componentMap.get(type);
+        if (!out) {
+            return null;
+        }
+
+        return out;
+    }
+
+
+    forEach(componentType: string, cb: (entityId: EntityItem, state: Component) => void) {
+        debugger;
         const entities = this.entitiesByComponent.get(componentType);
+        console.error("entities", entities);
 
         if (!entities) {
             return;
         }
 
         // TODO: Ask Jordan
-        for (let k in entities.keys()) {
-            // @ts-ignore
-            cb(entities.get(k));
-        }
+        // TODO: Whatatattatata
+        // for (k of entities) {
+        // for (k in entities.keys()) {
+        //   k becomes a string
+        // }
+        Array.from(entities.keys()).forEach(k => {
+            const entity = entities.get(k);
+
+            console.error("for k", k, entity);
+
+            cb(k, entity);
+        });
     }
 
     toArray(componentType: string): Component[] {
+        console.error("Getting componentType", componentType);
         const entities = this.entitiesByComponent.get(componentType);
 
         if (!entities) {

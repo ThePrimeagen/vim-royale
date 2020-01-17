@@ -1,0 +1,27 @@
+{
+  "name": "vim-royale",
+  "version": "1.0.0",
+  "description": "* Because Nano sucks. * Because Emacs sucks. * Because Rust sucks.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ThePrimeagen/vim-royale.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ThePrimeagen/vim-royale/issues"
+  },
+  "homepage": "https://github.com/ThePrimeagen/vim-royale#readme",
+  "dependencies": {
+    "@types/blessed": "^0.1.16",
+    "@types/node": "^13.1.6",
+    "blessed": "^0.1.81",
+    "ts-node": "^8.6.2",
+    "typescript": "^3.7.4"
+  }
+}
