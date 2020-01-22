@@ -6,41 +6,41 @@ import System from './System';
 import {EventData} from '../events';
 import getEntityStore from '../entities';
 import PositionComponent from '../objects/components/position';
+import GlobalContext from '../context';
+
+import Board from '../board';
 
 const store = getEntityStore();
 
 class RendererSystem implements System {
-    private width: number;
-    private height: number;
-    private terminal: string[][];
-    private screen;
+    private screen: blessed.Widgets.Screen;
+    private board: Board;
     private box: blessed.Widgets.BoxElement;
-    private swaps: string[][][];
-    private swapsIdx: number;
+    private tmp: string[][];
 
-    constructor(screen, opts: GameOptions = {
-        width: 80,
-        height: 24,
-    }) {
-        this.width = opts.width;
-        this.height = opts.height;
+    constructor(screen: blessed.Widgets.Screen, board: Board) {
         this.screen = screen;
-        this.swapsIdx = 0;
-        this.swaps = [];
+        this.board = board;
+        this.tmp = [];
+        const {width, height} = GlobalContext.display;
 
-        this.terminal = [];
-        for (let i = 0; i < this.height; ++i) {
-            this.terminal.push(new Array(this.width).fill('_'));
+        for (let x = 0; x < width; ++x) {
+            for (let y = 0; y < height; ++y) {
+                if (!this.tmp[y]) {
+                    this.tmp[y] = [];
+                }
+                this.tmp[y][x] = '';
+            }
         }
 
-        this.swaps.push(JSON.parse(JSON.stringify(this.terminal)));
-        this.swaps.push(JSON.parse(JSON.stringify(this.terminal)));
+        // TODO: Stop being lazy about copying...
+        // Also you really don't need to swap.  This is stupid
 
         this.box = blessed.box({
             top: 0,
             left: 0,
-            width: this.width + 2,
-            height: this.height + 2,
+            width: GlobalContext.display.width + 2,
+            height: GlobalContext.display.height + 2,
 
             content: this.renderToString(),
             tags: true,
@@ -61,41 +61,77 @@ class RendererSystem implements System {
 
     // TODO: Does this even matter in a CLI game?
     private renderToString(): string {
-        const swapToUse = this.swaps[++this.swapsIdx % 2];
-        this.apply(swapToUse, this.terminal);
+        const tmp = this.tmp;
+
+        const player = GlobalContext.player;
+        const {x, y} = player.position;
+        const {width, height} = GlobalContext.display;
+
+        // TODO: When the player is next to the wall, it shouldn't be offset by so far,
+        // also render checking will be interesting... we could always go cheap
+        // and just render everything that is full width / height away.
+        let offsetX = width / 2;
+        let offsetY = height / 2;
+
+        if (x < offsetX) {
+            offsetX = x;
+        }
+
+        if (y < offsetY) {
+            offsetY = y;
+        }
+
+        const [
+            renderX,
+            renderY,
+        ] = this.board.getMapByPlayersPerspective();
+
+        this.apply(tmp, this.board.map, 0, 0, renderX, renderY);
 
         store.
             toArray(PositionComponent.type).
+            filter((other: PositionComponent) => {
+                const relativeX = other.x - x;
+                const relativeY = other.y - y;
+
+                return Math.abs(relativeX) < width &&
+                    Math.abs(relativeY) < height;
+            }).
             sort((a: PositionComponent, b: PositionComponent) => a.z - b.z).
             forEach((pos: PositionComponent) => {
-                console.error("Renderto string", pos);
+                const relativeX = pos.x - x + offsetX;
+                const relativeY = pos.y - y + offsetY;
 
                 // TODO: Map world vs player world.... how do we do that?
                 //
-                this.apply(swapToUse, pos.char, pos.x, pos.y);
+                this.apply(tmp, pos.char, relativeX, relativeY);
             });
 
-        const out = swapToUse.map(x => x.join(''));
-        console.error('\n');
-        console.error(out.join('\n'));
-        console.error('\n');
-        console.error('\n');
-        console.error('\n');
+        const coords = [x, y].toString().split('');
+        this.apply(tmp, [coords], width - (coords.length + 1), 0);
+
+        const out = tmp.map((x, i) => {
+            return x.join('');
+        });
+
         return out.join('');
     }
 
-    private apply(swap: string[][], toWrite: string[][], offsetX: number = 0, offsetY: number = 0) {
-        debugger;
-        for (let i = 0; i < toWrite.length; ++i) {
-            for (let j = 0; j < toWrite[i].length; ++j) {
-                swap[i + offsetY][j + offsetX] = toWrite[i][j];
+    private apply(
+        swap: string[][], toWrite: string[][],
+        swapX: number = 0, swapY: number = 0,
+        toWriteX: number = 0, toWriteY: number = 0
+    ) {
+        for (let y = 0; y + toWriteY < toWrite.length && y + swapY < swap.length; ++y) {
+            for (let x = 0; x + toWriteX < toWrite[y + toWriteY].length && x + swapX < swap[y + swapY].length; ++x) {
+                swap[y + swapY][x + swapX] = toWrite[y + toWriteY][x + toWriteX];
             }
         }
     }
 }
 
-export default function createRenderer(screen, opts?: GameOptions) {
-    return new RendererSystem(screen, opts);
+export default function createRenderer(screen, board: Board) {
+    return new RendererSystem(screen, board);
 };
 
 

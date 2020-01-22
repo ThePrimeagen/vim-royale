@@ -15,5 +15,3 @@ export default class PositionComponent implements Component {
         this.z = z;
     }
 }
-
-console.error("PositionComponent", PositionComponent.type);

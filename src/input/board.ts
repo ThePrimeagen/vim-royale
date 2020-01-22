@@ -2,9 +2,7 @@ import getEvent from '../events';
 import GlobalContext from '../context';
 
 export default function board(key: string): boolean {
-    process.stderr.write(`Got key ${key}\n`);
-
-    const {player, map} = GlobalContext;
+    const {player} = GlobalContext;
 
     let processed = true;
     switch (key) {
@@ -22,6 +20,7 @@ export default function board(key: string): boolean {
         case 'k':
             player.movement.y = 1;
             break;
+
         default:
             processed = false;
             break;

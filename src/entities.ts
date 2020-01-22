@@ -45,9 +45,7 @@ class EntityStore {
 
 
     forEach(componentType: string, cb: (entityId: EntityItem, state: Component) => void) {
-        debugger;
         const entities = this.entitiesByComponent.get(componentType);
-        console.error("entities", entities);
 
         if (!entities) {
             return;
@@ -62,14 +60,11 @@ class EntityStore {
         Array.from(entities.keys()).forEach(k => {
             const entity = entities.get(k);
 
-            console.error("for k", k, entity);
-
             cb(k, entity);
         });
     }
 
     toArray(componentType: string): Component[] {
-        console.error("Getting componentType", componentType);
         const entities = this.entitiesByComponent.get(componentType);
 
         if (!entities) {

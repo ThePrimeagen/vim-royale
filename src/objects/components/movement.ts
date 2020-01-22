@@ -13,5 +13,3 @@ export default class MovementComponent implements Component {
     }
 };
 
-console.error("MovementComponent", MovementComponent.type);
-

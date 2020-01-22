@@ -8,45 +8,55 @@ import captureInput from './input/index';
 import Player from './objects/player';
 import EntityStore from './entities';
 import GlobalContext from './context';
+import Board from './board';
 
-const events = getEvents();
-const screen = blessed.screen({
-    smartCSR: true
-});
-
-screen.title = 'Vim Royale';
-
-const map = {
-    width: 80,
-    height: 24,
-};
-
-const renderer = createRenderSystem(screen, map);
-const movement = createMovementSystem();
-
-// Entity player?
-const player = new Player(15, 15, '@');
-GlobalContext.player = player;
-GlobalContext.screen = "board";
+let movement;
+let renderer;
 
 function loop(eventData: EventData) {
+    const then = Date.now();
     movement.run(eventData);
     renderer.run(eventData);
+    console.error("TimeToRender", Date.now() - then);
 }
 
-events.on(function(eventData: EventData) {
-    console.error("Emitting Event run", eventData);
+try {
+    const events = getEvents();
+    const screen = blessed.screen({
+        smartCSR: true
+    });
 
-    if (eventData.type === 'run') {
-        loop(eventData);
-    }
-});
+    screen.title = 'Vim Royale';
 
-captureInput(screen);
+    const map = {
+        width: 1000,
+        height: 1000,
+    };
 
-process.on('uncaughtException', function(err) {
-    console.error("Hello world");
-    console.error(err.message);
-    console.error(err.stack);
-});
+    const board = new Board(map.width, map.height);
+    const player = new Player(150, 150, '@');
+
+    GlobalContext.player = player;
+    GlobalContext.screen = "board";
+
+    renderer = createRenderSystem(screen, board);
+    movement = createMovementSystem(board);
+
+    events.on(function(eventData: EventData) {
+
+        if (eventData.type === 'run') {
+            loop(eventData);
+        }
+    });
+
+    captureInput(screen);
+
+    process.on('uncaughtException', function(err) {
+        console.error(err.message);
+        console.error(err.stack);
+
+    });
+} catch (e) {
+    console.error(e);
+}
 

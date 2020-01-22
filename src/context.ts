@@ -3,7 +3,7 @@ import Player from './objects/player';
 type ScreenType = "board" | "input";
 
 type GlobalContext = {
-    map: {
+    display: {
         width: number;
         height: number;
     };
@@ -13,9 +13,9 @@ type GlobalContext = {
 };
 
 export default {
-    map: {
+    display: {
         width: 80,
         height: 24,
-    }
+    },
 } as GlobalContext;
 

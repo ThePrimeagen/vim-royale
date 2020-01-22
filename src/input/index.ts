@@ -18,9 +18,7 @@ export default function captureInput(screen: blessed.Widgets.Screen) {
 
     screen.key(['h', 'j', 'k', 'l'], function(ch, key) {
         const inputFn = inputMap[GlobalContext.screen];
-        debugger;
         if (inputFn && inputFn(ch)) {
-            console.error("Emitting Event run");
             events.emit({
                 type: 'run',
                 data: {}
