@@ -9,6 +9,7 @@ import PositionComponent from '../objects/components/position';
 import GlobalContext from '../context';
 
 import Board from '../board';
+import apply from './apply';
 
 const store = getEntityStore();
 
@@ -86,10 +87,11 @@ class RendererSystem implements System {
             renderY,
         ] = this.board.getMapByPlayersPerspective();
 
-        this.apply(tmp, this.board.map, 0, 0, renderX, renderY);
+        apply(tmp, this.board.map, 0, 0, renderX, renderY);
 
         store.
             toArray(PositionComponent.type).
+            // @ts-ignore
             filter((other: PositionComponent) => {
                 const relativeX = other.x - x;
                 const relativeY = other.y - y;
@@ -104,11 +106,11 @@ class RendererSystem implements System {
 
                 // TODO: Map world vs player world.... how do we do that?
                 //
-                this.apply(tmp, pos.char, relativeX, relativeY);
+                apply(tmp, pos.char, relativeX, relativeY);
             });
 
         const coords = [x, y].toString().split('');
-        this.apply(tmp, [coords], width - (coords.length + 1), 0);
+        apply(tmp, [coords], width - (coords.length + 1), 0);
 
         const out = tmp.map((x, i) => {
             return x.join('');
@@ -116,21 +118,9 @@ class RendererSystem implements System {
 
         return out.join('');
     }
-
-    private apply(
-        swap: string[][], toWrite: string[][],
-        swapX: number = 0, swapY: number = 0,
-        toWriteX: number = 0, toWriteY: number = 0
-    ) {
-        for (let y = 0; y + toWriteY < toWrite.length && y + swapY < swap.length; ++y) {
-            for (let x = 0; x + toWriteX < toWrite[y + toWriteY].length && x + swapX < swap[y + swapY].length; ++x) {
-                swap[y + swapY][x + swapX] = toWrite[y + toWriteY][x + toWriteX];
-            }
-        }
-    }
 }
 
-export default function createRenderer(screen, board: Board) {
+export default function createRenderer(screen: blessed.Widgets.Screen, board: Board) {
     return new RendererSystem(screen, board);
 };
 

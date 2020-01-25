@@ -7,32 +7,16 @@ function clamp(num: number, upperBounds: number): number {
 const whiteSpace = '\u202F';
 
 export default class Board {
-    private width: number;
-    private height: number;
+    public readonly width: number;
+    public readonly height: number;
 
     public map: string[][];
 
-    constructor(width: number, height: number) {
-        this.width = width;
-        this.height = height;
-        this.map = [];
-        const screen = GlobalContext.display;
-        const halfWidth = Math.floor(screen.width / 2);
-        const halfHeight = Math.floor(screen.height / 2);
-
-        for (let i = 0; i < width; ++i) {
-            for (let j = 0; j < height; ++j) {
-                if (!this.map[j]) {
-                    this.map[j] = [];
-                }
-                if (i === 0 || j === 0 || i === width - 1 || j === height - 1) {
-                    this.map[j][i] = 'x';
-                }
-                else {
-                    this.map[j][i] = whiteSpace;
-                }
-            }
-        }
+    constructor(boardData: string[][]) {
+        console.error("BOARD DATA", boardData);
+        this.map = boardData;
+        this.height = this.map.length;
+        this.width = this.map[0].length;
     }
 
     // TODO: How to do this with viewing someone else...
@@ -42,5 +26,31 @@ export default class Board {
 
         return [clamp(x - width / 2, this.width), clamp(y - height / 2, this.height)];
     }
+
+    static generate(width: number, height: number) {
+        const map = [];
+
+        const screen = GlobalContext.display;
+        const halfWidth = Math.floor(screen.width / 2);
+        const halfHeight = Math.floor(screen.height / 2);
+
+        for (let i = 0; i < width; ++i) {
+            for (let j = 0; j < height; ++j) {
+                if (!map[j]) {
+                    map[j] = [];
+                }
+                if (i === 0 || j === 0 || i === width - 1 || j === height - 1) {
+                    map[j][i] = 'x';
+                }
+                else {
+                    map[j][i] = whiteSpace;
+                }
+            }
+        }
+
+        return map;
+    }
 }
+
+
 

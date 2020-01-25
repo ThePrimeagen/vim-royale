@@ -1,6 +1,7 @@
 import Player from './objects/player';
+import ClientSocket from './client-socket';
 
-type ScreenType = "board" | "input";
+type ScreenType = "board" | "input" | "main-menu";
 
 type GlobalContext = {
     display: {
@@ -10,6 +11,7 @@ type GlobalContext = {
 
     screen: ScreenType;
     player: Player;
+    socket: ClientSocket
 };
 
 export default {
@@ -17,5 +19,6 @@ export default {
         width: 80,
         height: 24,
     },
+
 } as GlobalContext;
 

@@ -1,0 +1,17 @@
+{
+    "include": ["src", "examples"],
+    "compilerOptions": {
+        "outDir": "./build/",
+        "sourceMap": true,
+        "noImplicitAny": false,
+        "lib": ["es6"],
+        "module": "commonjs",
+        "target": "es6",
+        "esModuleInterop": true,
+        "allowJs": false,
+        "strictNullChecks": false,
+        "strictPropertyInitialization": false,
+        "strict": true
+    }
+}
+

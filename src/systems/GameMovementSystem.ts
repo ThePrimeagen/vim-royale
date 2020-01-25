@@ -6,6 +6,7 @@ import GlobalContext from '../context';
 import getEntityStore from '../entities';
 import MovementComponent from '../objects/components/movement';
 import PositionComponent from '../objects/components/position';
+import confirmMovement from './confirmMovementWithServer';
 import Board from '../board';
 
 const store = getEntityStore();
@@ -19,6 +20,7 @@ class MovementSystem implements System {
 
     run(e: EventData) {
 
+        // @ts-ignore
         store.forEach(MovementComponent.type, (entity, component: MovementComponent) => {
 
             // nothing to be updated
@@ -28,19 +30,26 @@ class MovementSystem implements System {
 
             // TODO: Probably should tell someone about this.... (server)
             const pos = store.getComponent(entity, PositionComponent.type) as PositionComponent;
+            let updated = false;
 
             const newX = pos.x + component.x;
-            if (newX >= 1 && newX < this.board.map.length - 1) {
+            if (newX >= 1 && newX < this.board.width - 1) {
                 pos.x = newX;
+                updated = true;
             }
 
             const newY = pos.y + component.y;
-            if (newY >= 1 && newY < this.board.map[0].length - 1) {
+            if (newY >= 1 && newY < this.board.height - 1) {
                 pos.y = newY;
+                updated = true;
             }
 
             component.x = 0;
             component.y = 0;
+
+            if (updated) {
+                confirmMovement(pos);
+            }
         });
     }
 }

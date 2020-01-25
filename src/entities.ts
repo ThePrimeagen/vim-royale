@@ -88,10 +88,24 @@ class EntityStore {
             this.entitiesByComponent.set(comp.type, new Map());
         }
 
+        // @ts-ignore
         this.entitiesByComponent.get(comp.type).set(entity, comp);
     }
 
-    removeComponent
+    removeComponent(entity: EntityItem, type: string) {
+        throw new Error("You should implement me...");
+    }
+
+    removeEntity(entity: EntityItem) {
+        if (this.entityMap.has(entity)) {
+            this.entityMap.delete(entity);
+            this.entitiesByComponent.forEach(entityMap => {
+                if (entityMap.has(entity)) {
+                    entityMap.delete(entity);
+                }
+            });
+        }
+    }
 }
 
 const store = new EntityStore();

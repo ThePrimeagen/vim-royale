@@ -13,6 +13,7 @@ export default function board(key: string): boolean {
         case 'l':
             player.movement.x = 1;
             break;
+
         case 'j':
             player.movement.y = -1;
             break;

@@ -3,3 +3,5 @@ export type GameOptions = {
     height: number;
 };
 
+export type MapMessage = string[][];
+

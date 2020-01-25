@@ -5,7 +5,12 @@ import GlobalContext from '../context';
 import board from './board';
 
 const events = getEvent();
-const inputMap = {
+
+type InputMap = {
+    [key: string]: (ch: string) => boolean;
+};
+
+const inputMap: InputMap = {
     board
 };
 
@@ -20,8 +25,7 @@ export default function captureInput(screen: blessed.Widgets.Screen) {
         const inputFn = inputMap[GlobalContext.screen];
         if (inputFn && inputFn(ch)) {
             events.emit({
-                type: 'run',
-                data: {}
+                type: 'run'
             });
         }
     });
