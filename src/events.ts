@@ -1,13 +1,24 @@
+import WebSocket from 'ws';
+
 import { MapMessage, WSMessage } from './server/commands';
 
-export type StartGame = { type: "start-game"; data: MapMessage }
-export type Run = { type: "run"; }
+export enum EventType {
+    StartGame = "start-game",
+    Run = "run",
+    WsOpen = "ws-open",
+    WsMessage = "ws-message",
+    WsBinary = "ws-binary",
+}
+
+export type StartGame = { type: EventTypes.StartGame; data: MapMessage };
+export type BinaryData = { type: EventTypes.WsBinary; data: Buffer, ws: WebSocket };
+export type Run = { type: EventTypes.Run; }
 export type WS = {
-    type: "ws-open" | "ws-message";
+    type: EventTypes.WsMessage | EventTypes.WsOpen;
     data?: WSMessage
 }
 
-export type EventData = StartGame | Run | WS;
+export type EventData = StartGame | Run | WS | BinaryData;
 
 type EventCallback = (event: EventData) => void;
 

@@ -60,6 +60,8 @@ try {
         const board = new Board(boardData);
         const player = new Player(startingPosition[0], startingPosition[1], '@');
 
+
+
         GlobalContext.player = player;
         GlobalContext.screen = "board";
 

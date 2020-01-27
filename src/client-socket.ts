@@ -2,7 +2,7 @@ import path from 'path';
 
 import WebSocket from 'ws';
 
-import getEvents from './events';
+import getEvents, { EventType } from './events';
 import { WSMessage } from './server/commands';
 
 const events = getEvents();
@@ -13,24 +13,25 @@ export default class ClientSocket {
     public mode: string;
 
     constructor() {
-        this.mode = 'json';
-
         const ws = new WebSocket(`ws://${process.env.HOST}:${process.env.PORT}`);
         ws.on('open', () => {
             events.emit({
-                type: 'ws-open'
+                type: EventType.WsOpen
             });
         });
 
         ws.on('message', msg => {
             let m;
-            if (this.mode === 'json') {
+            let type: EventType = EventType.WsMessage;
+
+            if (typeof msg === 'string') {
 
                 // @ts-ignore
                 let wsMessage = JSON.parse(msg) as WSMessage;
 
+                // TODO: Probably should have some thing here.  THis would be
+                // like game specific stuffs.
                 if (wsMessage.type === 'status') {
-                    this.mode = wsMessage.encoding;
                     return;
                 }
 
@@ -38,10 +39,11 @@ export default class ClientSocket {
             }
             else {
                 m = msg;
+                type = EventType.WsBinary;
             }
 
             events.emit({
-                type: 'ws-message',
+                type,
                 data: m
             });
         });

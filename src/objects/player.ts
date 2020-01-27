@@ -3,7 +3,7 @@ import PositionComponent from './components/position';
 import MovementComponent from './components/movement';
 
 export default class Player {
-    private entity: EntityItem;
+    readonly public entity: EntityItem;
     public position: PositionComponent;
     public movement: MovementComponent;
 
