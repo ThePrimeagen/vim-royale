@@ -27,7 +27,7 @@ function pickRandoPosition() {
     ];
 }
 
-const server = createServer(2500);
+const server = createServer(map, 1000);
 const events = getEvents();
 
 wss.on('connection', ws => {

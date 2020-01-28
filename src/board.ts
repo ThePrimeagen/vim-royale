@@ -27,7 +27,7 @@ export default class Board {
         return [clamp(x - width / 2, this.width), clamp(y - height / 2, this.height)];
     }
 
-    static generate(width: number, height: number) {
+    static generate(width: number, height: number): Board {
         const map = [];
 
         const screen = GlobalContext.display;
@@ -48,7 +48,7 @@ export default class Board {
             }
         }
 
-        return map;
+        return new Board(map);
     }
 }
 

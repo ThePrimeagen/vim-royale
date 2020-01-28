@@ -1,12 +1,8 @@
-export enum MessageType {
-    Position = 0,
-}
-
 const dataB24 = Buffer.alloc(4);
-const dataV24 = new DataView(dataB24);
+const dataV24 = new DataView(dataB24.buffer);
 
 export default class BufferWriter {
-    private buffer: Buffer;
+    public buffer: Buffer;
     private ptr: number;
 
     constructor(length: number) {
@@ -39,19 +35,19 @@ export default class BufferWriter {
         this.ptr += 4;
     }
 
-    // 9 bytes
-    static createPosition(entityId: number, x: number, y: number): Buffer {
-        const buf = new BufferWriter(9);
-        buf.write8(MessageType.Position);
-        buf.write24(entityId);
-        buf.write16(x);
-        buf.write16(y);
+    static read24(buffer: Buffer, ptr: number = 0): number {
+        dataB24[0] = buffer[ptr++];
+        dataB24[1] = buffer[ptr++];
+        dataB24[2] = buffer[ptr++];
 
-        // TODO: What made you move this far?
-        // Think about jkhl, then f / t
+        return dataV24.getUint32(0);
+    }
 
-        return buf.buffer;
+    static read16(buffer: Buffer, ptr: number = 0): number {
+        dataB24[0] = buffer[ptr++];
+        dataB24[1] = buffer[ptr++];
+
+        return dataV24.getUint16(0);
     }
 }
-
 

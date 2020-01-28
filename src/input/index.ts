@@ -1,5 +1,5 @@
 import * as blessed from 'blessed';
-import getEvent from '../events';
+import getEvent, {EventType} from '../events';
 import GlobalContext from '../context';
 
 import board from './board';
@@ -25,7 +25,7 @@ export default function captureInput(screen: blessed.Widgets.Screen) {
         const inputFn = inputMap[GlobalContext.screen];
         if (inputFn && inputFn(ch)) {
             events.emit({
-                type: 'run'
+                type: EventType.Run
             });
         }
     });

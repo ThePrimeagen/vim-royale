@@ -1,11 +1,14 @@
 import getEntityStore, {EntityItem} from '../entities';
 import PositionComponent from './components/position';
 import MovementComponent from './components/movement';
+import {MovementCommand} from '../types';
 
 export default class Player {
-    readonly public entity: EntityItem;
+    public entity: EntityItem;
     public position: PositionComponent;
     public movement: MovementComponent;
+
+    public lastMovement: MovementCommand;
 
     constructor(x: number, y: number, char: string) {
         const store = getEntityStore();

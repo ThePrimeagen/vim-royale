@@ -4,8 +4,8 @@ dotenv.config();
 import * as blessed from 'blessed';
 
 import System from './systems/System';
-import createRenderSystem from './systems/GameRenderSystem';
-import createMovementSystem from './systems/GameMovementSystem';
+import createRenderSystem from './systems/ClientRenderSystem';
+import createMovementSystem from './systems/ClientMovementSystem';
 import getEvents, {EventData, Run} from './events';
 import captureInput from './input/index';
 import createMainMenu from './screen/main-menu';
@@ -60,8 +60,6 @@ try {
         const board = new Board(boardData);
         const player = new Player(startingPosition[0], startingPosition[1], '@');
 
-
-
         GlobalContext.player = player;
         GlobalContext.screen = "board";
 
@@ -70,6 +68,9 @@ try {
 
         systems.push(movement);
         systems.push(renderer);
+
+        GlobalContext.socket.createEntity(
+            player.entity, player.position.x, player.position.y);
 
         events.on(function mainGameListener(evt: EventData) {
             switch (evt.type) {

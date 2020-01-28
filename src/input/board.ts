@@ -1,31 +1,14 @@
 import getEvent from '../events';
 import GlobalContext from '../context';
+import getMovement from './getMovement';
 
 export default function board(key: string): boolean {
     const {player} = GlobalContext;
+    const movement = getMovement(key);
+    let processed = !!(movement[0] || movement[1]);
 
-    let processed = true;
-    switch (key) {
-        case 'h':
-            player.movement.x = -1;
-            break;
-
-        case 'l':
-            player.movement.x = 1;
-            break;
-
-        case 'j':
-            player.movement.y = -1;
-            break;
-
-        case 'k':
-            player.movement.y = 1;
-            break;
-
-        default:
-            processed = false;
-            break;
-    }
+    player.movement.x = movement[0];
+    player.movement.y = movement[1];
 
     return processed;
 };

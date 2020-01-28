@@ -1,6 +1,9 @@
-import getEvents, {EventTypes} from '../events';
-import { MessageType } from './messages';
+import getEvents, {EventType} from '../events';
+import { FrameType } from './messages/types';
+import Board from '../board';
+import getStore from '../entities';
 
+const store = getStore();
 const events = getEvents();
 
 function getNextLoop(tick: number, timeTaken: number) {
@@ -14,14 +17,18 @@ function getNextLoop(tick: number, timeTaken: number) {
 
 const sliceCopy = Uint8Array.prototype.slice;
 
-export default function server(tick: number) {
+export default function server(map: Board, tick: number) {
     const movesToProcess = [];
 
     events.on(evt => {
         switch (evt.type) {
-            case EventTypes.WsBinary:
-                if (evt.data[0] === MessageType.Position) {
+            case EventType.WsBinary:
+                if (evt.data[0] === FrameType.UpdatePosition) {
                     movesToProcess.push(sliceCopy.call(evt.data, 1));
+                }
+                if (evt.data[0] === FrameType.CreateEntity) {
+                    const
+                    store.attachComponent
                 }
                 break;
         }
@@ -30,9 +37,17 @@ export default function server(tick: number) {
     function update() {
         const now = Date.now();
 
-        // Process all user movements and send back OKEES!
+        // Process all movements.
+        // TODO: Server Movements System?
+        movesToProcess.forEach(x => {
+            console.log(x);
+        });
+
+        movesToProcess.length = 0;
 
         setTimeout(update, getNextLoop(tick, Date.now() - now));
     }
+
+    update();
 };
 

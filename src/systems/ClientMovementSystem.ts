@@ -6,7 +6,6 @@ import GlobalContext from '../context';
 import getEntityStore from '../entities';
 import MovementComponent from '../objects/components/movement';
 import PositionComponent from '../objects/components/position';
-import confirmMovement from './confirmMovementWithServer';
 import Board from '../board';
 
 const store = getEntityStore();
@@ -47,8 +46,10 @@ class MovementSystem implements System {
             component.x = 0;
             component.y = 0;
 
+            // TODO: clearly this means I would confirm all things through the
+            // movement system.  That is wrong....
             if (updated) {
-                confirmMovement(pos);
+                GlobalContext.socket.confirmMovement();
             }
         });
     }

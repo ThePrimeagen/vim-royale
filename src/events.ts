@@ -8,17 +8,35 @@ export enum EventType {
     WsOpen = "ws-open",
     WsMessage = "ws-message",
     WsBinary = "ws-binary",
+    ServerMovement = "server-movement",
 }
 
-export type StartGame = { type: EventTypes.StartGame; data: MapMessage };
-export type BinaryData = { type: EventTypes.WsBinary; data: Buffer, ws: WebSocket };
-export type Run = { type: EventTypes.Run; }
-export type WS = {
-    type: EventTypes.WsMessage | EventTypes.WsOpen;
+export interface StartGame  {
+    type: EventType.StartGame;
+    data: MapMessage
+};
+
+export interface BinaryData  {
+    type: EventType.WsBinary;
+    data: Buffer;
+    ws: WebSocket;
+};
+
+export interface Run  {
+    type: EventType.Run;
+};
+
+export interface WS  {
+    type: EventType.WsMessage | EventType.WsOpen | EventType.WsBinary;
     data?: WSMessage
 }
 
-export type EventData = StartGame | Run | WS | BinaryData;
+export interface ServerMovement {
+    type: EventType.ServerMovement;
+    data: Buffer[]
+}
+
+export type EventData = StartGame | Run | WS | BinaryData | ServerMovement;
 
 type EventCallback = (event: EventData) => void;
 

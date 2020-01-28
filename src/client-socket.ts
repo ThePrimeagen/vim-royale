@@ -2,7 +2,10 @@ import path from 'path';
 
 import WebSocket from 'ws';
 
+import { EntityItem } from './entities';
 import getEvents, { EventType } from './events';
+import { updatePosition, createEntity } from './server/messages';
+import GlobalContext from './context';
 import { WSMessage } from './server/commands';
 
 const events = getEvents();
@@ -59,6 +62,29 @@ export default class ClientSocket {
         this.ws = ws;
     }
 
-    confirmMovement(x: number, y: number) {
+    createEntity(entityId: EntityItem, x: number, y: number) {
+
+        const buf = createEntity({
+            entityId,
+            x,
+            y
+        });
+
+
+        this.ws.send(buf);
+    }
+
+    confirmMovement() {
+        const player = GlobalContext.player;
+        const pos = player.position;
+        const buf = updatePosition({
+            cmd: player.lastMovement,
+            entityId: player.entity,
+            x: pos.x,
+            y: pos.y
+        });
+
+
+        this.ws.send(buf);
     }
 };
