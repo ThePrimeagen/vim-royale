@@ -36,18 +36,15 @@ export default class BufferWriter {
     }
 
     static read24(buffer: Buffer, ptr: number = 0): number {
-        dataB24[0] = buffer[ptr++];
         dataB24[1] = buffer[ptr++];
         dataB24[2] = buffer[ptr++];
+        dataB24[3] = buffer[ptr++];
 
         return dataV24.getUint32(0);
     }
 
     static read16(buffer: Buffer, ptr: number = 0): number {
-        dataB24[0] = buffer[ptr++];
-        dataB24[1] = buffer[ptr++];
-
-        return dataV24.getUint16(0);
+        return buffer.readUInt16BE(ptr);
     }
 }
 

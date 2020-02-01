@@ -45,6 +45,7 @@ class MovementSystem implements System {
 
             component.x = 0;
             component.y = 0;
+            console.error("Player", GlobalContext.player.movement);
 
             // TODO: clearly this means I would confirm all things through the
             // movement system.  That is wrong....

@@ -1,6 +1,5 @@
-const outArr = [0, 0];
-
 export default function getMovement(ch: string) {
+    const outArr = [0, 0];
     switch (ch) {
         case 'h':
             outArr[0] = -1;

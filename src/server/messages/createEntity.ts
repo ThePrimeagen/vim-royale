@@ -14,6 +14,8 @@ export default function createEntity({
 }): Buffer {
     const b = new BufferWriter(8);
 
+    // TODO: Entity Type...
+    // TODO: Direction??...
     b.write8(FrameType.CreateEntity);
     b.write24(entityId);
     b.write16(x);
@@ -22,7 +24,16 @@ export default function createEntity({
     return b.buffer;
 };
 
-export function readeCreateEntity(buf: Buffer): CreateEntityResult {
+export function readCreateEntity(buf: Buffer): CreateEntityResult {
+    const out = {} as CreateEntityResult;
 
+    let ptr = 1;
+    out.entityId = BufferWriter.read24(buf, ptr);
+    ptr += 3;
+
+    out.x = BufferWriter.read16(buf, ptr);
+    out.y = BufferWriter.read16(buf, ptr + 2);
+
+    return out;
 }
 

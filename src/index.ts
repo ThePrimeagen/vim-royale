@@ -4,6 +4,7 @@ dotenv.config();
 import * as blessed from 'blessed';
 
 import System from './systems/System';
+import { MapLayout }from './server/commands';
 import createRenderSystem from './systems/ClientRenderSystem';
 import createMovementSystem from './systems/ClientMovementSystem';
 import getEvents, {EventData, Run} from './events';
@@ -56,8 +57,8 @@ try {
     });
     // The intro.
 
-    function createMainGame(boardData: string[][], startingPosition: [number, number]) {
-        const board = new Board(boardData);
+    function createMainGame(boardData: MapLayout, startingPosition: [number, number]) {
+        const board = new Board(boardData.map);
         const player = new Player(startingPosition[0], startingPosition[1], '@');
 
         GlobalContext.player = player;

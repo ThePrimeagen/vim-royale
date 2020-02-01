@@ -32,9 +32,9 @@ export default function createUpdatePosition({
 // We will get there
 export function readUpdatePosition(buf: Buffer): UpdatePositionResult {
 
-    const entityId = BufferWriter.read24(buf, 1);
-    const key = String.fromCharCode(buf[4]);
-    const x = BufferWriter.read16(buf, 5);
+    const entityId = BufferWriter.read24(buf, 0);
+    const key = String.fromCharCode(buf[3]);
+    const x = BufferWriter.read16(buf, 4);
     const y = BufferWriter.read16(buf, 6);
 
     return {

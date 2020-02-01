@@ -48,7 +48,7 @@ wss.on('connection', ws => {
     ws.send(JSON.stringify({ status: 'ready', encoding: 'json' }));
 
     // TODO: Pick position?
-    ws.send(JSON.stringify({ type: 'map',  map, position: pickRandoPosition() }));
+    ws.send(JSON.stringify({ type: 'map', map, position: pickRandoPosition() }));
 
     // Wait for request to join game...
     // TODO: This is where the board needs to be played.

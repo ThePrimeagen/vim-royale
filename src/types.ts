@@ -3,12 +3,7 @@ export type GameOptions = {
     height: number;
 };
 
-export type MapMessage = string[][];
+export type MovementCommand = 'k' | 'j' | 'l' | 'h';
 
-export enum MovementCommand {
-    k = 'k',
-    j = 'j',
-    l = 'l',
-    h = 'h',
-}
+
 

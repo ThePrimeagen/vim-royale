@@ -75,12 +75,15 @@ class EntityStore {
     }
 
     createNewEntity(): number {
-        const id = this.currentId++;
+        return this.setNewEntity(this.currentId++);
+    }
 
+    setNewEntity(id: number): number {
         this.entityMap.set(id, new Map());
 
         return id;
     }
+
 
     attachComponent(entity: EntityItem, comp: Component) {
         this.entityMap.get(entity).set(comp.type, comp);

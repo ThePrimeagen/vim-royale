@@ -77,6 +77,7 @@ export default class ClientSocket {
     confirmMovement() {
         const player = GlobalContext.player;
         const pos = player.position;
+        debugger;
         const buf = updatePosition({
             cmd: player.lastMovement,
             entityId: player.entity,

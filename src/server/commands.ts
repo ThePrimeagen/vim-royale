@@ -12,9 +12,15 @@ export type StatusMessage = {
     encoding: string;
 };
 
+export type MapLayout = {
+    width: number;
+    height: number;
+    map: string[][];
+};
+
 export type MapMessage = {
     type: 'map';
-    map: string[][];
+    map: MapLayout;
     position: [number, number];
 }
 
