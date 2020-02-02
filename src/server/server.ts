@@ -4,6 +4,7 @@ import {readCreateEntity} from './messages/createEntity';
 import {readUpdatePosition} from './messages/updatePosition';
 import PositionComponent from '../objects/components/position';
 import MovementComponent from '../objects/components/movement';
+import serverMovementSystem from '../systems/ServerMovementSystem';
 import Board from '../board';
 import getStore from '../entities';
 
@@ -23,7 +24,8 @@ const sliceCopy = Uint8Array.prototype.slice;
 const entities = [];
 
 export default function server(map: Board, tick: number) {
-    const movesToProcess = [];
+    const movesToProcess: Uint8Array[] = [];
+    const movement = serverMovementSystem(map);
 
     events.on(evt => {
         switch (evt.type) {
@@ -56,15 +58,17 @@ export default function server(map: Board, tick: number) {
 
         // Process all movements.
         // TODO: Server Movements System?
-        movesToProcess.forEach(x => {
-            console.log('update positions', JSON.stringify(readUpdatePosition(x)));
+        movement.run({
+            type: EventType.ServerMovement,
+            data: movesToProcess.map(x => Buffer.from(x)),
         });
 
-        movesToProcess.length = 0;
-
         setTimeout(update, getNextLoop(tick, Date.now() - now));
+
+        movesToProcess.length = 0;
     }
 
     update();
 };
+
 
