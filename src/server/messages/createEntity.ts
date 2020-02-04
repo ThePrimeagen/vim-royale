@@ -24,15 +24,14 @@ export default function createEntity({
     return b.buffer;
 };
 
-export function readCreateEntity(buf: Buffer): CreateEntityResult {
+export function readCreateEntity(buf: Buffer, offset: number = 0): CreateEntityResult {
     const out = {} as CreateEntityResult;
 
-    let ptr = 1;
-    out.entityId = BufferWriter.read24(buf, ptr);
-    ptr += 3;
+    out.entityId = BufferWriter.read24(buf, offset);
+    offset += 3;
 
-    out.x = BufferWriter.read16(buf, ptr);
-    out.y = BufferWriter.read16(buf, ptr + 2);
+    out.x = BufferWriter.read16(buf, offset);
+    out.y = BufferWriter.read16(buf, offset + 2);
 
     return out;
 }

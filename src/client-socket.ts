@@ -70,16 +70,16 @@ export default class ClientSocket {
             y
         });
 
-
         this.ws.send(buf);
     }
 
-    confirmMovement() {
+    confirmMovement(movementId: number) {
         const player = GlobalContext.player;
         const pos = player.position;
 
         const buf = updatePosition({
             cmd: player.lastMovement,
+            movementId,
             entityId: player.entity,
             x: pos.x,
             y: pos.y

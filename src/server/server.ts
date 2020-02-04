@@ -1,4 +1,4 @@
-import getEvents, {EventType} from '../events';
+import getEvents, {EventType, MovesToProcess} from '../events';
 import { FrameType } from './messages/types';
 import {readCreateEntity} from './messages/createEntity';
 import {readUpdatePosition} from './messages/updatePosition';
@@ -7,6 +7,7 @@ import MovementComponent from '../objects/components/movement';
 import serverMovementSystem from '../systems/ServerMovementSystem';
 import Board from '../board';
 import getStore from '../entities';
+import { TrackingInfo } from '../types';
 
 const store = getStore();
 const events = getEvents();
@@ -24,18 +25,24 @@ const sliceCopy = Uint8Array.prototype.slice;
 const entities = [];
 
 export default function server(map: Board, tick: number) {
-    const movesToProcess: Uint8Array[] = [];
+    const movesToProcess: MovesToProcess[] = [];
     const movement = serverMovementSystem(map);
 
-    events.on(evt => {
+    events.on((evt, ...args) => {
         switch (evt.type) {
             case EventType.WsBinary:
+                const trackingInfo: TrackingInfo = args[0];
+
                 if (evt.data[0] === FrameType.UpdatePosition) {
-                    movesToProcess.push(sliceCopy.call(evt.data, 1));
+                    movesToProcess.push({
+                        buf: Buffer.from(sliceCopy.call(evt.data)),
+                        tracking: trackingInfo,
+                    });
                 }
+
                 if (evt.data[0] === FrameType.CreateEntity) {
                     const buf = evt.data as Buffer;
-                    const data = readCreateEntity(buf);
+                    const data = readCreateEntity(buf, 1);
 
                     // TODO: character symbols???
                     // TODO: Updating everyone else on entities.
@@ -60,7 +67,7 @@ export default function server(map: Board, tick: number) {
         // TODO: Server Movements System?
         movement.run({
             type: EventType.ServerMovement,
-            data: movesToProcess.map(x => Buffer.from(x)),
+            data: movesToProcess,
         });
 
         setTimeout(update, getNextLoop(tick, Date.now() - now));

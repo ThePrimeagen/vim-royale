@@ -13,7 +13,6 @@ export default class Board {
     public map: string[][];
 
     constructor(boardData: string[][]) {
-        console.error("BOARD DATA", boardData);
         this.map = boardData;
         this.height = this.map.length;
         this.width = this.map[0].length;

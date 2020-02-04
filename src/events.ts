@@ -1,6 +1,7 @@
 import WebSocket from 'ws';
-
 import { MapMessage, WSMessage } from './server/commands';
+import Stats from './stats';
+import { TrackingInfo } from './types';
 
 export enum EventType {
     StartGame = "start-game",
@@ -11,6 +12,15 @@ export enum EventType {
     ServerMovement = "server-movement",
 }
 
+export interface WsOpen {
+    type: EventType.WsOpen;
+};
+
+export interface WsMessage {
+    type: EventType.WsMessage;
+    data: WSMessage;
+};
+
 export interface StartGame  {
     type: EventType.StartGame;
     data: MapMessage
@@ -18,27 +28,26 @@ export interface StartGame  {
 
 export interface BinaryData  {
     type: EventType.WsBinary;
-    data: Buffer;
-    ws: WebSocket;
+    data: Buffer
 };
 
-export interface Run  {
+export interface Run {
     type: EventType.Run;
 };
 
-export interface WS  {
-    type: EventType.WsMessage | EventType.WsOpen | EventType.WsBinary;
-    data?: WSMessage
-}
+export type MovesToProcess = {
+    buf: Buffer,
+    tracking: TrackingInfo,
+};
 
 export interface ServerMovement {
     type: EventType.ServerMovement;
-    data: Buffer[]
+    data: MovesToProcess[]
 }
 
-export type EventData = StartGame | Run | WS | BinaryData | ServerMovement;
+export type EventData = WsOpen | WsMessage | StartGame | Run | BinaryData | ServerMovement;
 
-type EventCallback = (event: EventData) => void;
+type EventCallback = (event: EventData, ...args: any[]) => void;
 
 class Event {
     private callbacks: EventCallback[];
@@ -51,8 +60,8 @@ class Event {
         this.callbacks.push(cb);
     }
 
-    emit(data: EventData) {
-        this.callbacks.forEach(cb => cb(data));
+    emit(data: EventData, ...additionalArgs: any[]) {
+        this.callbacks.forEach(cb => cb(data, ...additionalArgs));
     }
 
     off(cb: EventCallback) {
@@ -67,3 +76,4 @@ const event = new Event();
 export default function getEvent() {
     return event;
 };
+

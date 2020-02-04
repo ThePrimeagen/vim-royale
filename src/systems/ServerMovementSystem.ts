@@ -8,8 +8,10 @@ import MovementComponent from '../objects/components/movement';
 import PositionComponent from '../objects/components/position';
 import Board from '../board';
 import {readUpdatePosition} from '../server/messages/updatePosition';
+import createCorrectPosition, {readCorrectPosition} from '../server/messages/correctPosition';
 
 const store = getEntityStore();
+const FORCE_MOVEMENT_AMOUNT = 1000;
 
 class ServerMovementSystem implements System {
     private board: Board;
@@ -20,34 +22,44 @@ class ServerMovementSystem implements System {
 
     run(listOfMovements: EventData) {
 
-        const buffers = (listOfMovements as ServerMovement).data
+        const data = (listOfMovements as ServerMovement).data
 
-        buffers.forEach(buf => {
-            const update = readUpdatePosition(buf);
+        data.forEach(({buf, tracking}) => {
+            const update = readUpdatePosition(buf, 1);
             const movement = getMovement(update.key);
 
             const position =
                 store.getComponent(update.entityId, PositionComponent.type) as PositionComponent;
 
             // We got a problem
-            if (position.x + movement[0] !== update.x ||
-                position.y + movement[1] !== update.y) {
+            const expectedX = position.x + movement[0];
+            const expectedY = position.y + movement[1];
 
-                throw new Error("WHY WAS THIS DONE.  DON'T YOU LOVE ME");
+            if (expectedX !== update.x || expectedY !== update.y) {
+                // this is insane way to do it, but we are doing it this way
+                // baby.
+                // TODO: there must be IDs associated with this.
+                const buf = createCorrectPosition({
+                    x: position.x,
+                    y: position.y,
+                    entityId: update.entityId,
+                    nextId: update.movementId + FORCE_MOVEMENT_AMOUNT,
+                });
+
+                tracking.ws.send(buf);
+                console.log("Movement Deninced!!!!", position.x, position.y);
             }
+            else {
+                position.x += movement[0];
+                position.y += movement[1];
 
-            position.x += movement[0];
-            position.y += movement[1];
-
-            console.log("Movement Approved!!!!", position.x, position.y);
+                console.log("Movement Approved!!!!", position.x, position.y);
+            }
         });
-
     }
 }
 
 export default function createMovement(board: Board) {
     return new ServerMovementSystem(board);
 };
-
-
 

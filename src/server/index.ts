@@ -1,14 +1,16 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-import ws from 'ws';
+import WebSocket from 'ws';
 
 import Board from '../board';
+import Stats from '../stats';
 
 import createServer from './server';
 import getEvents, {BinaryData} from '../events';
+import {TrackingInfo} from '../types';
 
-const wss = new ws.Server({
+const wss = new WebSocket.Server({
     // @ts-ignore
     port: +process.env.PORT
 });
@@ -33,9 +35,14 @@ const events = getEvents();
 wss.on('connection', ws => {
     const binaryMessage = {
         type: 'ws-binary',
-        data: Buffer.alloc(1),
-        ws
+        data: Buffer.alloc(1)
     } as BinaryData;
+
+    const trackingInfo: TrackingInfo = {
+        ws,
+        // TODO: Do that
+        stats: new Stats(),
+    };
 
     // TODO: on the edities
     const entityIdRange = [1000, 2000];
@@ -55,7 +62,7 @@ wss.on('connection', ws => {
     ws.on('message', msg => {
         if (msg instanceof Uint8Array) {
             binaryMessage.data = msg;
-            events.emit(binaryMessage);
+            events.emit(binaryMessage, trackingInfo);
             return;
         }
 

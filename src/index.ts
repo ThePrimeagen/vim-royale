@@ -4,10 +4,11 @@ dotenv.config();
 import * as blessed from 'blessed';
 
 import System from './systems/System';
+import { isCorrectPosition, readCorrectPosition }from './server/messages/correctPosition';
 import { MapLayout }from './server/commands';
 import createRenderSystem from './systems/ClientRenderSystem';
-import createMovementSystem from './systems/ClientMovementSystem';
-import getEvents, {EventData, Run} from './events';
+import MovementSystem from './systems/ClientMovementSystem';
+import getEvents, {EventType, BinaryData, EventData, Run} from './events';
 import captureInput from './input/index';
 import createMainMenu from './screen/main-menu';
 
@@ -17,8 +18,10 @@ import EntityStore from './entities';
 import GlobalContext from './context';
 import Board from './board';
 
-let movement;
+let movement: MovementSystem;
 let renderer;
+let board: Board;
+let player: Player;
 
 const systems: System[] = [];
 function loop(eventData: Run) {
@@ -48,24 +51,45 @@ try {
     captureInput(screen);
     createMainMenu(systems, screen);
 
-    events.on(evt => {
+    events.on((evt, ...args) => {
         switch (evt.type) {
-            case "start-game":
+            case EventType.StartGame:
                 createMainGame(evt.data.map, evt.data.position);
+                break;
+
+            case EventType.WsBinary:
+                handleBinaryMessage(evt);
+                break;
+
+            case EventType.Run:
+                loop(evt);
                 break;
         }
     });
-    // The intro.
+
+    // TODO: Stop using globals and just get your act together.  Also those
+    // arnt globals, those are technically module level data, which some
+    // people, not REACTJS, think is fine to use (IE. SVELLLLTEEE)
+    function handleBinaryMessage(evt: BinaryData) {
+        if (isCorrectPosition(evt.data, 0)) {
+            const posCorrection = readCorrectPosition(evt.data, 1);
+
+            player.forcePosition.x = posCorrection.x;
+            player.forcePosition.y = posCorrection.y;
+            player.forcePosition.movementId = posCorrection.nextId;
+            player.forcePosition.force = true;
+        }
+    }
 
     function createMainGame(boardData: MapLayout, startingPosition: [number, number]) {
-        const board = new Board(boardData.map);
-        const player = new Player(startingPosition[0], startingPosition[1], '@');
+        board = new Board(boardData.map);
+        player = new Player(startingPosition[0], startingPosition[1], '@');
 
         GlobalContext.player = player;
         GlobalContext.screen = "board";
 
         renderer = createRenderSystem(screen, board);
-        movement = createMovementSystem(board);
+        movement = new MovementSystem(board);
 
         systems.push(movement);
         systems.push(renderer);
@@ -73,13 +97,6 @@ try {
         GlobalContext.socket.createEntity(
             player.entity, player.position.x, player.position.y);
 
-        events.on(function mainGameListener(evt: EventData) {
-            switch (evt.type) {
-                case "run":
-                    loop(evt);
-                    break;
-            }
-        });
     }
 } catch (e) {
     console.error(e);
