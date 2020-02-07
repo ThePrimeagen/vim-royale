@@ -17,6 +17,8 @@ export type EntityItem = number;
 // singleton?
 class EntityStore {
     private currentId: number;
+    private maxId: number;
+    private startId: number;
 
     // <generics>
     private entityMap: Map<EntityItem, Map<string, Component>>;
@@ -28,14 +30,20 @@ class EntityStore {
         this.currentId = 1;
     }
 
-    getComponent(entityId: EntityItem, type: string): Component {
+    setEntityRange(start: number, stop: number) {
+        this.currentId = start;
+        this.startId = start;
+        this.maxId = stop;
+    }
+
+    getComponent<T extends Component>(entityId: EntityItem, comp: T): T {
         const componentMap = this.entityMap.get(entityId);
 
         if (!componentMap) {
             return null;
         }
 
-        const out = componentMap.get(type);
+        const out = componentMap.get(comp.type) as T;
         if (!out) {
             return null;
         }
@@ -43,9 +51,8 @@ class EntityStore {
         return out;
     }
 
-
-    forEach(componentType: string, cb: (entityId: EntityItem, state: Component) => void) {
-        const entities = this.entitiesByComponent.get(componentType);
+    forEach<T extends Component>(T, cb: (entityId: EntityItem, state: T) => void) {
+        const entities = this.entitiesByComponent.get(T.type);
 
         if (!entities) {
             return;
@@ -58,32 +65,55 @@ class EntityStore {
         //   k becomes a string
         // }
         Array.from(entities.keys()).forEach(k => {
-            const entity = entities.get(k);
+            const entity: T = <any>entities.get(k);
 
             cb(k, entity);
         });
     }
 
-    toArray(componentType: string): Component[] {
-        const entities = this.entitiesByComponent.get(componentType);
+    toArray<T extends Component>(T): T[] {
+        const entities = this.entitiesByComponent.get(T.type);
 
         if (!entities) {
             return [];
         }
 
-        return Array.from(entities.keys()).map(k => entities.get(k));
+        return Array.from(entities.keys()).map(k => entities.get(k) as T);
+    }
+
+    getNextId(): number {
+        if (this.currentId + 1 === this.maxId) {
+            this.currentId = this.startId;
+        }
+
+        return this.currentId++;
     }
 
     createNewEntity(): number {
-        return this.setNewEntity(this.currentId++);
-    }
+        let id: number;
+        let count = 0;
+        do {
+            id = this.getNextId();
+            count++;
+        } while (!this.setNewEntity(id) && count < this.maxId - this.startId);
 
-    setNewEntity(id: number): number {
-        this.entityMap.set(id, new Map());
+        // TODO: this should be better handlede.....
+        if (count === this.maxId - this.startId) {
+            throw new Error("WHAT HAS HAPPENED, YOU HAVE USED ALL OF YOUR ENTITIES");
+        }
 
         return id;
     }
 
+    setNewEntity(id: number): boolean {
+        if (this.entityMap.has(id)) {
+            return false;
+        }
+
+        this.entityMap.set(id, new Map());
+
+        return true;
+    }
 
     attachComponent(entity: EntityItem, comp: Component) {
         this.entityMap.get(entity).set(comp.type, comp);

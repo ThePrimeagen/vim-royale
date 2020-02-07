@@ -18,10 +18,11 @@ export type MapLayout = {
     map: string[][];
 };
 
-export type MapMessage = {
+export type StartGameMessage = {
     type: 'map';
     map: MapLayout;
     position: [number, number];
+    entityIdRange: [number, number];
 }
 
-export type WSMessage = StatusMessage | MapMessage;
+export type WSMessage = StatusMessage | StartGameMessage;

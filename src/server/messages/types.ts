@@ -4,6 +4,7 @@ export enum FrameType {
     CreateEntity = 1,
     UpdatePosition = 2,
     CorrectPosition = 3,
+    GameStateUpdate = 4,
 };
 
 export enum CreateType {
@@ -14,6 +15,14 @@ export type CreateEntityResult = {
     x: number;
     y: number;
     entityId: number;
+};
+
+// TODO: I hate this.
+export type GameStateUpdateResults = {
+    x: number;
+    y: number;
+    entityId: number;
+    char: string;
 };
 
 export type CorrectPositionResult = {

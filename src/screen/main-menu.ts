@@ -2,7 +2,7 @@ import * as blessed from 'blessed';
 import System from '../systems/System';
 import GlobalContext from '../context';
 import getEvents, {EventData, EventType} from '../events';
-import { MapMessage } from '../server/commands';
+import { StartGameMessage } from '../server/commands';
 import { isStatusCommand, isMapCommand, WSMessage } from '../server/commands';
 
 enum State {
@@ -47,7 +47,7 @@ export default function mainMenu(systems: System[], screen: blessed.Widgets.Scre
                     events.off(onEvent);
                     events.emit({
                         type: EventType.StartGame,
-                        data: d as MapMessage,
+                        data: d as StartGameMessage,
                     });
                 }
 

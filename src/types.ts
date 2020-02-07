@@ -7,8 +7,10 @@ export type GameOptions = {
 };
 
 export type TrackingInfo = {
-    ws: WebSocket,
-    stats: Stats,
+    entityIdRange: [number, number];
+    movementId: number;
+    ws: WebSocket;
+    stats: Stats;
 };
 
 export type MovementCommand = 'k' | 'j' | 'l' | 'h';

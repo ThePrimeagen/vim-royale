@@ -90,7 +90,8 @@ class RendererSystem implements System {
         apply(tmp, this.board.map, 0, 0, renderX, renderY);
 
         store.
-            toArray(PositionComponent.type).
+            toArray(PositionComponent).
+
             // @ts-ignore
             filter((other: PositionComponent) => {
                 const relativeX = other.x - x;

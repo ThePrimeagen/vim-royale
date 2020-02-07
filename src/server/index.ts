@@ -15,7 +15,7 @@ const wss = new WebSocket.Server({
     port: +process.env.PORT
 });
 
-const currentPlayers = [];
+const currentPlayers: TrackingInfo[] = [];
 let entityId = 0;
 
 // 0       8       6       4       2
@@ -29,8 +29,10 @@ function pickRandoPosition() {
     ];
 }
 
-const server = createServer(map, 1000);
+const server = createServer(map, 1000, currentPlayers);
 const events = getEvents();
+const entitiesRange = 10000;
+let entitiesStart = 0;
 
 wss.on('connection', ws => {
     const binaryMessage = {
@@ -38,14 +40,19 @@ wss.on('connection', ws => {
         data: Buffer.alloc(1)
     } as BinaryData;
 
+    // TODO: on the edities
+    const entityIdRange: [number, number] =
+        [entitiesStart, entitiesStart + entitiesRange];
+
+    entitiesStart += entitiesRange;
+
     const trackingInfo: TrackingInfo = {
         ws,
-        // TODO: Do that
         stats: new Stats(),
+        entityIdRange,
+        movementId: 0,
     };
-
-    // TODO: on the edities
-    const entityIdRange = [1000, 2000];
+    currentPlayers.push(trackingInfo);
 
     console.log("LOOK AT ME, connected");
 
@@ -54,8 +61,12 @@ wss.on('connection', ws => {
     // TODO: Fix this shotty startup sequence
     ws.send(JSON.stringify({ status: 'ready', encoding: 'json' }));
 
-    // TODO: Pick position?
-    ws.send(JSON.stringify({ type: 'map', map, position: pickRandoPosition() }));
+    ws.send(JSON.stringify({
+        type: 'map',
+        map,
+        position: pickRandoPosition(),
+        entityIdRange,
+    }));
 
     // Wait for request to join game...
     // TODO: This is where the board needs to be played.
