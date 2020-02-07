@@ -1,5 +1,5 @@
 import WebSocket from 'ws';
-import { MapMessage, WSMessage } from './server/commands';
+import { StartGameMessage, WSMessage } from './server/commands';
 import Stats from './stats';
 import { TrackingInfo } from './types';
 
@@ -23,7 +23,7 @@ export interface WsMessage {
 
 export interface StartGame  {
     type: EventType.StartGame;
-    data: MapMessage
+    data: StartGameMessage
 };
 
 export interface BinaryData  {
@@ -45,7 +45,13 @@ export interface ServerMovement {
     data: MovesToProcess[]
 }
 
-export type EventData = WsOpen | WsMessage | StartGame | Run | BinaryData | ServerMovement;
+export interface ServerMovement {
+    type: EventType.ServerMovement;
+    data: MovesToProcess[]
+}
+
+export type EventData =
+    WsOpen | WsMessage | StartGame | Run | BinaryData | ServerMovement;
 
 type EventCallback = (event: EventData, ...args: any[]) => void;
 

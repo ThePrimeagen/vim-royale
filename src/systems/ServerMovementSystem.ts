@@ -26,10 +26,32 @@ class ServerMovementSystem implements System {
 
         data.forEach(({buf, tracking}) => {
             const update = readUpdatePosition(buf, 1);
+
+            console.log("We are updating the server right MEOW",
+                tracking.movementId,
+                tracking.entityIdRange,
+                update.entityId);
+
+            // We need to ignore this movement.
+            if (tracking.movementId > update.movementId) {
+                return;
+            }
+
+            if (tracking.entityIdRange[0] > update.entityId ||
+                tracking.entityIdRange[1] < update.entityId) {
+
+                // We should definitely just kick the websocket out.
+                // TODO: Send endgame message, they are messing with the stones.
+                tracking.ws.close();
+                return;
+            }
+
             const movement = getMovement(update.key);
 
+            // WHAT THE F
             const position =
-                store.getComponent(update.entityId, PositionComponent.type) as PositionComponent;
+            // @ts-ignore
+                store.getComponent(update.entityId, PositionComponent) as PositionComponent;
 
             // We got a problem
             const expectedX = position.x + movement[0];
@@ -49,9 +71,11 @@ class ServerMovementSystem implements System {
                 tracking.ws.send(buf);
                 console.log("Movement Deninced!!!!", position.x, position.y);
             }
+
             else {
                 position.x += movement[0];
                 position.y += movement[1];
+                tracking.movementId = update.movementId;
 
                 console.log("Movement Approved!!!!", position.x, position.y);
             }

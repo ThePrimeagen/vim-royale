@@ -3,8 +3,11 @@ dotenv.config();
 
 import * as blessed from 'blessed';
 
+import PositionComponent from './objects/components/position';
 import System from './systems/System';
-import { isCorrectPosition, readCorrectPosition }from './server/messages/correctPosition';
+import { StartGameMessage } from './server/commands';
+import { isCorrectPosition, readCorrectPosition } from './server/messages/correctPosition';
+import { isGameStateUpdate, readGameStateUpdate } from './server/messages/game-state-update';
 import { MapLayout }from './server/commands';
 import createRenderSystem from './systems/ClientRenderSystem';
 import MovementSystem from './systems/ClientMovementSystem';
@@ -14,7 +17,7 @@ import createMainMenu from './screen/main-menu';
 
 import Player from './objects/player';
 import ClientSocket from './client-socket';
-import EntityStore from './entities';
+import getEntityStore from './entities';
 import GlobalContext from './context';
 import Board from './board';
 
@@ -24,6 +27,8 @@ let board: Board;
 let player: Player;
 
 const systems: System[] = [];
+const store = getEntityStore();
+
 function loop(eventData: Run) {
     const then = Date.now();
     systems.forEach(s => {
@@ -44,7 +49,6 @@ try {
     process.on('uncaughtException', function(err) {
         console.error(err.message);
         console.error(err.stack);
-
     });
 
     GlobalContext.socket = new ClientSocket()
@@ -54,7 +58,7 @@ try {
     events.on((evt, ...args) => {
         switch (evt.type) {
             case EventType.StartGame:
-                createMainGame(evt.data.map, evt.data.position);
+                createMainGame(evt.data);
                 break;
 
             case EventType.WsBinary:
@@ -79,10 +83,37 @@ try {
             player.forcePosition.movementId = posCorrection.nextId;
             player.forcePosition.force = true;
         }
+
+        else if (isGameStateUpdate(evt.data, 0)) {
+            console.error("StateBuffer", evt.data);
+            const stateUpdate = readGameStateUpdate(evt.data, 1);
+            console.error("StateUpdate", stateUpdate);
+
+            let posComponent;
+            if (store.setNewEntity(stateUpdate.entityId)) {
+                posComponent = new PositionComponent(
+                    stateUpdate.char, stateUpdate.x, stateUpdate.y);
+
+                store.attachComponent(stateUpdate.entityId, posComponent);
+            }
+
+            // TODO: Fix me
+            // @ts-ignore
+            posComponent = store.getComponent(
+            // @ts-ignore
+                stateUpdate.entityId, PositionComponent) as PositionComponent;
+
+            posComponent.x = stateUpdate.x;
+            posComponent.y = stateUpdate.y;
+            loop({} as Run);
+        }
     }
 
-    function createMainGame(boardData: MapLayout, startingPosition: [number, number]) {
-        board = new Board(boardData.map);
+    function createMainGame(data: StartGameMessage) {
+        board = new Board(data.map.map);
+        store.setEntityRange(data.entityIdRange[0], data.entityIdRange[1]);
+
+        const startingPosition = data.position;
         player = new Player(startingPosition[0], startingPosition[1], '@');
 
         GlobalContext.player = player;

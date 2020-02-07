@@ -5,6 +5,7 @@ import {readUpdatePosition} from './messages/updatePosition';
 import PositionComponent from '../objects/components/position';
 import MovementComponent from '../objects/components/movement';
 import serverMovementSystem from '../systems/ServerMovementSystem';
+import ServerUpdatePlayers from '../systems/ServerUpdatePlayers';
 import Board from '../board';
 import getStore from '../entities';
 import { TrackingInfo } from '../types';
@@ -24,9 +25,10 @@ function getNextLoop(tick: number, timeTaken: number) {
 const sliceCopy = Uint8Array.prototype.slice;
 const entities = [];
 
-export default function server(map: Board, tick: number) {
+export default function server(map: Board, tick: number, infos: TrackingInfo[]) {
     const movesToProcess: MovesToProcess[] = [];
     const movement = serverMovementSystem(map);
+    const updatePlayers = new ServerUpdatePlayers(map);
 
     events.on((evt, ...args) => {
         switch (evt.type) {
@@ -69,6 +71,8 @@ export default function server(map: Board, tick: number) {
             type: EventType.ServerMovement,
             data: movesToProcess,
         });
+
+        updatePlayers.run(infos);
 
         setTimeout(update, getNextLoop(tick, Date.now() - now));
 
