@@ -9,7 +9,10 @@ import PositionComponent from '../objects/components/position';
 import GlobalContext from '../context';
 
 import Board from '../board';
-import apply from './apply';
+import apply from './render/apply';
+import getRenderBounds from './render/get-render-bounds';
+import makeRelative from './render/make-relative';
+import render from './render';
 
 const store = getEntityStore();
 
@@ -62,62 +65,19 @@ class RendererSystem implements System {
 
     // TODO: Does this even matter in a CLI game?
     private renderToString(): string {
-        const tmp = this.tmp;
+        const display = GlobalContext.display;
+        const pPosition = GlobalContext.player.position;
+        const positions = store.toArray<PositionComponent>(PositionComponent);
 
-        const player = GlobalContext.player;
-        const {x, y} = player.position;
-        const {width, height} = GlobalContext.display;
+        // APPLY THAT GAME BOARD
+        const tmp = render(this.board.map, this.tmp, positions, pPosition, display);
 
-        // TODO: When the player is next to the wall, it shouldn't be offset by so far,
-        // also render checking will be interesting... we could always go cheap
-        // and just render everything that is full width / height away.
-        let offsetX = width / 2;
-        let offsetY = height / 2;
+        const coords = [pPosition.x, pPosition.y].toString().split('');
+        apply(tmp, [coords], display.width - (coords.length + 1), 0);
 
-        if (x < offsetX) {
-            offsetX = x;
-        }
-
-        if (y < offsetY) {
-            offsetY = y;
-        }
-
-        const [
-            renderX,
-            renderY,
-        ] = this.board.getMapByPlayersPerspective();
-
-        apply(tmp, this.board.map, 0, 0, renderX, renderY);
-
-        store.
-            toArray(PositionComponent).
-
-            // @ts-ignore
-            filter((other: PositionComponent) => {
-                const relativeX = other.x - x;
-                const relativeY = other.y - y;
-
-                return Math.abs(relativeX) < width &&
-                    Math.abs(relativeY) < height;
-            }).
-            sort((a: PositionComponent, b: PositionComponent) => a.z - b.z).
-            forEach((pos: PositionComponent) => {
-                const relativeX = pos.x - x + offsetX;
-                const relativeY = pos.y - y + offsetY;
-
-                // TODO: Map world vs player world.... how do we do that?
-                //
-                apply(tmp, pos.char, relativeX, relativeY);
-            });
-
-        const coords = [x, y].toString().split('');
-        apply(tmp, [coords], width - (coords.length + 1), 0);
-
-        const out = tmp.map((x, i) => {
-            return x.join('');
-        });
-
-        return out.join('');
+        return tmp.
+            map(line => line.join('')).
+            join('');
     }
 }
 
