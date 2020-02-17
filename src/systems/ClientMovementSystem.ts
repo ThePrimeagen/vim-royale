@@ -1,28 +1,27 @@
 import {GameOptions} from '../types';
 import System from './System';
 import {EventData} from '../events';
-import GlobalContext from '../context';
+import GlobalContext, {LocalContext} from '../context';
 
-import getEntityStore from '../entities';
 import MovementComponent from '../objects/components/movement';
 import PositionComponent from '../objects/components/position';
 import ForcePositionComponent from '../objects/components/force-position';
 import Board from '../board';
 
-const store = getEntityStore();
-
 export default class MovementSystem implements System {
     private board: Board;
+    private context: LocalContext;
     private movementId = 0;
 
-    constructor(board: Board) {
+    constructor(board: Board, context: LocalContext) {
         this.board = board;
+        this.context = context;
     }
 
     // TODO: Girth?
     run(e: EventData) {
 
-        store.forEach(MovementComponent, (entity, component: MovementComponent) => {
+        this.context.store.forEach(MovementComponent, (entity, component: MovementComponent) => {
 
             // nothing to be updated
             if (!component.x && !component.y) {
@@ -31,9 +30,9 @@ export default class MovementSystem implements System {
 
             // TODO: Probably should tell someone about this.... (server)
             // @ts-ignore
-            const pos = store.getComponent(entity, PositionComponent) as PositionComponent;
+            const pos = this.context.store.getComponent(entity, PositionComponent) as PositionComponent;
             // @ts-ignore
-            const force = store.getComponent(entity, ForcePositionComponent) as ForcePositionComponent;
+            const force = this.context.store.getComponent(entity, ForcePositionComponent) as ForcePositionComponent;
 
             if (force && force.force) {
                 pos.x = force.x;
@@ -68,8 +67,8 @@ export default class MovementSystem implements System {
 
             // TODO: clearly this means I would confirm all things through the
             // movement system.  That is wrong....
-            if (updated && GlobalContext.player.position === pos) {
-                GlobalContext.socket.confirmMovement(this.movementId++);
+            if (updated && this.context.player.position === pos) {
+                this.context.socket.confirmMovement(this.movementId++);
             }
         });
     }

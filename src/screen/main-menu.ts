@@ -1,7 +1,7 @@
 import * as blessed from 'blessed';
 import System from '../systems/System';
-import GlobalContext from '../context';
-import getEvents, {EventData, EventType} from '../events';
+import GlobalContext, {LocalContext} from '../context';
+import {EventData, EventType} from '../events';
 import { StartGameMessage } from '../server/commands';
 import { isStatusCommand, isMapCommand, WSMessage } from '../server/commands';
 
@@ -10,11 +10,7 @@ enum State {
     Menu,
 };
 
-const events = getEvents();
-
-export default function mainMenu(systems: System[], screen: blessed.Widgets.Screen) {
-    systems.length = 0;
-
+export default function mainMenu(screen: blessed.Widgets.Screen, context: LocalContext) {
     let state = State.Connecting;
 
     const box = blessed.box({
@@ -37,15 +33,14 @@ export default function mainMenu(systems: System[], screen: blessed.Widgets.Scre
     function onEvent(evt: EventData) {
         switch(evt.type) {
             case EventType.WsOpen:
-                console.error('ws-open');
                 box.setContent("Connected... Getting game board.");
                 break;
 
             case EventType.WsMessage: {
                 const d = evt.data as WSMessage;
                 if (isMapCommand(d)) {
-                    events.off(onEvent);
-                    events.emit({
+                    context.events.off(onEvent);
+                    context.events.emit({
                         type: EventType.StartGame,
                         data: d as StartGameMessage,
                     });
@@ -56,7 +51,7 @@ export default function mainMenu(systems: System[], screen: blessed.Widgets.Scre
         }
     };
 
-    getEvents().on(onEvent);
+    context.events.on(onEvent);
 };
 
 

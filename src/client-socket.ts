@@ -5,25 +5,29 @@ import WebSocket from 'ws';
 import { EntityItem } from './entities';
 import getEvents, { EventType } from './events';
 import { updatePosition, createEntity } from './server/messages';
-import GlobalContext from './context';
+import GlobalContext, { LocalContext } from './context';
 import { WSMessage } from './server/commands';
 
-const events = getEvents();
-
 export default class ClientSocket {
+    private context: LocalContext;
     private ws: WebSocket;
+    private open: () => void;
+    private message: (msg: any) => void;
 
     public mode: string;
 
-    constructor() {
-        const ws = new WebSocket(`ws://${process.env.HOST}:${process.env.PORT}`);
-        ws.on('open', () => {
-            events.emit({
+    constructor(host: string, port: number, context: LocalContext) {
+        const ws = new WebSocket(`ws://${host}:${port}`);
+
+        this.context = context;
+        this.open = () => {
+            context.events.emit({
                 type: EventType.WsOpen
             });
-        });
+        };
+        ws.on('open', this.open);
 
-        ws.on('message', msg => {
+        this.message = msg => {
             let m;
             let type: EventType = EventType.WsMessage;
 
@@ -45,12 +49,14 @@ export default class ClientSocket {
                 type = EventType.WsBinary;
             }
 
-            events.emit({
+            context.events.emit({
                 type,
                 data: m
             });
-        });
+        };
+        ws.on('message', this.message);
 
+        /*
         ws.on('close', () => {
             // TODO: reconnect socket.
         });
@@ -58,8 +64,15 @@ export default class ClientSocket {
         ws.on('error', () => {
             // TODO: reconnect socket.
         });
+         */
 
         this.ws = ws;
+    }
+
+    shutdown() {
+        this.ws.off('message', this.message);
+        this.ws.off('open', this.open);
+        this.ws.close();
     }
 
     createEntity(entityId: EntityItem, x: number, y: number) {
@@ -70,11 +83,12 @@ export default class ClientSocket {
             y
         });
 
+        console.log("createEntity", entityId);
         this.ws.send(buf);
     }
 
     confirmMovement(movementId: number) {
-        const player = GlobalContext.player;
+        const player = this.context.player;
         const pos = player.position;
 
         const buf = updatePosition({

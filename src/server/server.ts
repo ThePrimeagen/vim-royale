@@ -1,17 +1,16 @@
 import getEvents, {EventType, MovesToProcess} from '../events';
-import { FrameType } from './messages/types';
+import {FrameType} from './messages/types';
 import {readCreateEntity} from './messages/createEntity';
 import {readUpdatePosition} from './messages/updatePosition';
+import createGameStateUpdate from './messages/game-state-update';
 import PositionComponent from '../objects/components/position';
 import MovementComponent from '../objects/components/movement';
-import serverMovementSystem from '../systems/ServerMovementSystem';
+import ServerMovementSystem from '../systems/ServerMovementSystem';
 import ServerUpdatePlayers from '../systems/ServerUpdatePlayers';
+import {createLocalContext} from '../context';
 import Board from '../board';
 import getStore from '../entities';
-import { TrackingInfo } from '../types';
-
-const store = getStore();
-const events = getEvents();
+import {TrackingInfo} from '../types';
 
 function getNextLoop(tick: number, timeTaken: number) {
     // TODO: This is really bad to have happen.p..
@@ -24,13 +23,20 @@ function getNextLoop(tick: number, timeTaken: number) {
 
 const sliceCopy = Uint8Array.prototype.slice;
 const entities = [];
-
+//
+//TODO: Refactor this into a less heaping pile of shit.
 export default function server(map: Board, tick: number, infos: TrackingInfo[]) {
     const movesToProcess: MovesToProcess[] = [];
-    const movement = serverMovementSystem(map);
-    const updatePlayers = new ServerUpdatePlayers(map);
+    const context = createLocalContext({
+        store: getStore(),
+        events: getEvents(),
+    });
 
-    events.on((evt, ...args) => {
+    const movement = new ServerMovementSystem(map, context);
+    const updatePlayers = new ServerUpdatePlayers(map, context);
+
+    context.events.on((evt, ...args) => {
+
         switch (evt.type) {
             case EventType.WsBinary:
                 const trackingInfo: TrackingInfo = args[0];
@@ -53,12 +59,24 @@ export default function server(map: Board, tick: number, infos: TrackingInfo[]) 
                     const position = new PositionComponent('x', data.x, data.y);
                     const movement = new MovementComponent(0, 0);
 
-                    store.setNewEntity(data.entityId);
-                    store.attachComponent(data.entityId, position);
-                    store.attachComponent(data.entityId, movement);
+                    context.store.setNewEntity(data.entityId);
+                    context.store.attachComponent(data.entityId, position);
+                    context.store.attachComponent(data.entityId, movement);
                     entities.push(data.entityId);
                 }
                 break;
+
+            case EventType.WsClose: {
+                const trackingInfo = evt.data;
+                const buf = createGameStateUpdate.
+                    removeEntityRange(trackingInfo.entityIdRange);
+
+                context.store.removeEntityRange(...trackingInfo.entityIdRange);
+                infos.forEach(tracking => {
+                    tracking.ws.send(buf);
+                });
+                break;
+            }
         }
     });
 
@@ -81,5 +99,4 @@ export default function server(map: Board, tick: number, infos: TrackingInfo[]) 
 
     update();
 };
-
 

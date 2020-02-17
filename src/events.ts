@@ -7,10 +7,16 @@ export enum EventType {
     StartGame = "start-game",
     Run = "run",
     WsOpen = "ws-open",
+    WsClose = "ws-close",
     WsMessage = "ws-message",
     WsBinary = "ws-binary",
     ServerMovement = "server-movement",
 }
+
+export interface WsClose {
+    type: EventType.WsClose;
+    data: TrackingInfo
+};
 
 export interface WsOpen {
     type: EventType.WsOpen;
@@ -51,11 +57,11 @@ export interface ServerMovement {
 }
 
 export type EventData =
-    WsOpen | WsMessage | StartGame | Run | BinaryData | ServerMovement;
+    WsOpen | WsMessage | StartGame | Run | BinaryData | ServerMovement | WsClose;
 
 type EventCallback = (event: EventData, ...args: any[]) => void;
 
-class Event {
+export class Event {
     private callbacks: EventCallback[];
 
     constructor() {
@@ -79,7 +85,7 @@ class Event {
 };
 
 const event = new Event();
-export default function getEvent() {
+export default function getEvent(): Event {
     return event;
 };
 

@@ -9,127 +9,163 @@ import { StartGameMessage } from './server/commands';
 import { isCorrectPosition, readCorrectPosition } from './server/messages/correctPosition';
 import { isGameStateUpdate, readGameStateUpdate } from './server/messages/game-state-update';
 import { MapLayout }from './server/commands';
-import createRenderSystem from './systems/ClientRenderSystem';
+import RendererSystem from './systems/ClientRenderSystem';
 import MovementSystem from './systems/ClientMovementSystem';
-import getEvents, {EventType, BinaryData, EventData, Run} from './events';
+import getEvents, {Event, EventType, BinaryData, EventData, Run} from './events';
 import captureInput from './input/index';
 import createMainMenu from './screen/main-menu';
+import createLogger, {setLogger} from './logger';
+import errorLogger from './logger/console.error';
+import handleBinaryMessage from './updates';
 
 import Player from './objects/player';
 import ClientSocket from './client-socket';
-import getEntityStore from './entities';
-import GlobalContext from './context';
+import getEntityStore, {EntityStore} from './entities';
+import GlobalContext, {LocalContext, createLocalContext} from './context';
 import Board from './board';
 
-let movement: MovementSystem;
-let renderer;
-let board: Board;
-let player: Player;
+setLogger(errorLogger);
+const logger = createLogger("Game");
 
-const systems: System[] = [];
-const store = getEntityStore();
+type GameConfig = {
+    port: number;
+    host: string;
+    context: LocalContext;
+};
 
-function loop(eventData: Run) {
-    const then = Date.now();
-    systems.forEach(s => {
-        s.run(eventData);
-    });
-
-    console.error("TimeToRender", Date.now() - then);
+type Callback = () => void;
+type GameCBs = {
+    connected: Callback[];
+    gameStart: Callback[];
 }
 
-try {
-    const events = getEvents();
+export default class Game {
+    private movement: MovementSystem;
+    private renderer: RendererSystem;
+    private store: EntityStore;
+    private events: Event;
+    private player: Player;
+    private context: LocalContext;
+    private board: Board;
+    private screen: blessed.Widgets.Screen;
+    private callbacks: GameCBs;
+    private on: (evt: EventData, ...args: any[]) => void;
+
+    constructor(screen: blessed.Widgets.Screen, {
+        host,
+        port,
+        context,
+    }: GameConfig) {
+
+        context.store = this.store = getEntityStore();
+        context.events = this.events = getEvents();
+        context.socket = new ClientSocket(host, port, context);
+
+        logger("Constructing the game");
+
+        this.callbacks = {
+            connected: [],
+            gameStart: [],
+        };
+
+        this.screen = screen;
+        this.context = context;
+
+        createMainMenu(screen, this.context);
+
+        this.on = (evt, ...args) => {
+            logger("Received Event");
+            switch (evt.type) {
+                case EventType.StartGame:
+                    this.callbacks.gameStart.forEach(cb => cb());
+                    this.createMainGame(evt.data);
+                    break;
+
+                case EventType.WsBinary:
+                    handleBinaryMessage(this.context, evt);
+                    break;
+
+                case EventType.Run:
+                    this.loop(evt);
+                    break;
+
+                case EventType.WsOpen:
+                    this.callbacks.connected.forEach(cb => cb());
+                    break;
+            }
+        };
+
+        this.events.on(this.on);
+    }
+
+    public onGameStart(cb: () => void) {
+        logger("onGameStart");
+        this.callbacks.gameStart.push(cb);
+    }
+
+    public onConnected(cb: () => void) {
+        logger("onConnected");
+        this.callbacks.connected.push(cb);
+    }
+
+    private createMainGame(data: StartGameMessage) {
+        logger("createMainGame", data.entityIdRange, data.position);
+
+        this.board = new Board(data.map.map);
+        this.store.setEntityRange(data.entityIdRange[0], data.entityIdRange[1]);
+
+        const [
+            playerX,
+            playerY,
+        ] = data.position;
+        this.player = new Player(playerX, playerY, '@', this.context);
+
+        this.context.player = this.player;
+        this.context.screen = "board";
+
+        this.renderer = new RendererSystem(this.screen, this.board, this.context);
+        this.movement = new MovementSystem(this.board, this.context);
+
+        this.context.socket.createEntity(
+            this.player.entity, this.player.position.x, this.player.position.y);
+    }
+
+    public shutdown() {
+        logger("shutdown");
+        this.events.off(this.on);
+        this.context.socket.shutdown();
+    }
+
+    private loop(eventData: Run) {
+        const then = Date.now();
+
+        this.movement.run(eventData);
+        this.renderer.run(eventData);
+
+        logger("shutdown", Date.now() - then);
+    }
+}
+
+if (require.main === module) {
     const screen = blessed.screen({
         smartCSR: true
     });
-
     screen.title = 'Vim Royale';
 
     process.on('uncaughtException', function(err) {
+        logger(err.message);
+        logger(err.stack);
+
         console.error(err.message);
         console.error(err.stack);
     });
 
-    GlobalContext.socket = new ClientSocket()
-    captureInput(screen);
-    createMainMenu(systems, screen);
-
-    events.on((evt, ...args) => {
-        switch (evt.type) {
-            case EventType.StartGame:
-                createMainGame(evt.data);
-                break;
-
-            case EventType.WsBinary:
-                handleBinaryMessage(evt);
-                break;
-
-            case EventType.Run:
-                loop(evt);
-                break;
-        }
+    const context = createLocalContext();
+    captureInput(screen, context);
+    const game = new Game(screen, {
+        context,
+        port: +process.env.PORT,
+        host: process.env.HOST,
     });
-
-    // TODO: Stop using globals and just get your act together.  Also those
-    // arnt globals, those are technically module level data, which some
-    // people, not REACTJS, think is fine to use (IE. SVELLLLTEEE)
-    function handleBinaryMessage(evt: BinaryData) {
-        if (isCorrectPosition(evt.data, 0)) {
-            const posCorrection = readCorrectPosition(evt.data, 1);
-
-            player.forcePosition.x = posCorrection.x;
-            player.forcePosition.y = posCorrection.y;
-            player.forcePosition.movementId = posCorrection.nextId;
-            player.forcePosition.force = true;
-        }
-
-        else if (isGameStateUpdate(evt.data, 0)) {
-            console.error("StateBuffer", evt.data);
-            const stateUpdate = readGameStateUpdate(evt.data, 1);
-            console.error("StateUpdate", stateUpdate);
-
-            let posComponent;
-            if (store.setNewEntity(stateUpdate.entityId)) {
-                posComponent = new PositionComponent(
-                    stateUpdate.char, stateUpdate.x, stateUpdate.y);
-
-                store.attachComponent(stateUpdate.entityId, posComponent);
-            }
-
-            // TODO: Fix me
-            // @ts-ignore
-            posComponent = store.getComponent(
-            // @ts-ignore
-                stateUpdate.entityId, PositionComponent) as PositionComponent;
-
-            posComponent.x = stateUpdate.x;
-            posComponent.y = stateUpdate.y;
-            loop({} as Run);
-        }
-    }
-
-    function createMainGame(data: StartGameMessage) {
-        board = new Board(data.map.map);
-        store.setEntityRange(data.entityIdRange[0], data.entityIdRange[1]);
-
-        const startingPosition = data.position;
-        player = new Player(startingPosition[0], startingPosition[1], '@');
-
-        GlobalContext.player = player;
-        GlobalContext.screen = "board";
-
-        renderer = createRenderSystem(screen, board);
-        movement = new MovementSystem(board);
-
-        systems.push(movement);
-        systems.push(renderer);
-
-        GlobalContext.socket.createEntity(
-            player.entity, player.position.x, player.position.y);
-
-    }
-} catch (e) {
-    console.error(e);
 }
 

@@ -4,9 +4,8 @@ import {GameOptions} from '../types';
 
 import System from './System';
 import {EventData} from '../events';
-import getEntityStore from '../entities';
 import PositionComponent from '../objects/components/position';
-import GlobalContext from '../context';
+import GlobalContext, {LocalContext} from '../context';
 
 import Board from '../board';
 import apply from './render/apply';
@@ -14,17 +13,17 @@ import getRenderBounds from './render/get-render-bounds';
 import makeRelative from './render/make-relative';
 import render from './render';
 
-const store = getEntityStore();
-
-class RendererSystem implements System {
+export default class RendererSystem implements System {
     private screen: blessed.Widgets.Screen;
     private board: Board;
+    private context: LocalContext;
     private box: blessed.Widgets.BoxElement;
     private tmp: string[][];
 
-    constructor(screen: blessed.Widgets.Screen, board: Board) {
+    constructor(screen: blessed.Widgets.Screen, board: Board, context: LocalContext) {
         this.screen = screen;
         this.board = board;
+        this.context = context;
         this.tmp = [];
         const {width, height} = GlobalContext.display;
 
@@ -66,8 +65,8 @@ class RendererSystem implements System {
     // TODO: Does this even matter in a CLI game?
     private renderToString(): string {
         const display = GlobalContext.display;
-        const pPosition = GlobalContext.player.position;
-        const positions = store.toArray<PositionComponent>(PositionComponent);
+        const pPosition = this.context.player.position;
+        const positions = this.context.store.toArray<PositionComponent>(PositionComponent);
 
         // APPLY THAT GAME BOARD
         const tmp = render(this.board.map, this.tmp, positions, pPosition, display);
@@ -80,10 +79,6 @@ class RendererSystem implements System {
             join('');
     }
 }
-
-export default function createRenderer(screen: blessed.Widgets.Screen, board: Board) {
-    return new RendererSystem(screen, board);
-};
 
 
 

@@ -1,24 +1,23 @@
 import System from './System';
-import GlobalContext from '../context';
+import GlobalContext, {LocalContext} from '../context';
 
-import getEntityStore from '../entities';
 import getMovement from '../input/getMovement';
 import PC from '../objects/components/position';
 import createGameUpdate from '../server/messages/game-state-update';
 import { TrackingInfo } from '../types';
 import Board from '../board';
 
-const store = getEntityStore();
-
 export default class ServerUpdatePlayers {
     private board: Board;
+    private context: LocalContext;
 
-    constructor(board: Board) {
+    constructor(board: Board, context: LocalContext) {
         this.board = board;
+        this.context = context;
     }
 
     run(listOfTrackingInfos: TrackingInfo[]) {
-        store.forEach(PC, (entityId, component: PC) => {
+        this.context.store.forEach(PC, (entityId, component: PC) => {
 
             const obj = {
                 entityId,
@@ -30,7 +29,7 @@ export default class ServerUpdatePlayers {
 
             listOfTrackingInfos.forEach(tracking => {
                 if (entityId >= tracking.entityIdRange[0] &&
-                    entityId <= tracking.entityIdRange[1]) {
+                    entityId < tracking.entityIdRange[1]) {
                     return;
                 }
 

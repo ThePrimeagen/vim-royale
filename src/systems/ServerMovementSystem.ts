@@ -1,8 +1,7 @@
 import System from './System';
 import {EventData, ServerMovement} from '../events';
-import GlobalContext from '../context';
+import GlobalContext, {LocalContext} from '../context';
 
-import getEntityStore from '../entities';
 import getMovement from '../input/getMovement';
 import MovementComponent from '../objects/components/movement';
 import PositionComponent from '../objects/components/position';
@@ -10,14 +9,15 @@ import Board from '../board';
 import {readUpdatePosition} from '../server/messages/updatePosition';
 import createCorrectPosition, {readCorrectPosition} from '../server/messages/correctPosition';
 
-const store = getEntityStore();
 const FORCE_MOVEMENT_AMOUNT = 1000;
 
-class ServerMovementSystem implements System {
+export default class ServerMovementSystem implements System {
     private board: Board;
+    private context: LocalContext;
 
-    constructor(board: Board) {
+    constructor(board: Board, context: LocalContext) {
         this.board = board;
+        this.context = context;
     }
 
     run(listOfMovements: EventData) {
@@ -51,7 +51,7 @@ class ServerMovementSystem implements System {
             // WHAT THE F
             const position =
             // @ts-ignore
-                store.getComponent(update.entityId, PositionComponent) as PositionComponent;
+                this.context.store.getComponent(update.entityId, PositionComponent) as PositionComponent;
 
             // We got a problem
             const expectedX = position.x + movement[0];
@@ -82,8 +82,4 @@ class ServerMovementSystem implements System {
         });
     }
 }
-
-export default function createMovement(board: Board) {
-    return new ServerMovementSystem(board);
-};
 

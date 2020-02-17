@@ -15,7 +15,7 @@ export interface Component {
 export type EntityItem = number;
 
 // singleton?
-class EntityStore {
+export class EntityStore {
     private currentId: number;
     private maxId: number;
     private startId: number;
@@ -49,6 +49,11 @@ class EntityStore {
         }
 
         return out;
+    }
+
+    // TODO: Debugging
+    getAllEntities(): EntityItem[] {
+        return [...this.entityMap.keys()];
     }
 
     forEach<T extends Component>(T, cb: (entityId: EntityItem, state: T) => void) {
@@ -129,6 +134,29 @@ class EntityStore {
         throw new Error("You should implement me...");
     }
 
+    removeEntityRange(from: EntityItem, to: EntityItem) {
+
+        // TODO: OBVIOUSLY A PROBLEM (maybe, profile).
+        for (const entityId of this.entityMap.keys()) {
+            if (entityId >= from && entityId < to) {
+                if (this.entityMap.has(entityId)) {
+                    const components = this.entityMap.get(entityId);
+
+                    for (const component of components.values()) {
+                        const entityIdMap =
+                            this.entitiesByComponent.get(component.type);
+
+                        if (entityIdMap.has(entityId)) {
+                            entityIdMap.delete(entityId);
+                        }
+                    }
+
+                    this.entityMap.delete(entityId);
+                }
+            }
+        }
+    }
+
     removeEntity(entity: EntityItem) {
         if (this.entityMap.has(entity)) {
             this.entityMap.delete(entity);
@@ -141,9 +169,8 @@ class EntityStore {
     }
 }
 
-const store = new EntityStore();
 export default function createEntityStore() {
-    return store;
+    return new EntityStore();
 };
 
 

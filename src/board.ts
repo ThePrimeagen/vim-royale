@@ -18,14 +18,6 @@ export default class Board {
         this.width = this.map[0].length;
     }
 
-    // TODO: How to do this with viewing someone else...
-    public getMapByPlayersPerspective(): [number, number] {
-        const {x, y} = GlobalContext.player.position;
-        const {width, height} = GlobalContext.display;
-
-        return [clamp(x - width / 2, this.width), clamp(y - height / 2, this.height)];
-    }
-
     static generate(width: number, height: number): Board {
         const map = [];
 

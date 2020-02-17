@@ -1,20 +1,18 @@
 import * as blessed from 'blessed';
-import getEvent, {EventType} from '../events';
-import GlobalContext from '../context';
+import {EventType} from '../events';
+import GlobalContext, {LocalContext} from '../context';
 
 import board from './board';
 
-const events = getEvent();
-
 type InputMap = {
-    [key: string]: (ch: string) => boolean;
+    [key: string]: (ch: string, context: LocalContext) => boolean;
 };
 
 const inputMap: InputMap = {
     board
 };
 
-export default function captureInput(screen: blessed.Widgets.Screen) {
+export default function captureInput(screen: blessed.Widgets.Screen, context: LocalContext) {
 
     // Quit on Escape, q, or Control-C.
     screen.key(['escape', 'q', 'C-c'], function(ch, key) {
@@ -22,9 +20,9 @@ export default function captureInput(screen: blessed.Widgets.Screen) {
     });
 
     screen.key(['h', 'j', 'k', 'l'], function(ch, key) {
-        const inputFn = inputMap[GlobalContext.screen];
-        if (inputFn && inputFn(ch)) {
-            events.emit({
+        const inputFn = inputMap[context.screen];
+        if (inputFn && inputFn(ch, context)) {
+            context.events.emit({
                 type: EventType.Run
             });
         }

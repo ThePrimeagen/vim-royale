@@ -17,13 +17,28 @@ export type CreateEntityResult = {
     entityId: number;
 };
 
-// TODO: I hate this.
-export type GameStateUpdateResults = {
+export enum GameStateType {
+    PlayerMovement = 1,
+    PlaceBullet = 2,
+    RemoveEntityRange = 3,
+}
+
+export type GameStatePlayerMovement = {
+    type: GameStateType.PlayerMovement;
     x: number;
     y: number;
     entityId: number;
     char: string;
-};
+}
+
+export type GameStateRemoveEntityRange = {
+    type: GameStateType.RemoveEntityRange;
+    from: number;
+    to: number;
+}
+
+// TODO: I hate this.
+export type GameStateUpdateResults = GameStatePlayerMovement | GameStateRemoveEntityRange;
 
 export type CorrectPositionResult = {
     x: number;
