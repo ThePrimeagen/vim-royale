@@ -61,7 +61,7 @@ export type EventData =
 
 type EventCallback = (event: EventData, ...args: any[]) => void;
 
-export class Event {
+export class Events {
     private callbacks: EventCallback[];
 
     constructor() {
@@ -84,8 +84,6 @@ export class Event {
     }
 };
 
-const event = new Event();
-export default function getEvent(): Event {
-    return event;
+export default function createEvents() {
+    return new Events();
 };
-

@@ -3,7 +3,7 @@ import fs from 'fs';
 import scythe from 'death';
 import { setTimeout } from 'timers';
 
-import consoleLogger from './console-logger';
+import consoleLogger from './console.log';
 
 export type Logger = (sync: boolean, str: string, cb?: () => void) => void;
 
@@ -32,6 +32,7 @@ function logData(sync: boolean = false) {
     }
 
     const data = queue.join('\n');
+    queue.length = 0;
 
     isWriting = true;
     log(sync, data, function() {
@@ -43,6 +44,7 @@ let log = consoleLogger;
 scythe(() => {
     if (timeoutId !== null) {
         clearTimeout(timeoutId);
+        timeoutId = null;
         logData(true);
     }
 });
@@ -51,8 +53,20 @@ export function setLogger(_log: Logger) {
     log = _log;
 }
 
+export function flush() {
+    if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+    }
+    logData(true);
+}
+
 export default function createLogger(prefix: string) {
     return function log(...args: any[]) {
+        if (process.env.SUPPRESS_LOGS === 'true') {
+            return;
+        }
+
         if (timeoutId === null) {
             timeoutId = setTimeout(() => {
                 logData();

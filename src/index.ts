@@ -11,11 +11,12 @@ import { isGameStateUpdate, readGameStateUpdate } from './server/messages/game-s
 import { MapLayout }from './server/commands';
 import RendererSystem from './systems/ClientRenderSystem';
 import MovementSystem from './systems/ClientMovementSystem';
-import getEvents, {Event, EventType, BinaryData, EventData, Run} from './events';
+import getEvents, {Events, EventType, BinaryData, EventData, Run} from './events';
 import captureInput from './input/index';
 import createMainMenu from './screen/main-menu';
-import createLogger, {setLogger} from './logger';
+import createLogger, {setLogger, flush} from './logger';
 import errorLogger from './logger/console.error';
+import logLogger from './logger/console.log';
 import handleBinaryMessage from './updates';
 
 import Player from './objects/player';
@@ -24,7 +25,12 @@ import getEntityStore, {EntityStore} from './entities';
 import GlobalContext, {LocalContext, createLocalContext} from './context';
 import Board from './board';
 
-setLogger(errorLogger);
+if (process.env.LOGGER_TYPE === 'log') {
+    setLogger(logLogger);
+}
+else {
+    setLogger(errorLogger);
+}
 const logger = createLogger("Game");
 
 type GameConfig = {
@@ -39,16 +45,19 @@ type GameCBs = {
     gameStart: Callback[];
 }
 
+let id = 0;
 export default class Game {
+    public context: LocalContext;
+
     private movement: MovementSystem;
     private renderer: RendererSystem;
     private store: EntityStore;
-    private events: Event;
+    private events: Events;
     private player: Player;
-    private context: LocalContext;
     private board: Board;
     private screen: blessed.Widgets.Screen;
     private callbacks: GameCBs;
+    private id: number;
     private on: (evt: EventData, ...args: any[]) => void;
 
     constructor(screen: blessed.Widgets.Screen, {
@@ -56,12 +65,13 @@ export default class Game {
         port,
         context,
     }: GameConfig) {
+        this.id = id++;
 
         context.store = this.store = getEntityStore();
         context.events = this.events = getEvents();
         context.socket = new ClientSocket(host, port, context);
 
-        logger("Constructing the game");
+        logger("Constructing the game", this.id, context.socket.id);
 
         this.callbacks = {
             connected: [],
@@ -74,11 +84,11 @@ export default class Game {
         createMainMenu(screen, this.context);
 
         this.on = (evt, ...args) => {
-            logger("Received Event");
+            logger("Received Event", this.id, evt.type);
             switch (evt.type) {
                 case EventType.StartGame:
-                    this.callbacks.gameStart.forEach(cb => cb());
                     this.createMainGame(evt.data);
+                    this.callbacks.gameStart.forEach(cb => cb());
                     break;
 
                 case EventType.WsBinary:
@@ -99,17 +109,17 @@ export default class Game {
     }
 
     public onGameStart(cb: () => void) {
-        logger("onGameStart");
+        logger("onGameStart", this.id);
         this.callbacks.gameStart.push(cb);
     }
 
     public onConnected(cb: () => void) {
-        logger("onConnected");
+        logger("onConnected", this.id);
         this.callbacks.connected.push(cb);
     }
 
     private createMainGame(data: StartGameMessage) {
-        logger("createMainGame", data.entityIdRange, data.position);
+        logger("createMainGame", this.id, this.context.socket.id, data.entityIdRange, data.position);
 
         this.board = new Board(data.map.map);
         this.store.setEntityRange(data.entityIdRange[0], data.entityIdRange[1]);
@@ -132,6 +142,7 @@ export default class Game {
 
     public shutdown() {
         logger("shutdown");
+        flush();
         this.events.off(this.on);
         this.context.socket.shutdown();
     }

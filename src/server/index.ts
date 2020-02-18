@@ -7,7 +7,8 @@ import Board from '../board';
 import Stats from '../stats';
 
 import createServer from './server';
-import getEvents, {BinaryData, EventType} from '../events';
+import getLogger, {flush} from '../logger';
+import getEvents, {Events, BinaryData, EventType} from '../events';
 import {TrackingInfo} from '../types';
 
 export type ServerConfig = {
@@ -18,8 +19,9 @@ export type ServerConfig = {
     entityIdRange: number,
 }
 
-const events = getEvents();
+const logger = getLogger("ServerIndex");
 
+let trackingInfoId = 0;
 export default class Server {
     private currentPlayers: TrackingInfo[];
     private callbacks: {
@@ -33,6 +35,7 @@ export default class Server {
     private height: number;
     private entitiesRange: number;
     private entitiesStart: number;
+    private events: Events;
 
     constructor({
         port,
@@ -41,6 +44,8 @@ export default class Server {
         tick,
         entityIdRange = 10000,
     }: ServerConfig) {
+        this.events = getEvents();
+
         this.callbacks = {
             listening: []
         };
@@ -67,6 +72,8 @@ export default class Server {
         });
 
         this.wss.on('connection', ws => {
+            logger("New Connection", trackingInfoId);
+
             const binaryMessage = {
                 type: 'ws-binary',
                 data: Buffer.alloc(1)
@@ -83,14 +90,23 @@ export default class Server {
                 stats: new Stats(),
                 entityIdRange,
                 movementId: 0,
+                id: trackingInfoId++,
             };
+
             this.currentPlayers.push(trackingInfo);
 
             // TODO: Wrap this socket in something to control for types
             // we want to send down the current state to the user.
             // TODO: Fix this shotty startup sequence
+            logger("Sending", trackingInfo.id, JSON.stringify({ status: 'ready', encoding: 'json' }));
             ws.send(JSON.stringify({ status: 'ready', encoding: 'json' }));
 
+            logger("Sending", trackingInfo.id, {
+                type: 'map',
+                map: "big map goes here",
+                position: this.pickRandoPosition(),
+                entityIdRange,
+            });
             ws.send(JSON.stringify({
                 type: 'map',
                 map: this.map,
@@ -102,7 +118,7 @@ export default class Server {
                 const idx = this.currentPlayers.indexOf(trackingInfo);
                 this.currentPlayers.splice(idx, 1);
 
-                events.emit({
+                this.events.emit({
                     type: EventType.WsClose,
                     data: trackingInfo
                 });
@@ -113,7 +129,7 @@ export default class Server {
             ws.on('message', msg => {
                 if (msg instanceof Uint8Array) {
                     binaryMessage.data = msg;
-                    events.emit(binaryMessage, trackingInfo);
+                    this.events.emit(binaryMessage, trackingInfo);
                     return;
                 }
             });
@@ -132,6 +148,7 @@ export default class Server {
     }
 
     public shutdown() {
+        flush();
         this.wss.close();
         this.callbacks = null;
     }

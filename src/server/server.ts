@@ -1,4 +1,4 @@
-import getEvents, {EventType, MovesToProcess} from '../events';
+import getEvents, {Events, EventType, MovesToProcess} from '../events';
 import {FrameType} from './messages/types';
 import {readCreateEntity} from './messages/createEntity';
 import {readUpdatePosition} from './messages/updatePosition';
@@ -11,6 +11,9 @@ import {createLocalContext} from '../context';
 import Board from '../board';
 import getStore from '../entities';
 import {TrackingInfo} from '../types';
+import getLogger from '../logger';
+
+const logger = getLogger("Server");
 
 function getNextLoop(tick: number, timeTaken: number) {
     // TODO: This is really bad to have happen.p..
@@ -23,9 +26,12 @@ function getNextLoop(tick: number, timeTaken: number) {
 
 const sliceCopy = Uint8Array.prototype.slice;
 const entities = [];
+
 //
 //TODO: Refactor this into a less heaping pile of shit.
 export default function server(map: Board, tick: number, infos: TrackingInfo[]) {
+    logger("Starting Server");
+
     const movesToProcess: MovesToProcess[] = [];
     const context = createLocalContext({
         store: getStore(),
@@ -36,6 +42,8 @@ export default function server(map: Board, tick: number, infos: TrackingInfo[]) 
     const updatePlayers = new ServerUpdatePlayers(map, context);
 
     context.events.on((evt, ...args) => {
+
+        logger("Server Event", evt.type);
 
         switch (evt.type) {
             case EventType.WsBinary:
@@ -67,7 +75,7 @@ export default function server(map: Board, tick: number, infos: TrackingInfo[]) 
                 break;
 
             case EventType.WsClose: {
-                const trackingInfo = evt.data;
+                const trackingInfo: TrackingInfo = evt.data;
                 const buf = createGameStateUpdate.
                     removeEntityRange(trackingInfo.entityIdRange);
 

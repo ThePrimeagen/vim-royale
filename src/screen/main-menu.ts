@@ -2,13 +2,16 @@ import * as blessed from 'blessed';
 import System from '../systems/System';
 import GlobalContext, {LocalContext} from '../context';
 import {EventData, EventType} from '../events';
-import { StartGameMessage } from '../server/commands';
-import { isStatusCommand, isMapCommand, WSMessage } from '../server/commands';
+import createLogger from '../logger';
+import {StartGameMessage} from '../server/commands';
+import {isStatusCommand, isMapCommand, WSMessage} from '../server/commands';
 
 enum State {
     Connecting,
     Menu,
 };
+
+const logger = createLogger("mainMenu");
 
 export default function mainMenu(screen: blessed.Widgets.Screen, context: LocalContext) {
     let state = State.Connecting;
@@ -31,6 +34,8 @@ export default function mainMenu(screen: blessed.Widgets.Screen, context: LocalC
 
     // Wait for tit to go to connected state.
     function onEvent(evt: EventData) {
+        logger("onEvent", context.id, evt.type);
+
         switch(evt.type) {
             case EventType.WsOpen:
                 box.setContent("Connected... Getting game board.");

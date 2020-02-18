@@ -11,6 +11,7 @@ export type TrackingInfo = {
     movementId: number;
     ws: WebSocket;
     stats: Stats;
+    id: number;
 };
 
 export type MovementCommand = 'k' | 'j' | 'l' | 'h';

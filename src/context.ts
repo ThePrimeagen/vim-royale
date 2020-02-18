@@ -1,6 +1,6 @@
 import Player from './objects/player';
 import {EntityStore} from './entities';
-import {Event} from './events';
+import {Events} from './events';
 import ClientSocket from './client-socket';
 
 type ScreenType = "board" | "input" | "main-menu";
@@ -16,10 +16,12 @@ export type LocalContext = {
     screen: ScreenType;
     player: Player;
     store: EntityStore;
-    events: Event;
-    socket: ClientSocket
+    events: Events;
+    socket: ClientSocket;
+    id: number;
 };
 
+let contextId = 0;
 export function createLocalContext({
     screen,
     store,
@@ -29,7 +31,7 @@ export function createLocalContext({
 }: {
     screen?: ScreenType,
     store?: EntityStore,
-    events?: Event,
+    events?: Events,
     player?: Player,
     socket?: ClientSocket
 } = {}): LocalContext {
@@ -38,7 +40,8 @@ export function createLocalContext({
         player,
         socket,
         events,
-        store
+        store,
+        id: contextId++,
     } as LocalContext;
 }
 

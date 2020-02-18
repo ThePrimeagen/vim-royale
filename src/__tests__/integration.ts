@@ -1,3 +1,9 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
+process.env.LOGGER_TYPE = 'log';
+//process.env.SUPPRESS_LOGS = 'true';
+
 jest.doMock('blessed', () => {
     return {
         box: () => {
@@ -8,10 +14,12 @@ jest.doMock('blessed', () => {
     };
 });
 
-import {LocalContext} from '../context';
+import {LocalContext, createLocalContext} from '../context';
 import Game from '../index';
 import Server from '../server';
 import util from 'util';
+import createInput from '../input';
+import * as blessed from 'blessed';
 
 function serverIsListening(server: Server) {
     return new Promise(function(res) {
@@ -26,15 +34,21 @@ function gameIsConnected(game: Game) {
     });
 }
 
+function gameIsReadyToPlay(game: Game) {
+    return new Promise(function(res) {
+        // TODO: I HATE THE NAME OF THIS FUNCTION.
+        game.onGameStart(res);
+    });
+}
+
+jest.setTimeout(500000);
+
 describe("integration", function() {
-    let server: Server, game: Game[], screen;
+    let server: Server, game: Game[];
     let port: number = 1336;
-    let context: LocalContext;
 
     beforeEach(async function() {
         port++;
-
-        context = {} as LocalContext;
 
         server = new Server({
             port,
@@ -43,11 +57,6 @@ describe("integration", function() {
             tick: 1000,
             entityIdRange: 2000,
         });
-
-        screen = {
-            append: jest.fn(),
-            render: jest.fn(),
-        };
 
         //await util.promisify(server.onListening.bind(server))();
         await serverIsListening(server);
@@ -68,23 +77,62 @@ describe("integration", function() {
         server = null;
     });
 
-    function createGame(): Game {
-        const g = new Game(screen, { port, host: 'localhost', context});
+    function getKeyListeners(screen) {
+    }
+
+    type KeyListener = [string[], (ch: string) => void];
+    function createScreen(keyListeners: KeyListener[] = []) {
+        // @ts-ignore
+        return {
+            append: jest.fn(),
+            render: jest.fn(),
+                key: jest.fn((keys: string[], callback: (ch: string) => void) => {
+                keyListeners.push([keys, callback]);
+            }),
+        } as blessed.Widgets.Screen;
+    }
+
+    function createGame(screen: blessed.Widgets.Screen, context: LocalContext = createLocalContext()): Game {
+        const g = new Game(screen, {
+            port,
+            host: 'localhost',
+            context,
+        });
         game.push(g);
         return g;
     }
 
+    function findMovementListener(listeners: KeyListener[]): KeyListener {
+        return listeners.filter(listener => ~listener[0].indexOf('j'))[0];
+    }
+
     it("should start a game and a server", async function() {
-        await gameIsConnected(createGame());
+        await gameIsConnected(createGame(createScreen()));
     });
 
     it("connect multiple games to one server.", async function() {
-        const g1 = createGame();
-        //const g2 = createGame();
+        const g1 = createGame(createScreen());
+        const g2 = createGame(createScreen());
 
-        await gameIsConnected(g1);
-        //await gameIsConnected(g2);
-        console.log("end async test");
+        await Promise.all([gameIsConnected(g1), gameIsConnected(g2)]);
+    });
+
+    it.only("move the player around.", async function(done) {
+        const listeners = [];
+        const context = createLocalContext();
+        const screen = createScreen(listeners);
+
+        const g1 = createGame(screen, context);
+        createInput(screen, context);
+
+        await gameIsReadyToPlay(g1);
+
+        const keyListener = findMovementListener(listeners);
+        context.events.on((evt) => {
+            console.log("LOOK AT ME MAW", evt, context.player);
+            done();
+        });
+        keyListener[1]('j');
     });
 });
 
