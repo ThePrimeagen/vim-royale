@@ -10,11 +10,11 @@ export default function getMovement(ch: string) {
             break;
 
         case 'j':
-            outArr[1] = -1;
+            outArr[1] = 1;
             break;
 
         case 'k':
-            outArr[1] = 1;
+            outArr[1] = -1;
             break;
     }
     return outArr;
