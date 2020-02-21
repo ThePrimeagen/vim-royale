@@ -2,6 +2,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 import WebSocket from 'ws';
+import ON_DEATH from 'death';
 
 import Board from '../board';
 import Stats from '../stats';
@@ -165,5 +166,6 @@ if (require.main === module) {
     });
 }
 
-
-
+ON_DEATH(function(signal: any) {
+    process.exit();
+});
