@@ -7,7 +7,7 @@ import PositionComponent from '../objects/components/position';
 import MovementComponent from '../objects/components/movement';
 import ServerMovementSystem from '../systems/ServerMovementSystem';
 import ServerUpdatePlayers from '../systems/ServerUpdatePlayers';
-import {createLocalContext} from '../context';
+import {createLocalContext, LocalContext} from '../context';
 import Board from '../board';
 import getStore from '../entities';
 import {TrackingInfo} from '../types';
@@ -25,86 +25,105 @@ function getNextLoop(tick: number, timeTaken: number) {
 }
 
 const sliceCopy = Uint8Array.prototype.slice;
-const entities = [];
 
 //
 //TODO: Refactor this into a less heaping pile of shit.
-export default function server(map: Board, tick: number, infos: TrackingInfo[]) {
-    logger("Starting Server");
 
-    const movesToProcess: MovesToProcess[] = [];
-    const context = createLocalContext({
-        store: getStore(),
-        events: getEvents(),
-    });
+export default class ServerClientSync {
+    private infos: TrackingInfo[];
+    private movesToProcess: MovesToProcess[];
+    private tick: number;
+    private map: Board;
+    private entities: number[];
+    private boundUpdate: () => void;
+    private movement: ServerMovementSystem;
+    private updatePlayers: ServerUpdatePlayers;
 
-    const movement = new ServerMovementSystem(map, context);
-    const updatePlayers = new ServerUpdatePlayers(map, context);
+    public context: LocalContext;
 
-    context.events.on((evt, ...args) => {
+    constructor(map: Board, tick: number, infos: TrackingInfo[], context: LocalContext) {
+        logger("Constructing new ServerClientSync");
+        this.map = map;
+        this.tick = tick;
+        this.infos = infos;
+        this.movesToProcess = [];
+        this.entities = [];
 
-        logger("Server Event", evt.type);
+        this.context = context;
+        this.context.events = getEvents();
+        this.context.store = getStore();
 
-        switch (evt.type) {
-            case EventType.WsBinary:
-                const trackingInfo: TrackingInfo = args[0];
+        this.movement = new ServerMovementSystem(this.map, this.context);
+        this.updatePlayers = new ServerUpdatePlayers(this.map, this.context);
+        this.boundUpdate = this.update.bind(this);
 
-                if (evt.data[0] === FrameType.UpdatePosition) {
-                    movesToProcess.push({
-                        buf: Buffer.from(sliceCopy.call(evt.data)),
-                        tracking: trackingInfo,
+        this.initializeEvents();
+        this.update();
+    }
+
+    private initializeEvents() {
+        this.context.events.on((evt, ...args) => {
+            logger("Server Event", evt.type);
+
+            switch (evt.type) {
+                case EventType.WsBinary:
+                    const trackingInfo: TrackingInfo = args[0];
+
+                    if (evt.data[0] === FrameType.UpdatePosition) {
+                        this.movesToProcess.push({
+                            buf: Buffer.from(sliceCopy.call(evt.data)),
+                            tracking: trackingInfo,
+                        });
+                    }
+
+                    if (evt.data[0] === FrameType.CreateEntity) {
+                        const buf = evt.data as Buffer;
+                        const data = readCreateEntity(buf, 1);
+
+                        // TODO: character symbols???
+                        // TODO: Updating everyone else on entities.
+                        // TODO: Validate that the entities id is actually an id
+                        // within their range.
+                        const position = new PositionComponent('x', data.x, data.y);
+                        const movement = new MovementComponent(0, 0);
+
+                        this.context.store.setNewEntity(data.entityId);
+                        this.context.store.attachComponent(data.entityId, position);
+                        this.context.store.attachComponent(data.entityId, movement);
+                        this.entities.push(data.entityId);
+                    }
+                    break;
+
+                case EventType.WsClose: {
+                    const trackingInfo: TrackingInfo = evt.data;
+                    const buf = createGameStateUpdate.
+                        removeEntityRange(trackingInfo.entityIdRange);
+
+                    this.context.store.removeEntityRange(...trackingInfo.entityIdRange);
+                    this.infos.forEach(tracking => {
+                        tracking.ws.send(buf);
                     });
+                    break;
                 }
-
-                if (evt.data[0] === FrameType.CreateEntity) {
-                    const buf = evt.data as Buffer;
-                    const data = readCreateEntity(buf, 1);
-
-                    // TODO: character symbols???
-                    // TODO: Updating everyone else on entities.
-                    // TODO: Validate that the entities id is actually an id
-                    // within their range.
-                    const position = new PositionComponent('x', data.x, data.y);
-                    const movement = new MovementComponent(0, 0);
-
-                    context.store.setNewEntity(data.entityId);
-                    context.store.attachComponent(data.entityId, position);
-                    context.store.attachComponent(data.entityId, movement);
-                    entities.push(data.entityId);
-                }
-                break;
-
-            case EventType.WsClose: {
-                const trackingInfo: TrackingInfo = evt.data;
-                const buf = createGameStateUpdate.
-                    removeEntityRange(trackingInfo.entityIdRange);
-
-                context.store.removeEntityRange(...trackingInfo.entityIdRange);
-                infos.forEach(tracking => {
-                    tracking.ws.send(buf);
-                });
-                break;
             }
-        }
-    });
+        });
+    }
 
-    function update() {
+    public update() {
         const now = Date.now();
 
         // Process all movements.
         // TODO: Server Movements System?
-        movement.run({
+        this.movement.run({
             type: EventType.ServerMovement,
-            data: movesToProcess,
+            data: this.movesToProcess,
         });
 
-        updatePlayers.run(infos);
+        this.updatePlayers.run(this.infos);
 
-        setTimeout(update, getNextLoop(tick, Date.now() - now));
+        setTimeout(this.boundUpdate, getNextLoop(this.tick, Date.now() - now));
 
-        movesToProcess.length = 0;
+        this.movesToProcess.length = 0;
     }
-
-    update();
-};
+}
 

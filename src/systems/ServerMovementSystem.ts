@@ -9,6 +9,10 @@ import Board from '../board';
 import {readUpdatePosition} from '../server/messages/updatePosition';
 import createCorrectPosition, {readCorrectPosition} from '../server/messages/correctPosition';
 
+import getLogger from '../logger';
+
+const logger = getLogger("ServerMovementSystem");
+
 const FORCE_MOVEMENT_AMOUNT = 1000;
 
 export default class ServerMovementSystem implements System {
@@ -26,11 +30,6 @@ export default class ServerMovementSystem implements System {
 
         data.forEach(({buf, tracking}) => {
             const update = readUpdatePosition(buf, 1);
-
-            console.log("We are updating the server right MEOW",
-                tracking.movementId,
-                tracking.entityIdRange,
-                update.entityId);
 
             // We need to ignore this movement.
             if (tracking.movementId > update.movementId) {
@@ -69,7 +68,7 @@ export default class ServerMovementSystem implements System {
                 });
 
                 tracking.ws.send(buf);
-                console.log("Movement Deninced!!!!", position.x, position.y);
+                logger("Movement Deninced!!!!", position.x, position.y);
             }
 
             else {
@@ -77,7 +76,7 @@ export default class ServerMovementSystem implements System {
                 position.y += movement[1];
                 tracking.movementId = update.movementId;
 
-                console.log("Movement Approved!!!!", position.x, position.y);
+                logger("Movement Approved!!!!", position.x, position.y);
             }
         });
     }

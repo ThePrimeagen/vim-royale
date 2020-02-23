@@ -6,10 +6,11 @@ import WebSocket from 'ws';
 import Board from '../board';
 import Stats from '../stats';
 
-import createServer from './server';
+import ServerClientSync from './server';
 import getLogger, {flush} from '../logger';
-import getEvents, {Events, BinaryData, EventType} from '../events';
+import {Events, BinaryData, EventType} from '../events';
 import {TrackingInfo} from '../types';
+import {createLocalContext, LocalContext} from '../context';
 
 export type ServerConfig = {
     port: number,
@@ -35,7 +36,9 @@ export default class Server {
     private height: number;
     private entitiesRange: number;
     private entitiesStart: number;
-    private events: Events;
+    private context: LocalContext;
+
+    public scs: ServerClientSync;
 
     constructor({
         port,
@@ -44,8 +47,6 @@ export default class Server {
         tick,
         entityIdRange = 10000,
     }: ServerConfig) {
-        this.events = getEvents();
-
         this.callbacks = {
             listening: []
         };
@@ -57,6 +58,7 @@ export default class Server {
         this.height = height;
         this.entitiesRange = entityIdRange;
         this.entitiesStart = 0;
+        this.context = createLocalContext();
 
         this.wss = new WebSocket.Server({
             port
@@ -65,7 +67,8 @@ export default class Server {
         //
         //TODO: Server refactor should make an object to directly call
         //functions on instead of this event bus non-sense.  I hates it.
-        createServer(this.map, tick, this.currentPlayers);
+        this.scs = new ServerClientSync(
+            this.map, tick, this.currentPlayers, this.context);
 
         this.wss.on('listening', () => {
             this.callbacks.listening.forEach(cb => cb());
@@ -118,7 +121,7 @@ export default class Server {
                 const idx = this.currentPlayers.indexOf(trackingInfo);
                 this.currentPlayers.splice(idx, 1);
 
-                this.events.emit({
+                this.context.events.emit({
                     type: EventType.WsClose,
                     data: trackingInfo
                 });
@@ -129,8 +132,15 @@ export default class Server {
             ws.on('message', msg => {
                 if (msg instanceof Uint8Array) {
                     binaryMessage.data = msg;
-                    this.events.emit(binaryMessage, trackingInfo);
-                    return;
+                    this.context.events.emit(binaryMessage, trackingInfo);
+                }
+                // did you know that ws some how emits a Buffer???
+                // @ts-ignore
+                if (msg.type === "Buffer") {
+
+                    // @ts-ignore
+                    binaryMessage.data = msg.data;
+                    this.context.events.emit(binaryMessage, trackingInfo);
                 }
             });
         });

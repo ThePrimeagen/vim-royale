@@ -1,8 +1,11 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+import util from 'util';
+import * as blessed from 'blessed';
+
 process.env.LOGGER_TYPE = 'log';
-//process.env.SUPPRESS_LOGS = 'true';
+process.env.SUPPRESS_LOGS = 'true';
 
 jest.doMock('blessed', () => {
     return {
@@ -17,9 +20,10 @@ jest.doMock('blessed', () => {
 import {LocalContext, createLocalContext} from '../context';
 import Game from '../index';
 import Server from '../server';
-import util from 'util';
+import {EventType} from '../events';
+import {FrameType} from '../server/messages/types';
 import createInput from '../input';
-import * as blessed from 'blessed';
+import PositionComponent from '../objects/components/position';
 
 function serverIsListening(server: Server) {
     return new Promise(function(res) {
@@ -41,7 +45,7 @@ function gameIsReadyToPlay(game: Game) {
     });
 }
 
-jest.setTimeout(500000);
+jest.setTimeout(5000);
 
 describe("integration", function() {
     let server: Server, game: Game[];
@@ -65,12 +69,10 @@ describe("integration", function() {
     });
 
     afterEach(function() {
-        console.log("aftereach");
         game.forEach(game => {
             game.shutdown();
         });
 
-        console.log("server shutdown");
         server.shutdown();
 
         game = null;
@@ -117,21 +119,47 @@ describe("integration", function() {
         await Promise.all([gameIsConnected(g1), gameIsConnected(g2)]);
     });
 
-    it.only("move the player around.", async function(done) {
+    it("move the player around.", async function(done) {
         const listeners = [];
         const context = createLocalContext();
         const screen = createScreen(listeners);
-
         const g1 = createGame(screen, context);
+
+        server.scs.context.events.on((evt) => {
+            if (evt.type === EventType.WsBinary &&
+                evt.data[0] === FrameType.UpdatePosition) {
+
+                server.scs.update();
+
+                const sStore = server.scs.context.store;
+                const gStore = g1.context.store;
+
+                const serverEntities = sStore.getAllEntities();
+                const clientEntities = gStore.getAllEntities();
+
+                expect(serverEntities).toEqual(clientEntities);
+
+                const serverPlayer = sStore.
+                    // @ts-ignore
+                    getComponent<PositionComponent>(0, PositionComponent);
+
+                const clientPlayer = gStore.
+                    // @ts-ignore
+                    getComponent<PositionComponent>(0, PositionComponent);
+
+                expect(serverPlayer.x).toEqual(clientPlayer.x);
+                expect(serverPlayer.y).toEqual(clientPlayer.y);
+
+                done();
+            }
+        });
+
         createInput(screen, context);
 
         await gameIsReadyToPlay(g1);
 
         const keyListener = findMovementListener(listeners);
-        context.events.on((evt) => {
-            console.log("LOOK AT ME MAW", evt, context.player);
-            done();
-        });
+
         keyListener[1]('j');
     });
 });
