@@ -4,6 +4,7 @@ import GlobalContext, {LocalContext} from '../context';
 import {EventData, EventType} from '../events';
 import createLogger from '../logger';
 import {StartGameMessage} from '../server/commands';
+import getBox from '../util/getBox';
 import {isStatusCommand, isMapCommand, WSMessage} from '../server/commands';
 
 enum State {
@@ -16,7 +17,7 @@ const logger = createLogger("mainMenu");
 export default function mainMenu(screen: blessed.Widgets.Screen, context: LocalContext) {
     let state = State.Connecting;
 
-    const box = blessed.box({
+    const box =  getBox({
         top: 0,
         left: 0,
         width: GlobalContext.display.width + 2,

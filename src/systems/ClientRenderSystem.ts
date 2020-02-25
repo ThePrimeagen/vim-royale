@@ -7,6 +7,7 @@ import {EventData} from '../events';
 import PositionComponent from '../objects/components/position';
 import GlobalContext, {LocalContext} from '../context';
 
+import getBox from '../util/getBox';
 import Board from '../board';
 import apply from './render/apply';
 import getRenderBounds from './render/get-render-bounds';
@@ -39,7 +40,7 @@ export default class RendererSystem implements System {
         // TODO: Stop being lazy about copying...
         // Also you really don't need to swap.  This is stupid
 
-        this.box = blessed.box({
+        this.box = getBox({
             top: 0,
             left: 0,
             width: GlobalContext.display.width + 2,

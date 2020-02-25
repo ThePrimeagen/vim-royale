@@ -110,7 +110,7 @@ export default class ServerClientSync {
     }
 
     public update() {
-        const now = Date.now();
+        const then = Date.now();
 
         // Process all movements.
         // TODO: Server Movements System?
@@ -121,9 +121,11 @@ export default class ServerClientSync {
 
         this.updatePlayers.run(this.infos);
 
-        setTimeout(this.boundUpdate, getNextLoop(this.tick, Date.now() - now));
+        setTimeout(this.boundUpdate, getNextLoop(this.tick, Date.now() - then));
 
+        console.log("Render Time.", Date.now() - then, this.movesToProcess.length);
         this.movesToProcess.length = 0;
+        global.gc();
     }
 }
 

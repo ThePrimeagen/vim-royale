@@ -21,10 +21,6 @@ export default class Board {
     static generate(width: number, height: number): Board {
         const map = [];
 
-        const screen = GlobalContext.display;
-        const halfWidth = Math.floor(screen.width / 2);
-        const halfHeight = Math.floor(screen.height / 2);
-
         for (let i = 0; i < width; ++i) {
             for (let j = 0; j < height; ++j) {
                 if (!map[j]) {

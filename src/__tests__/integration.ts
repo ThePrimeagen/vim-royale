@@ -21,30 +21,19 @@ import {LocalContext, createLocalContext} from '../context';
 import Game from '../index';
 import Server from '../server';
 import {EventType} from '../events';
+import {EntityStore} from '../entities';
 import {FrameType} from '../server/messages/types';
+import {
+    gameIsConnected,
+    gameIsReadyToPlay,
+    serverIsListening,
+    KeyListener,
+    createScreen,
+    findMovementListener,
+} from './utils';
+
 import createInput from '../input';
 import PositionComponent from '../objects/components/position';
-
-function serverIsListening(server: Server) {
-    return new Promise(function(res) {
-        server.onListening(res);
-    });
-}
-
-function gameIsConnected(game: Game) {
-    return new Promise(function(res) {
-        // TODO: I HATE THE NAME OF THIS FUNCTION.
-        game.onConnected(res);
-    });
-}
-
-function gameIsReadyToPlay(game: Game) {
-    return new Promise(function(res) {
-        // TODO: I HATE THE NAME OF THIS FUNCTION.
-        game.onGameStart(res);
-    });
-}
-
 jest.setTimeout(5000);
 
 describe("integration", function() {
@@ -59,7 +48,7 @@ describe("integration", function() {
             width: 200,
             height: 200,
             tick: 1000,
-            entityIdRange: 2000,
+            entityIdRange: 1337,
         });
 
         //await util.promisify(server.onListening.bind(server))();
@@ -79,21 +68,6 @@ describe("integration", function() {
         server = null;
     });
 
-    function getKeyListeners(screen) {
-    }
-
-    type KeyListener = [string[], (ch: string) => void];
-    function createScreen(keyListeners: KeyListener[] = []) {
-        // @ts-ignore
-        return {
-            append: jest.fn(),
-            render: jest.fn(),
-                key: jest.fn((keys: string[], callback: (ch: string) => void) => {
-                keyListeners.push([keys, callback]);
-            }),
-        } as blessed.Widgets.Screen;
-    }
-
     function createGame(screen: blessed.Widgets.Screen, context: LocalContext = createLocalContext()): Game {
         const g = new Game(screen, {
             port,
@@ -104,8 +78,28 @@ describe("integration", function() {
         return g;
     }
 
-    function findMovementListener(listeners: KeyListener[]): KeyListener {
-        return listeners.filter(listener => ~listener[0].indexOf('j'))[0];
+    function onServerUpdatePosition(count: number = 1) {
+        return new Promise(res => {
+            let c = 0;
+            function onEvent(evt) {
+                if (evt.type === EventType.WsBinary &&
+                    evt.data[0] === FrameType.UpdatePosition) {
+
+                    server.scs.update();
+
+                    if (++c === count) {
+                        server.scs.context.events.off(onEvent);
+                        res();
+                    }
+                }
+            };
+            server.scs.context.events.on(onEvent);
+        });
+    }
+
+    function getPositionComponent(store: EntityStore, entityId: number): PositionComponent {
+        // @ts-ignore
+        return store.getComponent<PositionComponent>(entityId, PositionComponent);
     }
 
     it("should start a game and a server", async function() {
@@ -119,41 +113,13 @@ describe("integration", function() {
         await Promise.all([gameIsConnected(g1), gameIsConnected(g2)]);
     });
 
-    it("move the player around.", async function(done) {
+    it("move the player around.", async function() {
         const listeners = [];
         const context = createLocalContext();
         const screen = createScreen(listeners);
         const g1 = createGame(screen, context);
 
-        server.scs.context.events.on((evt) => {
-            if (evt.type === EventType.WsBinary &&
-                evt.data[0] === FrameType.UpdatePosition) {
-
-                server.scs.update();
-
-                const sStore = server.scs.context.store;
-                const gStore = g1.context.store;
-
-                const serverEntities = sStore.getAllEntities();
-                const clientEntities = gStore.getAllEntities();
-
-                expect(serverEntities).toEqual(clientEntities);
-
-                const serverPlayer = sStore.
-                    // @ts-ignore
-                    getComponent<PositionComponent>(0, PositionComponent);
-
-                const clientPlayer = gStore.
-                    // @ts-ignore
-                    getComponent<PositionComponent>(0, PositionComponent);
-
-                expect(serverPlayer.x).toEqual(clientPlayer.x);
-                expect(serverPlayer.y).toEqual(clientPlayer.y);
-
-                done();
-            }
-        });
-
+        const updates = onServerUpdatePosition(1);
         createInput(screen, context);
 
         await gameIsReadyToPlay(g1);
@@ -161,6 +127,68 @@ describe("integration", function() {
         const keyListener = findMovementListener(listeners);
 
         keyListener[1]('j');
+
+        await updates;
+
+        const sStore = server.scs.context.store;
+        const gStore = g1.context.store;
+
+        const serverEntities = sStore.getAllEntities();
+        const clientEntities = gStore.getAllEntities();
+
+        expect(serverEntities).toEqual(clientEntities);
+
+        const serverPlayer = sStore.
+            // @ts-ignore
+            getComponent<PositionComponent>(0, PositionComponent);
+
+        const clientPlayer = gStore.
+            // @ts-ignore
+            getComponent<PositionComponent>(0, PositionComponent);
+
+        expect(serverPlayer.x).toEqual(clientPlayer.x);
+        expect(serverPlayer.y).toEqual(clientPlayer.y);
+    });
+
+    it("move multiple players around.", async function() {
+        const players = Array.from({length: 3}, () => {
+            const listeners = [];
+            const screen = createScreen(listeners);
+            const context = createLocalContext();
+            const g = createGame(screen, context);
+
+            createInput(screen, context);
+
+            return {
+                listeners,
+                screen,
+                g,
+            };
+        });
+
+        const updates = onServerUpdatePosition(12);
+
+        await Promise.all(players.map(x => gameIsReadyToPlay(x.g)));
+
+        const keyListeners = players.
+            map(x => findMovementListener(x.listeners));
+
+        for (let i = 0; i < 4; ++i) {
+            keyListeners.forEach(listener => listener[1]('j'));
+        }
+
+        await updates;
+
+        const sStore = server.scs.context.store;
+        expect(sStore.getAllEntities()).toEqual([0, 1337, 1337 * 2]);
+
+        players.forEach((x, i) => {
+            const store = x.g.context.store;
+            const gPos = getPositionComponent(store, i * 1337);
+            const sPos = getPositionComponent(sStore, i * 1337);
+            expect(gPos.x).toEqual(sPos.x);
+            expect(gPos.y).toEqual(sPos.y);
+        });
     });
 });
 
