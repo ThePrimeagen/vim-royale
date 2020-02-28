@@ -29,7 +29,7 @@ const directions = [ 'j', 'h', 'l', 'k', ];
 
 function getNextPlayerUpdateTime() {
     const halfTime = playerUpdateTime / 2;
-    return halfTime + Math.floor(Math.random() * playerUpdateTime);
+    return (halfTime + Math.random() * playerUpdateTime) | 0;
 }
 
 function createGame(screen: blessed.Widgets.Screen, context: LocalContext = createLocalContext(), port: number = 1337): Game {

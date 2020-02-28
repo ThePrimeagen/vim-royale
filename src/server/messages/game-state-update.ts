@@ -5,10 +5,16 @@ import BufferReader from './buffer-reader';
 
 type PlayerMovementArgs = {entityId: number, char: string, x: number, y: number};
 
-export default {
-    playerMovement({entityId, char, x, y}: PlayerMovementArgs): Buffer {
+const PLAYER_MOVEMENT_SIZE = 10;
 
-        const b = new BufferWriter(10);
+export {
+    PLAYER_MOVEMENT_SIZE,
+}
+
+export default {
+    playerMovement({entityId, char, x, y}: PlayerMovementArgs, b?: BufferWriter): Buffer {
+
+        b = b || new BufferWriter(PLAYER_MOVEMENT_SIZE);
         b.write8(FrameType.GameStateUpdate);
         b.write8(GameStateType.PlayerMovement);
         b.write24(entityId);

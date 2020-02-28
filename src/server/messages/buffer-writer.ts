@@ -10,6 +10,10 @@ export default class BufferWriter {
         this.ptr = 0;
     }
 
+    reset() {
+        this.ptr = 0;
+    }
+
     writeStr(str: string) {
         this.ptr += this.buffer.slice(this.ptr).write(str);
     }

@@ -163,12 +163,20 @@ describe("integration", function() {
                 listeners,
                 screen,
                 g,
+                x: 0,
+                y: 0,
             };
         });
 
         const updates = onServerUpdatePosition(12);
 
         await Promise.all(players.map(x => gameIsReadyToPlay(x.g)));
+
+        // put the start on each player.
+        players.forEach(player => {
+            player.x = player.g.context.player.position.x;
+            player.y = player.g.context.player.position.y;
+        });
 
         const keyListeners = players.
             map(x => findMovementListener(x.listeners));
@@ -184,10 +192,9 @@ describe("integration", function() {
 
         players.forEach((x, i) => {
             const store = x.g.context.store;
-            const gPos = getPositionComponent(store, i * 1337);
             const sPos = getPositionComponent(sStore, i * 1337);
-            expect(gPos.x).toEqual(sPos.x);
-            expect(gPos.y).toEqual(sPos.y);
+            expect(x.x).toEqual(sPos.x);
+            expect(x.y + 4).toEqual(sPos.y);
         });
     });
 });

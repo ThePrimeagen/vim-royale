@@ -76,6 +76,7 @@ export default class Server {
         });
 
         this.wss.on('connection', ws => {
+            console.log("New Connection", trackingInfoId);
             logger("New Connection", trackingInfoId);
 
             const binaryMessage = {

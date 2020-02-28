@@ -12,6 +12,7 @@ import Board from '../board';
 import getStore from '../entities';
 import {TrackingInfo} from '../types';
 import getLogger from '../logger';
+import ObjectPool from '../util/SyncObjectPool';
 
 const logger = getLogger("Server");
 
@@ -25,6 +26,7 @@ function getNextLoop(tick: number, timeTaken: number) {
 }
 
 const sliceCopy = Uint8Array.prototype.slice;
+const pool = new ObjectPool();
 
 //
 //TODO: Refactor this into a less heaping pile of shit.
@@ -38,6 +40,7 @@ export default class ServerClientSync {
     private boundUpdate: () => void;
     private movement: ServerMovementSystem;
     private updatePlayers: ServerUpdatePlayers;
+    private updateObject: {type: EventType.ServerMovement, data: MovesToProcess[]};
 
     public context: LocalContext;
 
@@ -48,6 +51,10 @@ export default class ServerClientSync {
         this.infos = infos;
         this.movesToProcess = [];
         this.entities = [];
+        this.updateObject = {
+            type: EventType.ServerMovement,
+            data: this.movesToProcess,
+        };
 
         this.context = context;
         this.context.events = getEvents();
@@ -70,10 +77,17 @@ export default class ServerClientSync {
                     const trackingInfo: TrackingInfo = args[0];
 
                     if (evt.data[0] === FrameType.UpdatePosition) {
-                        this.movesToProcess.push({
-                            buf: Buffer.from(sliceCopy.call(evt.data)),
-                            tracking: trackingInfo,
-                        });
+                        // 3 Shape -- One time cost
+                        // 2 Strings
+                        // buf, tracking
+                        //
+                        // 1 Object
+                        // 2 Buffer
+                        // TODO: Garbage
+                        const obj = pool.malloc();
+                        obj.buf = Buffer.from(evt.data);
+                        obj.tracking = trackingInfo;
+                        this.movesToProcess.push(obj as MovesToProcess);
                     }
 
                     if (evt.data[0] === FrameType.CreateEntity) {
@@ -114,16 +128,21 @@ export default class ServerClientSync {
 
         // Process all movements.
         // TODO: Server Movements System?
-        this.movement.run({
-            type: EventType.ServerMovement,
-            data: this.movesToProcess,
-        });
-
+        this.movement.run(this.updateObject);
         this.updatePlayers.run(this.infos);
 
-        setTimeout(this.boundUpdate, getNextLoop(this.tick, Date.now() - then));
+        const now = Date.now();
+        if (this.tick < now - then) {
+            console.log("GET IT TOGETHER");
+        }
 
-        console.log("Render Time.", Date.now() - then, this.movesToProcess.length);
+        setTimeout(this.boundUpdate, getNextLoop(this.tick, now - then));
+
+        //console.log("Render Time.", Date.now() - then);
+        for (let i = 0; i < this.movesToProcess.length; ++i) {
+            pool.free(this.movesToProcess[i]);
+        }
+
         this.movesToProcess.length = 0;
         global.gc();
     }
