@@ -7,7 +7,7 @@ import PositionComponent from '../objects/components/position';
 import MovementComponent from '../objects/components/movement';
 import ServerMovementSystem from '../systems/ServerMovementSystem';
 import ServerUpdatePlayers from '../systems/ServerUpdatePlayers';
-import {createLocalContext, LocalContext} from '../context';
+import GlobalContext, {createLocalContext, LocalContext} from '../context';
 import Board from '../board';
 import getStore from '../entities';
 import {TrackingInfo} from '../types';
@@ -101,6 +101,10 @@ export default class ServerClientSync {
                         const position = new PositionComponent('x', data.x, data.y);
                         const movement = new MovementComponent(0, 0);
 
+                        if (!GlobalContext.activePlayers[data.entityId]) {
+                            GlobalContext.activePlayers[data.entityId] = position;
+                        }
+
                         this.context.store.setNewEntity(data.entityId);
                         this.context.store.attachComponent(data.entityId, position);
                         this.context.store.attachComponent(data.entityId, movement);
@@ -133,7 +137,7 @@ export default class ServerClientSync {
 
         const now = Date.now();
         if (this.tick < now - then) {
-            console.log("GET IT TOGETHER");
+            //console.log("GET IT TOGETHER");
         }
 
         setTimeout(this.boundUpdate, getNextLoop(this.tick, now - then));
@@ -144,7 +148,50 @@ export default class ServerClientSync {
         }
 
         this.movesToProcess.length = 0;
-        global.gc();
+
+        if (++count % 10 === 0) {
+            gCount++
+            const gThen = Date.now();
+            global.gc();
+            const gDiff = Date.now() - gThen;
+
+            gSum += gDiff;
+            if (gHigh < gDiff) {
+                gHigh = gDiff;
+            }
+
+            if (gLow > gDiff) {
+                gLow = gDiff;
+            }
+        }
+
+
+        const diff = Date.now() - then;
+        sum += diff;
+        if (high < diff) {
+            high = diff;
+        }
+
+        if (low > diff) {
+            low = diff;
+        }
+
+        if (count === 500) {
+            console.log("Stats", high, low, sum / count);
+            console.log("Garbage", gHigh, gLow, gSum / gCount);
+            sum = gCount = count = high = 0
+            gSum = gHigh = 0
+            gLow = low = 1000;
+        }
     }
 }
+
+let gHigh = 0;
+let gLow = 0;
+let gSum = 0;
+let count = 0;
+let gCount = 0;
+let high = 0;
+let low = 1000;
+let sum = 0;
 

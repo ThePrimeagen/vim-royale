@@ -14,6 +14,8 @@ export interface Component {
 
 export type EntityItem = number;
 
+const cachedEntityArray: Component[] = [];
+
 // singleton?
 export class EntityStore {
     private currentId: number;
@@ -74,6 +76,19 @@ export class EntityStore {
 
             cb(k, entity);
         });
+    }
+
+    toCachedArray(component: Component): Component[] {
+        cachedEntityArray.length = 0;
+
+        const entities = this.entitiesByComponent.get(component.type);
+        for (let [k, v] of entities) {
+            if (v.type === component.type) {
+                cachedEntityArray.push(v);
+            }
+        }
+
+        return cachedEntityArray;
     }
 
     toArray<T extends Component>(T): T[] {

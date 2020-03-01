@@ -1,4 +1,5 @@
 import Player from './objects/player';
+import PositionComponent from './objects/components/position';
 import {EntityStore} from './entities';
 import {Events} from './events';
 import ClientSocket from './client-socket';
@@ -9,6 +10,9 @@ export type GlobalContext = {
     display: {
         width: number;
         height: number;
+    };
+    activePlayers: {
+        [key: string]: PositionComponent,
     };
 };
 
@@ -50,5 +54,6 @@ export default {
         width: 80,
         height: 24,
     },
+    activePlayers: {}
 } as GlobalContext;
 
