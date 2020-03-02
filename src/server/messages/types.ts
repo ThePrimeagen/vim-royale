@@ -18,13 +18,13 @@ export type CreateEntityResult = {
 };
 
 export enum GameStateType {
-    PlayerMovement = 1,
+    EntityMovement = 1,
     PlaceBullet = 2,
     RemoveEntityRange = 3,
 }
 
-export type GameStatePlayerMovement = {
-    type: GameStateType.PlayerMovement;
+export type GameStateEntityMovement = {
+    type: GameStateType.EntityMovement;
     x: number;
     y: number;
     entityId: number;
@@ -38,7 +38,7 @@ export type GameStateRemoveEntityRange = {
 }
 
 // TODO: I hate this.
-export type GameStateUpdateResults = GameStatePlayerMovement | GameStateRemoveEntityRange;
+export type GameStateUpdateResults = GameStateEntityMovement | GameStateRemoveEntityRange;
 
 export type CorrectPositionResult = {
     x: number;

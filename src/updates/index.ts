@@ -14,7 +14,7 @@ function handleGameStateUpdate(context: LocalContext, buffer: Buffer) {
 
     logger("StateUpdate", stateUpdate);
     switch (stateUpdate.type) {
-        case GameStateType.PlayerMovement:
+        case GameStateType.EntityMovement:
             let posComponent;
             if (context.store.setNewEntity(stateUpdate.entityId)) {
                 posComponent = new PositionComponent(
@@ -29,10 +29,10 @@ function handleGameStateUpdate(context: LocalContext, buffer: Buffer) {
 
             posComponent.x = stateUpdate.x;
             posComponent.y = stateUpdate.y;
+
             break;
 
         case GameStateType.RemoveEntityRange:
-            debugger;
             const {
                 from, to
             } = stateUpdate;

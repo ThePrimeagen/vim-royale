@@ -7,6 +7,8 @@ import MovementComponent from '../objects/components/movement';
 import PositionComponent from '../objects/components/position';
 import ForcePositionComponent from '../objects/components/force-position';
 import Board from '../board';
+import getLogger from '../logger';
+const logger = getLogger("ClientMovementSystem");
 
 export default class MovementSystem implements System {
     private board: Board;
@@ -44,18 +46,20 @@ export default class MovementSystem implements System {
                 force.x = 0;
                 force.y = 0;
                 force.force = false;
-                console.error("Force position update to", pos, this.movementId);
+                logger("Force position update to", this.context.id, pos, this.movementId);
                 return;
             }
 
             let updated = false;
 
+            const oldX = pos.x;
             const newX = pos.x + component.x;
             if (newX >= 1 && newX < this.board.width - 1) {
                 pos.x = newX;
                 updated = true;
             }
 
+            const oldY = pos.y;
             const newY = pos.y + component.y;
             if (newY >= 1 && newY < this.board.height - 1) {
                 pos.y = newY;
@@ -68,7 +72,9 @@ export default class MovementSystem implements System {
             // TODO: clearly this means I would confirm all things through the
             // movement system.  That is wrong....
             if (updated && this.context.player.position === pos) {
-                this.context.socket.confirmMovement(this.movementId++);
+                const id = this.movementId++;
+                logger("Confirming movement", this.context.id, id, pos);
+                this.context.socket.confirmMovement(id);
             }
         });
     }

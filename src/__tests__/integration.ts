@@ -17,12 +17,12 @@ jest.doMock('blessed', () => {
     };
 });
 
-import {LocalContext, createLocalContext} from '../context';
+import GlobalContext, {LocalContext, createLocalContext} from '../context';
 import Game from '../index';
 import Server from '../server';
-import {EventType} from '../events';
+import {EventType, Events} from '../events';
 import {EntityStore} from '../entities';
-import {FrameType} from '../server/messages/types';
+import {FrameType, GameStateType} from '../server/messages/types';
 import {
     gameIsConnected,
     gameIsReadyToPlay,
@@ -30,6 +30,7 @@ import {
     KeyListener,
     createScreen,
     findMovementListener,
+    getMovementFromDir,
 } from './utils';
 
 import createInput from '../input';
@@ -38,9 +39,9 @@ jest.setTimeout(5000);
 
 describe("integration", function() {
     let server: Server, game: Game[];
-    let port: number = 1336;
+    let port: number = 25000;
 
-    beforeEach(async function() {
+    async function startServer(optionalStartingPositions?: [number, number][]) {
         port++;
 
         server = new Server({
@@ -49,13 +50,14 @@ describe("integration", function() {
             height: 200,
             tick: 1000,
             entityIdRange: 1337,
+            optionalStartingPositions
         });
 
         //await util.promisify(server.onListening.bind(server))();
         await serverIsListening(server);
 
         game = [];
-    });
+    }
 
     afterEach(function() {
         game.forEach(game => {
@@ -76,6 +78,26 @@ describe("integration", function() {
         });
         game.push(g);
         return g;
+    }
+
+    let onClientId = 0;
+    function onClientUpdatePosition(events: Events, count: number = 1) {
+        const id = ++onClientId;
+        return new Promise(res => {
+            let c = 0;
+            function onEvent(evt) {
+                if (evt.type === EventType.WsBinary &&
+                    evt.data[0] === FrameType.GameStateUpdate &&
+                    evt.data[1] === GameStateType.EntityMovement) {
+
+                    if (++c === count) {
+                        events.off(onEvent);
+                        res();
+                    }
+                }
+            };
+            events.on(onEvent);
+        });
     }
 
     function onServerUpdatePosition(count: number = 1) {
@@ -103,10 +125,13 @@ describe("integration", function() {
     }
 
     it("should start a game and a server", async function() {
+        await startServer();
         await gameIsConnected(createGame(createScreen()));
     });
 
     it("connect multiple games to one server.", async function() {
+        await startServer();
+
         const g1 = createGame(createScreen());
         const g2 = createGame(createScreen());
 
@@ -114,6 +139,8 @@ describe("integration", function() {
     });
 
     it("move the player around.", async function() {
+        await startServer();
+
         const listeners = [];
         const context = createLocalContext();
         const screen = createScreen(listeners);
@@ -151,6 +178,8 @@ describe("integration", function() {
     });
 
     it("move multiple players around.", async function() {
+        await startServer();
+
         const players = Array.from({length: 3}, () => {
             const listeners = [];
             const screen = createScreen(listeners);
@@ -197,5 +226,60 @@ describe("integration", function() {
             expect(x.y + 4).toEqual(sPos.y);
         });
     });
+
+    it.only("ensure that updates go to players.", async function() {
+        await startServer([[3, 3], [GlobalContext.display.width + 4, 3]]);
+
+        const players = Array.from({length: 2}, () => {
+            const listeners = [];
+            const screen = createScreen(listeners);
+            const context = createLocalContext();
+            const g = createGame(screen, context);
+
+            createInput(screen, context);
+
+            return {
+                listeners,
+                screen,
+                g,
+                x: 0,
+                y: 0,
+            };
+        });
+
+        await Promise.all(players.map(x => gameIsReadyToPlay(x.g)));
+        const listener = findMovementListener(players[1].listeners);
+        const update0 = onClientUpdatePosition(players[0].g.context.events, 1);
+        const update1 = onClientUpdatePosition(players[1].g.context.events, 1);
+
+        players.forEach(player => {
+            player.x = player.g.context.player.position.x;
+            player.y = player.g.context.player.position.y;
+        });
+
+        const xDelta = players[1].x - players[0].x;
+        let xMove = xDelta - GlobalContext.display.width + 1;
+        const serverGotMovements = onServerUpdatePosition(xMove);
+
+        do {
+            listener[1](getMovementFromDir('x', -1));
+        } while (--xMove);
+
+        await Promise.all([serverGotMovements, update0, update1]);
+        const player00 = getPositionComponent(players[0].g.context.store, 0);
+        const player01 = getPositionComponent(players[0].g.context.store, 1337);
+        const player10 = getPositionComponent(players[1].g.context.store, 0);
+        const player11 = getPositionComponent(players[1].g.context.store, 1337);
+
+        expect(player00.x).toEqual(player10.x);
+        expect(player01.x).toEqual(player11.x);
+
+        expect(player00.y).toEqual(player10.y);
+        expect(player01.y).toEqual(player11.y);
+    });
 });
 
+function getPositionComponent(store: EntityStore, entityId: number): PositionComponent {
+    // @ts-ignore
+    return store.getComponent<PositionComponent>(entityId, PositionComponent);
+}

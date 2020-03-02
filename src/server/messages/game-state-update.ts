@@ -3,7 +3,7 @@ import { EntityItem } from '../../entities';
 import BufferWriter from './buffer-writer';
 import BufferReader from './buffer-reader';
 
-type PlayerMovementArgs = {entityId: number, char: string, x: number, y: number};
+type EntityMovementArgs = {entityId: number, char: string, x: number, y: number};
 
 const PLAYER_MOVEMENT_SIZE = 10;
 
@@ -12,11 +12,11 @@ export {
 }
 
 export default {
-    playerMovement({entityId, char, x, y}: PlayerMovementArgs, b?: BufferWriter): Buffer {
+    playerMovement({entityId, char, x, y}: EntityMovementArgs, b?: BufferWriter): Buffer {
 
         b = b || new BufferWriter(PLAYER_MOVEMENT_SIZE);
         b.write8(FrameType.GameStateUpdate);
-        b.write8(GameStateType.PlayerMovement);
+        b.write8(GameStateType.EntityMovement);
         b.write24(entityId);
         b.writeStr(char);
         b.write16(x);
@@ -40,12 +40,12 @@ const reader = new BufferReader();
 export function readGameStateUpdate(buffer: Buffer, offset: number = 0): GameStateUpdateResults {
     reader.reset(buffer, offset);
 
-    // PlayerMovement
+    // EntityMovement
     const type = reader.read8();
     let out: GameStateUpdateResults;
 
     switch (type) {
-        case GameStateType.PlayerMovement:
+        case GameStateType.EntityMovement:
             out = {
                 type,
                 entityId: reader.read24(),

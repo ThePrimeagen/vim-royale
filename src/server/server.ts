@@ -76,6 +76,8 @@ export default class ServerClientSync {
                 case EventType.WsBinary:
                     const trackingInfo: TrackingInfo = args[0];
 
+                    logger("Server Binary Event", evt.data[0]);
+
                     if (evt.data[0] === FrameType.UpdatePosition) {
                         // 3 Shape -- One time cost
                         // 2 Strings
@@ -94,6 +96,7 @@ export default class ServerClientSync {
                         const buf = evt.data as Buffer;
                         const data = readCreateEntity(buf, 1);
 
+                        // TODO: Refactor this !false fest???
                         // TODO: character symbols???
                         // TODO: Updating everyone else on entities.
                         // TODO: Validate that the entities id is actually an id

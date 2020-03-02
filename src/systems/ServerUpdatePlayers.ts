@@ -7,6 +7,9 @@ import createGameUpdate, {PLAYER_MOVEMENT_SIZE} from '../server/messages/game-st
 import BufferWriter from '../server/messages/buffer-writer';
 import {TrackingInfo} from '../types';
 import Board from '../board';
+import getLogger from '../logger';
+
+const logger = getLogger("ServerUpdatePlayers");
 
 const obj = {
     entityId: 0,
@@ -61,6 +64,7 @@ const pool = new BufferPool(function(pool: BufferPool): BufferWriterWrapper {
 
 const { width, height } = GlobalContext.display;
 function isWithinUpdateDistance(a: PC, b: PC): boolean {
+    logger("isWithinUpdateDistance", a, b);
     return Math.abs(a.x - b.x) < width &&
         Math.abs(a.y - b.y) < height;
 }
@@ -85,9 +89,10 @@ export default class ServerUpdatePlayers {
             for (let i = 0; i < listOfTrackingInfos.length; ++i) {
                 const tracking = listOfTrackingInfos[i];
                 const playerEntityId = tracking.entityIdRange[0];
+
                 if (entityId >= playerEntityId &&
                     entityId < tracking.entityIdRange[1]) {
-                    return;
+                    continue;
                 }
 
                 let main: PC;
@@ -104,7 +109,7 @@ export default class ServerUpdatePlayers {
                 if (!main) {
                     // this does happen when the player has yet to upload their
                     // before another player has sent an update...
-                    return;
+                    continue;
                 }
 
                 if (isWithinUpdateDistance(main, component)) {

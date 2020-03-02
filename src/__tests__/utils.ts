@@ -40,3 +40,11 @@ export function findMovementListener(listeners: KeyListener[]): KeyListener {
     return listeners.filter(listener => ~listener[0].indexOf('j'))[0];
 }
 
+export function getMovementFromDir(dir: 'x' | 'y', value: -1 | 1): string {
+    if (dir === 'x') {
+        return value === 1 ? 'l' : 'h';
+    }
+    return value === 1 ? 'j' : 'k';
+}
+
+

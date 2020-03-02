@@ -12,14 +12,7 @@ import getLogger, {flush} from '../logger';
 import {Events, BinaryData, EventType} from '../events';
 import {TrackingInfo} from '../types';
 import {createLocalContext, LocalContext} from '../context';
-
-export type ServerConfig = {
-    port: number,
-    width: number,
-    height: number,
-    tick: number,
-    entityIdRange: number,
-}
+import {ServerConfig} from './types';
 
 const logger = getLogger("ServerIndex");
 
@@ -38,19 +31,26 @@ export default class Server {
     private entitiesRange: number;
     private entitiesStart: number;
     private context: LocalContext;
+    private optionalStartingPositions?: [number, number][];
+    private optionIdx: number;
 
     public scs: ServerClientSync;
 
-    constructor({
-        port,
-        width,
-        height,
-        tick,
-        entityIdRange = 10000,
-    }: ServerConfig) {
+    constructor(config: ServerConfig) {
+        const {
+            port,
+            width,
+            height,
+            tick,
+            entityIdRange = 10000,
+            optionalStartingPositions,
+        } = config;
+
         this.callbacks = {
             listening: []
         };
+        this.optionIdx = 0;
+        this.optionalStartingPositions = optionalStartingPositions;
 
         this.currentPlayers = [];
         this.entityId = 0;
@@ -106,16 +106,18 @@ export default class Server {
             logger("Sending", trackingInfo.id, JSON.stringify({ status: 'ready', encoding: 'json' }));
             ws.send(JSON.stringify({ status: 'ready', encoding: 'json' }));
 
+            const pos = this.pickPosition();
             logger("Sending", trackingInfo.id, {
                 type: 'map',
                 map: "big map goes here",
-                position: this.pickRandoPosition(),
+                position: pos,
                 entityIdRange,
             });
+
             ws.send(JSON.stringify({
                 type: 'map',
                 map: this.map,
-                position: this.pickRandoPosition(),
+                position: pos,
                 entityIdRange,
             }));
 
@@ -148,7 +150,11 @@ export default class Server {
         });
     }
 
-    public pickRandoPosition(): [number, number] {
+    public pickPosition(): [number, number] {
+        if (this.optionalStartingPositions) {
+            return this.optionalStartingPositions[this.optionIdx++];
+        }
+
         return [
             Math.floor(Math.random() * this.width - 2) + 1,
             Math.floor(Math.random() * this.height - 2) + 1
