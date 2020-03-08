@@ -9,7 +9,7 @@
 `npm install`
 
 ## Start the server
-`ts-node src/server/index.ts`
+`node --expose-gc ./node_modules/.bin/ts-node ./src/server/index.ts`
 
 ## Start the client
 `ts-node src/index.ts 2> out`
@@ -31,7 +31,4 @@ sudo perf script > nodestacks
 // Navigate to FlameGraph github.
 ./stackcollapse-perf.pl < ../path/to/nodestacks | ./flamegraph.pl --colors js > ../node-flamegraph.svg
 ```
-
-## Where I am currently At
-Performance is going good.  40 players, Updating randomly every 300ms, breaking 60 tick.
 

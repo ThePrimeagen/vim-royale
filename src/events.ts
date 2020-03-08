@@ -4,6 +4,7 @@ import Stats from './stats';
 import { TrackingInfo } from './types';
 
 export enum EventType {
+    ScreenTypeChanged = "screen-type-changed",
     StartGame = "start-game",
     Run = "run",
     WsOpen = "ws-open",
@@ -51,13 +52,18 @@ export interface ServerMovement {
     data: MovesToProcess[]
 }
 
+export interface ScreenTypeChanged {
+    type: EventType.ScreenTypeChanged;
+}
+
 export interface ServerMovement {
     type: EventType.ServerMovement;
     data: MovesToProcess[]
 }
 
 export type EventData =
-    WsOpen | WsMessage | StartGame | Run | BinaryData | ServerMovement | WsClose;
+    ScreenTypeChanged | WsOpen | WsMessage |
+    StartGame | Run | BinaryData | ServerMovement | WsClose;
 
 type EventCallback = (event: EventData, ...args: any[]) => void;
 

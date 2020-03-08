@@ -1,11 +1,18 @@
-### Client Server Interaciotns #### Stream Tonight:
-* Multiple players executing movement commands.
-* Beastco used a cry emoji in chat, should ask about his state of being in a
-  demeaning way.
-* Get the flamegraph going.
-* Set the server tick rate.
-
 #### TODO:
+
+* explore shooting.
+---- What I actually will do ---
+  * 1. (For Real). Put what mode you are currently in, in the bottom left hand
+    corner
+  * 2. (For Real). Displaying a wheel of letters???
+
+---- What I actually need to do ---
+  * 1.  Display a wheel of letters to start shooting in a direction.
+  * 2.  When letter pressed, display the letters to shoot.
+  * 3.  Bullets being created and displayed on other screens.
+  * 4.  Server determines health of players.
+
+
 * rewrite in rust
   * Prime will kill you in tarkov if you suggest this.
 

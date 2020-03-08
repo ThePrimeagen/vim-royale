@@ -2,7 +2,6 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import util from 'util';
-import * as blessed from 'blessed';
 
 process.env.LOGGER_TYPE = 'log';
 process.env.SUPPRESS_LOGS = 'true';
@@ -13,10 +12,11 @@ jest.doMock('blessed', () => {
             return {
                 setContent: jest.fn()
             };
-        }
+        },
     };
 });
 
+import * as mockBlessed from 'blessed';
 import GlobalContext, {LocalContext, createLocalContext} from '../context';
 import Game from '../index';
 import Server from '../server';
@@ -30,6 +30,7 @@ import {
     KeyListener,
     createScreen,
     findMovementListener,
+    toBlessedKeyEvent,
     getMovementFromDir,
 } from './utils';
 
@@ -40,6 +41,7 @@ jest.setTimeout(5000);
 describe("integration", function() {
     let server: Server, game: Game[];
     let port: number = 25000;
+    const onLinks: any[] = [];
 
     async function startServer(optionalStartingPositions?: [number, number][]) {
         port++;
@@ -70,7 +72,7 @@ describe("integration", function() {
         server = null;
     });
 
-    function createGame(screen: blessed.Widgets.Screen, context: LocalContext = createLocalContext()): Game {
+    function createGame(screen: any, context: LocalContext = createLocalContext()): Game {
         const g = new Game(screen, {
             port,
             host: 'localhost',
@@ -153,17 +155,24 @@ describe("integration", function() {
 
         const keyListener = findMovementListener(listeners);
 
-        keyListener[1]('j');
+        keyListener[1]("", toBlessedKeyEvent('j'));
 
         await updates;
 
         const sStore = server.scs.context.store;
         const gStore = g1.context.store;
 
+        // Knows about players
         const serverEntities = sStore.getAllEntities();
+
+        // This knows about players + local state rendererererers
+        // this would be mode.
         const clientEntities = gStore.getAllEntities();
 
-        expect(serverEntities).toEqual(clientEntities);
+        const clientServerEntities =
+            serverEntities.filter(x => ~clientEntities.indexOf(x));
+
+        expect(clientServerEntities).toEqual(serverEntities);
 
         const serverPlayer = sStore.
             // @ts-ignore
@@ -178,7 +187,12 @@ describe("integration", function() {
     });
 
     it("move multiple players around.", async function() {
-        await startServer();
+        const pos = [
+            [30, 50],
+            [70, 120],
+            [120, 170],
+        ] as [number, number][];
+        await startServer(pos);
 
         const players = Array.from({length: 3}, () => {
             const listeners = [];
@@ -211,7 +225,7 @@ describe("integration", function() {
             map(x => findMovementListener(x.listeners));
 
         for (let i = 0; i < 4; ++i) {
-            keyListeners.forEach(listener => listener[1]('j'));
+            keyListeners.forEach(listener => listener[1]("", toBlessedKeyEvent('j')));
         }
 
         await updates;
@@ -222,12 +236,12 @@ describe("integration", function() {
         players.forEach((x, i) => {
             const store = x.g.context.store;
             const sPos = getPositionComponent(sStore, i * 1337);
-            expect(x.x).toEqual(sPos.x);
-            expect(x.y + 4).toEqual(sPos.y);
+            expect(pos[i][0]).toEqual(sPos.x);
+            expect(pos[i][1] + 4).toEqual(sPos.y);
         });
     });
 
-    it.only("ensure that updates go to players.", async function() {
+    it("ensure that updates go to players.", async function() {
         await startServer([[3, 3], [GlobalContext.display.width + 4, 3]]);
 
         const players = Array.from({length: 2}, () => {
@@ -262,7 +276,7 @@ describe("integration", function() {
         const serverGotMovements = onServerUpdatePosition(xMove);
 
         do {
-            listener[1](getMovementFromDir('x', -1));
+            listener[1]("", getMovementFromDir('x', -1));
         } while (--xMove);
 
         await Promise.all([serverGotMovements, update0, update1]);

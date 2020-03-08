@@ -20,9 +20,10 @@ import logLogger from './logger/console.log';
 import handleBinaryMessage from './updates';
 
 import Player from './objects/player';
+import Mode from './objects/mode';
 import ClientSocket from './client-socket';
 import getEntityStore, {EntityStore} from './entities';
-import GlobalContext, {LocalContext, createLocalContext} from './context';
+import GlobalContext, {ScreenType, LocalContext, createLocalContext} from './context';
 import Board from './board';
 
 if (process.env.LOGGER_TYPE === 'log') {
@@ -70,6 +71,9 @@ export default class Game {
         context.store = this.store = getEntityStore();
         context.events = this.events = getEvents();
         context.socket = new ClientSocket(host, port, context);
+
+        // TODO: What do I need to do with you?
+        const mode = new Mode(context);
 
         logger("Constructing the game", this.id, context.socket.id);
 
@@ -131,7 +135,7 @@ export default class Game {
         this.player = new Player(playerX, playerY, '@', this.context);
 
         this.context.player = this.player;
-        this.context.screen = "board";
+        this.context.screen = ScreenType.Normal;
 
         this.renderer = new RendererSystem(this.screen, this.board, this.context);
         this.movement = new MovementSystem(this.board, this.context);
@@ -158,9 +162,11 @@ export default class Game {
 }
 
 if (require.main === module) {
+
     const screen = blessed.screen({
         smartCSR: true
     });
+
     screen.title = 'Vim Royale';
 
     process.on('uncaughtException', function(err) {

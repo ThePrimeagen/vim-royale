@@ -1,10 +1,14 @@
 import Player from './objects/player';
 import PositionComponent from './objects/components/position';
 import {EntityStore} from './entities';
-import {Events} from './events';
+import {Events, EventType} from './events';
 import ClientSocket from './client-socket';
 
-type ScreenType = "board" | "input" | "main-menu";
+export enum ScreenType {
+    Normal = "NORMAL",
+    Insert = "INSERT",
+    MainMenu = "MAIN-MENU",
+};
 
 export type GlobalContext = {
     display: {
@@ -39,14 +43,26 @@ export function createLocalContext({
     player?: Player,
     socket?: ClientSocket
 } = {}): LocalContext {
-    return {
-        screen,
+    const out = {
+        get screen() {
+            return screen;
+        },
+        set screen(s: ScreenType) {
+            screen = s;
+            if (out.events) {
+                out.events.emit({
+                    type: EventType.ScreenTypeChanged
+                });
+            }
+        },
         player,
         socket,
         events,
         store,
         id: contextId++,
     } as LocalContext;
+
+    return out;
 }
 
 export default {

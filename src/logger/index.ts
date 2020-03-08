@@ -37,6 +37,7 @@ function logData(sync: boolean = false) {
     isWriting = true;
     log(sync, data, function() {
         isWriting = false;
+        timeoutId = null;
     });
 }
 

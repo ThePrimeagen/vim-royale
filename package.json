@@ -4,7 +4,12 @@
   "description": "* Because Nano sucks. * Because Emacs sucks. * Because Rust sucks.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+      "r": "node ./node_modules/.bin/ts-node ./src/index.ts 2> out",
+      "ri": "node --inspect ./node_modules/.bin/ts-node ./src/index.ts 2> out",
+      "rib": "node --inspect-brk ./node_modules/.bin/ts-node ./src/index.ts 2> out",
+      "s": "node --expose-gc ./node_modules/.bin/ts-node ./src/server/index.ts",
+      "t": "node --expose-gc ./node_modules/.bin/jest",
+      "tib": "node --inspect-brk --expose-gc ./node_modules/.bin/jest"
   },
   "repository": {
     "type": "git",

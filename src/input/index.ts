@@ -1,31 +1,39 @@
 import * as blessed from 'blessed';
-import {EventType} from '../events';
-import GlobalContext, {LocalContext} from '../context';
 
-import board from './board';
+import {EventType} from '../events';
+import GlobalContext, {ScreenType, LocalContext} from '../context';
+import insert from './insert';
+import normal from './normal';
+import mainMenu from './normal';
 import getLogger from '../logger';
+
 const logger = getLogger('input');
 
-type InputMap = {
-    [key: string]: (ch: string, context: LocalContext) => boolean;
+type InputHandler = {
+    handle: (context: LocalContext, ch: string, ctrl?: boolean) => boolean;
+    exit: () => void;
+    enter: () => void;
 };
 
-const inputMap: InputMap = {
-    board
+const inputMap: {
+    [key: string]: InputHandler;
+} = {
+    [ScreenType.Normal]: normal,
+    [ScreenType.Insert]: insert,
+    [ScreenType.MainMenu]: mainMenu,
 };
 
 export default function captureInput(screen: blessed.Widgets.Screen, context: LocalContext) {
 
-    // Quit on Escape, q, or Control-C.
-    screen.key(['escape', 'q', 'C-c'], function(ch, key) {
-        return process.exit(0);
-    });
-
-
-    screen.key(['h', 'j', 'k', 'l'], function(ch, key) {
+    screen.on("keypress", function(_, key) {
         const inputFn = inputMap[context.screen];
-        logger("Got Input", context.id, ch);
-        if (inputFn && inputFn(ch, context)) {
+        logger("Got Input", context.id, key.name, key.ctrl, key);
+
+        // @ts-ignore because it actually has that as a property when using
+        // '.' or ','
+        const letter = key.name || key.ch;
+
+        if (inputFn && inputFn.handle(context, letter, key.ctrl)) {
             context.events.emit({
                 type: EventType.Run
             });
