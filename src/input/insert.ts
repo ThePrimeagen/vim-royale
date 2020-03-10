@@ -10,8 +10,6 @@ export default {
             return true;
         }
 
-        logger(key);
-
         // other stuffs???
         return true;
     },

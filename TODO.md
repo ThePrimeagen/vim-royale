@@ -2,9 +2,12 @@
 
 * explore shooting.
 ---- What I actually will do ---
-  * 1. (For Real). Put what mode you are currently in, in the bottom left hand
-    corner
-  * 2. (For Real). Displaying a wheel of letters???
+  * Lets do hjkl of shooting.
+    * Create an entity that "_MiRrOrEd_" Architectural Pattern on the server.
+      * Entity creation system where the amount of binary is arbitrary
+        depending on the type of creation.
+    * Hit detection / Bullet life?
+
 
 ---- What I actually need to do ---
   * 1.  Display a wheel of letters to start shooting in a direction.

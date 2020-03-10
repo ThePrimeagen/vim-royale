@@ -1,32 +1,34 @@
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
 
-import * as blessed from 'blessed';
+import * as blessed from "blessed";
 
-import PositionComponent from './objects/components/position';
-import System from './systems/System';
-import { StartGameMessage } from './server/commands';
-import { isCorrectPosition, readCorrectPosition } from './server/messages/correctPosition';
-import { isGameStateUpdate, readGameStateUpdate } from './server/messages/game-state-update';
-import { MapLayout }from './server/commands';
-import RendererSystem from './systems/ClientRenderSystem';
-import MovementSystem from './systems/ClientMovementSystem';
-import getEvents, {Events, EventType, BinaryData, EventData, Run} from './events';
-import captureInput from './input/index';
-import createMainMenu from './screen/main-menu';
-import createLogger, {setLogger, flush} from './logger';
-import errorLogger from './logger/console.error';
-import logLogger from './logger/console.log';
-import handleBinaryMessage from './updates';
+import PositionComponent from "./objects/components/position";
+import System from "./systems/System";
+import { StartGameMessage } from "./server/commands";
+import { isCorrectPosition, readCorrectPosition } from "./server/messages/correctPosition";
+import { isGameStateUpdate, readGameStateUpdate } from "./server/messages/game-state-update";
+import { MapLayout }from "./server/commands";
+import LifetimeSystem from "./systems/LifetimeSystem";
+import VelocitySystem from "./systems/VelocitySystem";
+import RendererSystem from "./systems/ClientRenderSystem";
+import MovementSystem from "./systems/ClientMovementSystem";
+import getEvents, {Events, EventType, BinaryData, EventData, Run} from "./events";
+import captureInput from "./input/index";
+import createMainMenu from "./screen/main-menu";
+import createLogger, {setLogger, flush} from "./logger";
+import errorLogger from "./logger/console.error";
+import logLogger from "./logger/console.log";
+import handleBinaryMessage from "./updates";
 
-import Player from './objects/player';
-import Mode from './objects/mode';
-import ClientSocket from './client-socket';
-import getEntityStore, {EntityStore} from './entities';
-import GlobalContext, {ScreenType, LocalContext, createLocalContext} from './context';
-import Board from './board';
+import Player from "./objects/player";
+import Mode from "./objects/mode";
+import ClientSocket from "./client-socket";
+import getEntityStore, {EntityStore} from "./entities";
+import GlobalContext, {ScreenType, LocalContext, createLocalContext} from "./context";
+import Board from "./board";
 
-if (process.env.LOGGER_TYPE === 'log') {
+if (process.env.LOGGER_TYPE === "log") {
     setLogger(logLogger);
 }
 else {
@@ -50,6 +52,8 @@ let id = 0;
 export default class Game {
     public context: LocalContext;
 
+    private velocity: VelocitySystem;
+    private lifetime: LifetimeSystem;
     private movement: MovementSystem;
     private renderer: RendererSystem;
     private store: EntityStore;
@@ -132,7 +136,7 @@ export default class Game {
             playerX,
             playerY,
         ] = data.position;
-        this.player = new Player(playerX, playerY, '@', this.context);
+        this.player = new Player(playerX, playerY, "@", this.context);
 
         this.context.player = this.player;
         this.context.screen = ScreenType.Normal;
@@ -157,7 +161,7 @@ export default class Game {
         this.movement.run(eventData);
         this.renderer.run(eventData);
 
-        logger("shutdown", Date.now() - then);
+        logger("timer", Date.now() - then);
     }
 }
 
@@ -167,9 +171,9 @@ if (require.main === module) {
         smartCSR: true
     });
 
-    screen.title = 'Vim Royale';
+    screen.title = "Vim Royale";
 
-    process.on('uncaughtException', function(err) {
+    process.on("uncaughtException", function(err) {
         logger(err.message);
         logger(err.stack);
 

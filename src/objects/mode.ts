@@ -15,7 +15,8 @@ export default class Mode {
         // TODO: HAHAH 100 hard coded Z? What is this css?
         this.position = new PositionComponent(
             ScreenType.MainMenu,
-            0, GlobalContext.display.height - 1, 100
+            0, GlobalContext.display.height - 1, 100,
+            true
         );
 
         context.store.attachComponent(this.entity, this.position);

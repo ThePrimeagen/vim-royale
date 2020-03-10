@@ -30,16 +30,16 @@ export default function render(
             const {
                 x, y
             } = pos;
-            return isInWindow(leftX, leftY, display.width, display.height, x, y);
+            console.error("IS IN WINDOW", x, y, isInWindow(leftX, leftY, display.width, display.height, x, y));
+            return pos.absolute ||
+                isInWindow(leftX, leftY, display.width, display.height, x, y);
         }).
         sort((a, b) => a.z - b.z).
         forEach(pos => {
             const [
                 x,
                 y,
-            ] = makeRelative(leftX, leftY, pos.x, pos.y);
-            isInWindow;
-            display;
+            ] = makeRelative(leftX, leftY, pos);
             apply(renderSpace, pos.char, x, y, 0, 0);
         });
 
@@ -47,7 +47,7 @@ export default function render(
     const [
         relX,
         relY,
-    ] = makeRelative(leftX, leftY, x, y);
+    ] = makeRelative(leftX, leftY, playerPosition);
 
     apply(renderSpace, playerPosition.char, relX, relY, 0, 0);
 

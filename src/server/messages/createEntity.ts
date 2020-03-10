@@ -1,22 +1,42 @@
 import BufferWriter from './buffer-writer';
-import { FrameType, CreateType, CreateEntityResult } from './types';
+import { EntityType, FrameType, CreateType, CreateEntityResult } from './types';
 import { EntityItem } from '../../entities';
+
+
+export type CreateEntity = {
+    entityId: EntityItem,
+    x: number,
+    y: number,
+};
+
+function getEntityLength(type: EntityType) {
+    switch (type) {
+        case EntityType.Player:
+            return 9;
+        case EntityType.Bullet:
+            return 13;
+        default:
+            throw new Error("Invalid Entity.  What are you doing with your life.");
+    }
+}
+
+//function addExtraData(
 
 // How to encode this ?
 // TODO: Bullets, they need to have direction, all of taht....
 // | FrameType : 1 | Type : 1 | x : 2 | y : 2 |
-export default function createEntity({
-    entityId,
-    x,
-    y,
-}: {
-    entityId: EntityItem, x: number, y: number,
-}): Buffer {
-    const b = new BufferWriter(8);
+export default function createEntity(entity: CreateEntity, type: EntityType): Buffer {
+    const {
+        entityId,
+        x,
+        y,
+    } = entity;
+    const b = new BufferWriter(9);
 
     // TODO: Entity Type...
     // TODO: Direction??...
     b.write8(FrameType.CreateEntity);
+    b.write8(type);
     b.write24(entityId);
     b.write16(x);
     b.write16(y);

@@ -67,6 +67,8 @@ export type EventData =
 
 type EventCallback = (event: EventData, ...args: any[]) => void;
 
+const runObject: Run = { type: EventType.Run };
+
 export class Events {
     private callbacks: EventCallback[];
 
@@ -78,9 +80,14 @@ export class Events {
         this.callbacks.push(cb);
     }
 
+    // Do i even like this?  It creates an addition object allocation every
+    // single time we call this method.
     emit(data: EventData, ...additionalArgs: any[]) {
         this.callbacks.forEach(cb => cb(data, ...additionalArgs));
     }
+
+    // Ease of use function
+    run() { this.emit(runObject); }
 
     off(cb: EventCallback) {
         const idx = this.callbacks.indexOf(cb);
