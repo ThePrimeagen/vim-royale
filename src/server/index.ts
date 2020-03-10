@@ -178,7 +178,7 @@ if (require.main === module) {
         port: +process.env.PORT,
         width: +process.env.WIDTH,
         height: +process.env.HEIGHT,
-        tick: +process.env.TICK,
+        tick: +process.env.SERVER_TICK || +process.env.TICK,
         entityIdRange: +process.env.ENTITY_ID_RANGE,
     });
 }

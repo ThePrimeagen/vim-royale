@@ -2,7 +2,6 @@ import * as blessed from 'blessed';
 
 import {GameOptions} from '../types';
 
-import System from './System';
 import {EventData} from '../events';
 import PositionComponent from '../objects/components/position';
 import GlobalContext, {LocalContext} from '../context';
@@ -14,7 +13,7 @@ import getRenderBounds from './render/get-render-bounds';
 import makeRelative from './render/make-relative';
 import render from './render';
 
-export default class RendererSystem implements System {
+export default class RendererSystem {
     private screen: blessed.Widgets.Screen;
     private board: Board;
     private context: LocalContext;
@@ -58,9 +57,11 @@ export default class RendererSystem implements System {
         screen.render();
     }
 
-    run(e: EventData) {
+    run(diff: number) {
         this.box.setContent(this.renderToString());
         this.screen.render();
+        // TODO: Is this actually bad?
+        //this.context.dirty = false;
     }
 
     // TODO: Does this even matter in a CLI game?

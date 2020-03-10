@@ -13,18 +13,9 @@ import getStore from '../entities';
 import {TrackingInfo} from '../types';
 import getLogger from '../logger';
 import ObjectPool from '../util/SyncObjectPool';
+import getNextLoop from '../util/getNextLoop';
 
 const logger = getLogger("Server");
-
-function getNextLoop(tick: number, timeTaken: number) {
-    // TODO: This is really bad to have happen.p..
-    if (timeTaken >= tick) {
-        return 0;
-    }
-
-    return tick - timeTaken;
-}
-
 const sliceCopy = Uint8Array.prototype.slice;
 const pool = new ObjectPool();
 
@@ -40,7 +31,6 @@ export default class ServerClientSync {
     private boundUpdate: () => void;
     private movement: ServerMovementSystem;
     private updatePlayers: ServerUpdatePlayers;
-    private updateObject: {type: EventType.ServerMovement, data: MovesToProcess[]};
 
     public context: LocalContext;
 
@@ -51,10 +41,6 @@ export default class ServerClientSync {
         this.infos = infos;
         this.movesToProcess = [];
         this.entities = [];
-        this.updateObject = {
-            type: EventType.ServerMovement,
-            data: this.movesToProcess,
-        };
 
         this.context = context;
         this.context.events = getEvents();
@@ -135,7 +121,7 @@ export default class ServerClientSync {
 
         // Process all movements.
         // TODO: Server Movements System?
-        this.movement.run(this.updateObject);
+        this.movement.run(this.movesToProcess);
         this.updatePlayers.run(this.infos);
 
         const now = Date.now();

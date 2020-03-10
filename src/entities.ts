@@ -38,7 +38,7 @@ export class EntityStore {
         this.maxId = stop;
     }
 
-    getComponent<T extends Component>(entityId: EntityItem, comp: T): T {
+    getComponent<T extends Component>(entityId: EntityItem, comp: T): T | null {
         const componentMap = this.entityMap.get(entityId);
 
         if (!componentMap) {

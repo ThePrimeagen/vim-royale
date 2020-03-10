@@ -1,5 +1,4 @@
-import System from './System';
-import {EventData, ServerMovement} from '../events';
+import {MovesToProcess, EventData, ServerMovement} from '../events';
 import GlobalContext, {LocalContext} from '../context';
 
 import getMovement from '../input/getMovement';
@@ -15,7 +14,7 @@ const logger = getLogger("ServerMovementSystem");
 
 const FORCE_MOVEMENT_AMOUNT = 1000;
 
-export default class ServerMovementSystem implements System {
+export default class ServerMovementSystem {
     private board: Board;
     private context: LocalContext;
 
@@ -24,11 +23,9 @@ export default class ServerMovementSystem implements System {
         this.context = context;
     }
 
-    run(listOfMovements: EventData) {
+    run(listOfMovements: MovesToProcess[]) {
 
-        const data = (listOfMovements as ServerMovement).data
-
-        data.forEach(({buf, tracking}) => {
+        listOfMovements.forEach(({buf, tracking}) => {
             const update = readUpdatePosition(buf, 1);
 
             // We need to ignore this movement.

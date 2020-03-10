@@ -1,4 +1,3 @@
-import System from './System';
 import GlobalContext, {LocalContext} from '../context';
 
 import getMovement from '../input/getMovement';

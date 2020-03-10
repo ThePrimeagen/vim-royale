@@ -25,18 +25,18 @@ function getEntityLength(type: EntityType) {
 // How to encode this ?
 // TODO: Bullets, they need to have direction, all of taht....
 // | FrameType : 1 | Type : 1 | x : 2 | y : 2 |
-export default function createEntity(entity: CreateEntity, type: EntityType): Buffer {
+export default function createEntity(entity: CreateEntity, type: EntityType = 0): Buffer {
     const {
         entityId,
         x,
         y,
     } = entity;
-    const b = new BufferWriter(9);
+    const b = new BufferWriter(8);
 
     // TODO: Entity Type...
     // TODO: Direction??...
     b.write8(FrameType.CreateEntity);
-    b.write8(type);
+    //b.write8(type);
     b.write24(entityId);
     b.write16(x);
     b.write16(y);

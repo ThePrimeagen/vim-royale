@@ -30,7 +30,7 @@ export default function render(
             const {
                 x, y
             } = pos;
-            console.error("IS IN WINDOW", x, y, isInWindow(leftX, leftY, display.width, display.height, x, y));
+
             return pos.absolute ||
                 isInWindow(leftX, leftY, display.width, display.height, x, y);
         }).

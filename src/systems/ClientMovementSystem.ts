@@ -1,16 +1,16 @@
 import {GameOptions} from '../types';
-import System from './System';
 import {EventData} from '../events';
 import GlobalContext, {LocalContext} from '../context';
 
 import MovementComponent from '../objects/components/movement';
 import PositionComponent from '../objects/components/position';
+import LifetimeComponent from '../objects/components/lifetime';
 import ForcePositionComponent from '../objects/components/force-position';
 import Board from '../board';
 import getLogger from '../logger';
 const logger = getLogger("ClientMovementSystem");
 
-export default class MovementSystem implements System {
+export default class MovementSystem {
     private board: Board;
     private context: LocalContext;
     private movementId = 0;
@@ -21,7 +21,7 @@ export default class MovementSystem implements System {
     }
 
     // TODO: Girth?
-    run(e: EventData) {
+    run(diff: number) {
 
         this.context.store.forEach(MovementComponent, (entity, component: MovementComponent) => {
 
@@ -75,6 +75,14 @@ export default class MovementSystem implements System {
                 const id = this.movementId++;
                 logger("Confirming movement", this.context.id, id, pos);
                 this.context.socket.confirmMovement(id);
+            }
+
+            // @ts-ignore
+            const lifetime = this.context.store.
+                getComponent(entity, LifetimeComponent) as LifetimeComponent;
+
+            if (lifetime && !lifetime.decrementOnMs) {
+                lifetime.tilesOrMs -= ((newY - oldY) | 0) + ((newX - oldX) | 0);
             }
         });
     }

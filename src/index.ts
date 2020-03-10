@@ -4,7 +4,6 @@ dotenv.config();
 import * as blessed from "blessed";
 
 import PositionComponent from "./objects/components/position";
-import System from "./systems/System";
 import { StartGameMessage } from "./server/commands";
 import { isCorrectPosition, readCorrectPosition } from "./server/messages/correctPosition";
 import { isGameStateUpdate, readGameStateUpdate } from "./server/messages/game-state-update";
@@ -27,6 +26,7 @@ import ClientSocket from "./client-socket";
 import getEntityStore, {EntityStore} from "./entities";
 import GlobalContext, {ScreenType, LocalContext, createLocalContext} from "./context";
 import Board from "./board";
+import getNextLoop from './util/getNextLoop';
 
 if (process.env.LOGGER_TYPE === "log") {
     setLogger(logLogger);
@@ -34,12 +34,14 @@ if (process.env.LOGGER_TYPE === "log") {
 else {
     setLogger(errorLogger);
 }
+
 const logger = createLogger("Game");
 
 type GameConfig = {
     port: number;
     host: string;
     context: LocalContext;
+    tick: number;
 };
 
 type Callback = () => void;
@@ -52,6 +54,8 @@ let id = 0;
 export default class Game {
     public context: LocalContext;
 
+    private tick: number;
+    private boundedLoop: () => void;
     private velocity: VelocitySystem;
     private lifetime: LifetimeSystem;
     private movement: MovementSystem;
@@ -69,6 +73,7 @@ export default class Game {
         host,
         port,
         context,
+        tick,
     }: GameConfig) {
         this.id = id++;
 
@@ -88,6 +93,7 @@ export default class Game {
 
         this.screen = screen;
         this.context = context;
+        this.tick = tick;
 
         createMainMenu(screen, this.context);
 
@@ -103,10 +109,6 @@ export default class Game {
                     handleBinaryMessage(this.context, evt);
                     break;
 
-                case EventType.Run:
-                    this.loop(evt);
-                    break;
-
                 case EventType.WsOpen:
                     this.callbacks.connected.forEach(cb => cb());
                     break;
@@ -114,6 +116,7 @@ export default class Game {
         };
 
         this.events.on(this.on);
+        this.boundedLoop = this.loop.bind(this);
     }
 
     public onGameStart(cb: () => void) {
@@ -143,9 +146,12 @@ export default class Game {
 
         this.renderer = new RendererSystem(this.screen, this.board, this.context);
         this.movement = new MovementSystem(this.board, this.context);
+        this.velocity = new VelocitySystem(this.context);
 
         this.context.socket.createEntity(
             this.player.entity, this.player.position.x, this.player.position.y);
+
+        this.loop();
     }
 
     public shutdown() {
@@ -155,13 +161,22 @@ export default class Game {
         this.context.socket.shutdown();
     }
 
-    private loop(eventData: Run) {
+    private loopCount: number = 0;
+    private loopLastCalled: number = 0;
+    private loop() {
         const then = Date.now();
+        const diff = this.loopLastCalled === 0 ? 0 : then - this.loopLastCalled;
 
-        this.movement.run(eventData);
-        this.renderer.run(eventData);
+        this.velocity.run(diff);
+        this.movement.run(diff);
+        this.renderer.run(diff);
 
-        logger("timer", Date.now() - then);
+        if (++this.loopCount % 600 === 0) {
+            logger("timer", Date.now() - then);
+        }
+
+        const now = this.loopLastCalled = Date.now();
+        setTimeout(this.boundedLoop, getNextLoop(this.tick, now - then));
     }
 }
 
@@ -187,6 +202,7 @@ if (require.main === module) {
         context,
         port: +process.env.PORT,
         host: process.env.HOST,
+        tick: +process.env.CLIENT_TICK,
     });
 }
 

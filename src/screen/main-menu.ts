@@ -1,5 +1,4 @@
 import * as blessed from 'blessed';
-import System from '../systems/System';
 import GlobalContext, {LocalContext} from '../context';
 import {EventData, EventType} from '../events';
 import createLogger from '../logger';
