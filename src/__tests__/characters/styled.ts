@@ -18,6 +18,14 @@ describe('DefaultCharacterStrategy', () => {
             expect(strategy.buildChar(input)).toEqual(output);
         });
 
+        test("doesn't add bold tags if bold is set to false", () => {
+            const strategy = new StyledCharacterStrategy({bold: false});
+            const input = 'MAIN-MENU';
+            const output = [['M', 'A', 'I', 'N', '-', 'M', 'E', 'N', 'U']];
+
+            expect(strategy.buildChar(input)).toEqual(output);
+        });
+
         test('adds foreground color tags', () => {
             const strategy = new StyledCharacterStrategy({fg: 'FF0000'});
             const input = 'MAIN-MENU';
