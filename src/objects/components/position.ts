@@ -21,6 +21,10 @@ export default class PositionComponent implements Component {
         return this._char;
     }
 
+    get characterStrategy(): CharacterStrategy {
+        return this._characterStrategy;
+    }
+
     constructor(char: string, x: number, y: number, z: number = 0, absolute = false) {
         this._characterStrategy = new DefaultCharacterStrategy();
         this._rawChar = char; // save raw char so we have it when we switch strategies
