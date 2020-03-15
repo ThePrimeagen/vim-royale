@@ -1,6 +1,6 @@
 import StyledCharacterStrategy from "../../characters/styled";
 
-describe('BasicCharacterStrategy', () => {
+describe('StyledCharacterStrategy', () => {
     describe('buildChar', () => {
         test('turns a string into a two-dimensional array with no styles by default', () => {
             const strategy = new StyledCharacterStrategy();
