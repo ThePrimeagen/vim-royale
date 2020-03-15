@@ -82,7 +82,7 @@ export default class MovementSystem {
                 getComponent(entity, LifetimeComponent) as LifetimeComponent;
 
             if (lifetime && !lifetime.decrementOnMs) {
-                lifetime.tilesOrMs -= ((newY - oldY) | 0) + ((newX - oldX) | 0);
+                lifetime.tilesOrMs -= Math.abs(newY - oldY + newX - oldX);
             }
         });
     }

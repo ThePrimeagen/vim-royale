@@ -147,6 +147,7 @@ export default class Game {
         this.renderer = new RendererSystem(this.screen, this.board, this.context);
         this.movement = new MovementSystem(this.board, this.context);
         this.velocity = new VelocitySystem(this.context);
+        this.lifetime = new LifetimeSystem(this.context);
 
         this.context.socket.createEntity(
             this.player.entity, this.player.position.x, this.player.position.y);
@@ -170,6 +171,7 @@ export default class Game {
         this.velocity.run(diff);
         this.movement.run(diff);
         this.renderer.run(diff);
+        this.lifetime.run();
 
         if (++this.loopCount % 600 === 0) {
             logger("timer", Date.now() - then);

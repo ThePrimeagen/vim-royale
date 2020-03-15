@@ -42,8 +42,6 @@ export default class VelocitySystem {
             // Set this...? or add it?
             movement.x += Math.floor(component.x) - x;
             movement.y += Math.floor(component.y) - y;
-
-
         }
 
         this.context.store.forEach(VelocityComponent, forEach);

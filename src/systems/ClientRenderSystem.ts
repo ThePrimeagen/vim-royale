@@ -76,6 +76,7 @@ export default class RendererSystem {
         const coords = [pPosition.x, pPosition.y].toString().split('');
         apply(tmp, [coords], display.width - (coords.length + 1), 0);
 
+        // TODO: Stop generating garbage
         return tmp.
             map(line => line.join('')).
             join('');
