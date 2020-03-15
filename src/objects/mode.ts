@@ -1,13 +1,12 @@
 import {EntityItem} from '../entities';
 import PositionComponent from './components/position';
-import StyledComponent from './components/styled';
 import GlobalContext, {LocalContext, ScreenType} from '../context';
 import {EventType} from '../events';
+import StyledCharacterStrategy from '../characters/styled';
 
 export default class Mode {
     public entity: EntityItem;
     public position: PositionComponent;
-    public styles: StyledComponent;
 
     constructor(context: LocalContext) {
         this.entity = context.store.createNewEntity();
@@ -17,6 +16,14 @@ export default class Mode {
             ScreenType.MainMenu,
             0, GlobalContext.display.height - 1, 100,
             true
+        );
+
+        this.position.setCharacterStrategy(
+            new StyledCharacterStrategy({
+              bold: true,
+              fg: '96A537',
+              bg: 'FF0000'
+            }),
         );
 
         context.store.attachComponent(this.entity, this.position);

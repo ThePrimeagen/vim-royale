@@ -1,4 +1,9 @@
 import {Component} from '../../entities';
+import DefaultCharacterStrategy from '../../characters/default';
+
+export interface CharacterStrategy {
+    buildChar(Char: string): string[][];
+}
 
 // What we render
 export default class PositionComponent implements Component {
@@ -9,12 +14,16 @@ export default class PositionComponent implements Component {
     y: number;
     z: number;
     private _char: string[][];
+    private _rawChar: string;
+    private _characterStrategy: CharacterStrategy;
 
     get char(): string[][] {
         return this._char;
     }
 
     constructor(char: string, x: number, y: number, z: number = 0, absolute = false) {
+        this._characterStrategy = new DefaultCharacterStrategy();
+        this._rawChar = char; // save raw char so we have it when we switch strategies
         this.setChar(char);
         this.x = x;
         this.y = y;
@@ -22,12 +31,13 @@ export default class PositionComponent implements Component {
         this.absolute = absolute;
     }
 
+    setCharacterStrategy(strategy: CharacterStrategy) {
+        this._characterStrategy = strategy;
+        this.setChar(this._rawChar);
+    }
+
     setChar(char: string) {
-        this._char = [char.split("")];
-        /*
-        this._char[0][0] = "{#FF0000-bg}{#96A537-fg}" + this._char[0][0];
-        const last = this._char[0].length;
-        this._char[0][last - 1] =  this._char[0][last - 1] + "{/#96A537-fg}{/#FF0000-bg}";
-         */
+        this._rawChar = char;
+        this._char = this._characterStrategy.buildChar(char);
     }
 }
