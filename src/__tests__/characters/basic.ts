@@ -1,9 +1,9 @@
-import DefaultCharacterStrategy from "../../characters/default";
+import BasicCharacterStrategy from "../../characters/basic";
 
-describe('DefaultCharacterStrategy', () => {
+describe('BasicCharacterStrategy', () => {
     describe('buildChar', () => {
         test('turns a string into a two-dimensional array', () => {
-            const strategy = new DefaultCharacterStrategy();
+            const strategy = new BasicCharacterStrategy();
             const input = 'MAIN-MENU';
             const output = [['M', 'A', 'I', 'N', '-', 'M', 'E', 'N', 'U']];
 

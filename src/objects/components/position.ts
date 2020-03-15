@@ -1,5 +1,5 @@
 import {Component} from '../../entities';
-import DefaultCharacterStrategy from '../../characters/default';
+import BasicCharacterStrategy from '../../characters/basic';
 
 export interface CharacterStrategy {
     buildChar(Char: string): string[][];
@@ -26,7 +26,7 @@ export default class PositionComponent implements Component {
     }
 
     constructor(char: string, x: number, y: number, z: number = 0, absolute = false) {
-        this._characterStrategy = new DefaultCharacterStrategy();
+        this._characterStrategy = new BasicCharacterStrategy();
         this._rawChar = char; // save raw char so we have it when we switch strategies
         this.setChar(char);
         this.x = x;
