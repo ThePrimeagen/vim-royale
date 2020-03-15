@@ -5,14 +5,15 @@ import {EventType} from '../events';
 import StyledCharacterStrategy from '../characters/styled';
 import BasicCharacterStrategy from '../characters/basic';
 
+const basicStrategy = new BasicCharacterStrategy();
 const characterStrategies = {
     [ScreenType.Normal]: new StyledCharacterStrategy({
         bold: true,
         fg: '96A537',
         bg: 'FF0000'
     }),
-    [ScreenType.Insert]: new BasicCharacterStrategy(),
-    [ScreenType.MainMenu]: new BasicCharacterStrategy()
+    [ScreenType.Insert]: basicStrategy,
+    [ScreenType.MainMenu]: basicStrategy
 };
 
 export default class Mode {
