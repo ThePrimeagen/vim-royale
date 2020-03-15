@@ -1,13 +1,24 @@
 import {EntityItem} from '../entities';
 import PositionComponent from './components/position';
-import StyledComponent from './components/styled';
 import GlobalContext, {LocalContext, ScreenType} from '../context';
 import {EventType} from '../events';
+import StyledCharacterStrategy from '../characters/styled';
+import BasicCharacterStrategy from '../characters/basic';
+
+const basicStrategy = new BasicCharacterStrategy();
+const characterStrategies = {
+    [ScreenType.Normal]: new StyledCharacterStrategy({
+        bold: true,
+        fg: '96A537',
+        bg: 'FF0000'
+    }),
+    [ScreenType.Insert]: basicStrategy,
+    [ScreenType.MainMenu]: basicStrategy
+};
 
 export default class Mode {
     public entity: EntityItem;
     public position: PositionComponent;
-    public styles: StyledComponent;
 
     constructor(context: LocalContext) {
         this.entity = context.store.createNewEntity();
@@ -19,9 +30,14 @@ export default class Mode {
             true
         );
 
+        this.position.setCharacterStrategy(
+          characterStrategies[ScreenType.MainMenu]);
+
         context.store.attachComponent(this.entity, this.position);
         context.events.on(evt => {
             if (evt.type === EventType.ScreenTypeChanged) {
+                this.position.setCharacterStrategy(
+                  characterStrategies[context.screen]);
                 this.position.setChar(context.screen);
             }
         });
