@@ -5,15 +5,14 @@ import {EventType} from '../events';
 import StyledCharacterStrategy from '../characters/styled';
 import BasicCharacterStrategy from '../characters/basic';
 
-const basicStrategy = new BasicCharacterStrategy();
 const characterStrategies = {
-    [ScreenType.Normal]: new StyledCharacterStrategy({
+    [ScreenType.Normal]: new StyledCharacterStrategy(ScreenType.Normal, {
         bold: true,
         fg: '96A537',
         bg: 'FF0000'
     }),
-    [ScreenType.Insert]: basicStrategy,
-    [ScreenType.MainMenu]: basicStrategy
+    [ScreenType.Insert]: new BasicCharacterStrategy(ScreenType.Insert),
+    [ScreenType.MainMenu]: new BasicCharacterStrategy(ScreenType.MainMenu)
 };
 
 export default class Mode {
@@ -38,7 +37,6 @@ export default class Mode {
             if (evt.type === EventType.ScreenTypeChanged) {
                 this.position.setCharacterStrategy(
                   characterStrategies[context.screen]);
-                this.position.setChar(context.screen);
             }
         });
     }
