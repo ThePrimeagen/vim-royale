@@ -11,7 +11,9 @@ type StyleTags = [string, string];
 const decorators = {
     bold(styleTags: StyleTags, enabled: boolean) {
         // only add tags if enabled is `true`
-        if (enabled) { buildTag(styleTags, 'bold'); }
+        if (enabled) {
+            buildTag(styleTags, 'bold');
+        }
     },
     fg(styleTags: StyleTags, rgb: string) {
         buildTag(styleTags, `#${rgb}-fg`);
