@@ -1,3 +1,4 @@
+import Player from '../objects/player';
 import getEvents, {Events, EventType, MovesToProcess} from '../events';
 import {FrameType} from './messages/types';
 import {readCreateEntity} from './messages/createEntity';
@@ -6,6 +7,7 @@ import createGameStateUpdate from './messages/game-state-update';
 import PositionComponent from '../objects/components/position';
 import MovementComponent from '../objects/components/movement';
 import ServerMovementSystem from '../systems/ServerMovementSystem';
+import LifetimeSystem from '../systems/LifetimeSystem';
 import ServerUpdatePlayers from '../systems/ServerUpdatePlayers';
 import GlobalContext, {createLocalContext, LocalContext} from '../context';
 import Board from '../board';
@@ -29,6 +31,7 @@ export default class ServerClientSync {
     private map: Board;
     private entities: number[];
     private boundUpdate: () => void;
+    private lifetime: LifetimeSystem;
     private movement: ServerMovementSystem;
     private updatePlayers: ServerUpdatePlayers;
 
@@ -48,6 +51,7 @@ export default class ServerClientSync {
 
         this.movement = new ServerMovementSystem(this.map, this.context);
         this.updatePlayers = new ServerUpdatePlayers(this.map, this.context);
+        this.lifetime = new LifetimeSystem(context);
         this.boundUpdate = this.update.bind(this);
 
         this.initializeEvents();
@@ -79,25 +83,20 @@ export default class ServerClientSync {
                     }
 
                     if (evt.data[0] === FrameType.CreateEntity) {
-                        const buf = evt.data as Buffer;
-                        const data = readCreateEntity(buf, 1);
+                        const buf = evt.data;
+                        const entityId = readCreateEntity(this.context, buf, 1);
 
-                        // TODO: Refactor this !false fest???
-                        // TODO: character symbols???
-                        // TODO: Updating everyone else on entities.
-                        // TODO: Validate that the entities id is actually an id
-                        // within their range.
-                        const position = new PositionComponent('x', data.x, data.y);
-                        const movement = new MovementComponent(0, 0);
+                        if (Player.is(buf, 1) &&
+                            !GlobalContext.activePlayers[entityId]) {
+                            // @ts-ignore
+                            const pos = this.context.store.
+                                getComponent(entityId, PositionComponent) as PositionComponent;
 
-                        if (!GlobalContext.activePlayers[data.entityId]) {
-                            GlobalContext.activePlayers[data.entityId] = position;
+                            GlobalContext.activePlayers[entityId] = pos;
                         }
 
-                        this.context.store.setNewEntity(data.entityId);
-                        this.context.store.attachComponent(data.entityId, position);
-                        this.context.store.attachComponent(data.entityId, movement);
-                        this.entities.push(data.entityId);
+                        // TODO: Do i even need this.?
+                        this.entities.push(entityId);
                     }
                     break;
 
@@ -123,6 +122,7 @@ export default class ServerClientSync {
         // TODO: Server Movements System?
         this.movement.run(this.movesToProcess);
         this.updatePlayers.run(this.infos);
+        this.lifetime.run();
 
         const now = Date.now();
         if (this.tick < now - then) {
@@ -141,7 +141,9 @@ export default class ServerClientSync {
         if (++count % 10 === 0) {
             gCount++
             const gThen = Date.now();
-            global.gc();
+            if (!process.env.NO_GC) {
+                global.gc();
+            }
             const gDiff = Date.now() - gThen;
 
             gSum += gDiff;
@@ -168,6 +170,7 @@ export default class ServerClientSync {
         if (count === 500) {
             console.log("Stats", high, low, sum / count);
             console.log("Garbage", gHigh, gLow, gSum / gCount);
+            console.log("Entities", this.context.store.getAllEntities().length);
             sum = gCount = count = high = 0
             gSum = gHigh = 0
             gLow = low = 1000;

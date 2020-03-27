@@ -8,6 +8,8 @@
       "ci": "node --inspect ./node_modules/.bin/ts-node ./src/index.ts 2> out",
       "cib": "node --inspect-brk ./node_modules/.bin/ts-node ./src/index.ts 2> out",
       "s": "node --expose-gc ./node_modules/.bin/ts-node ./src/server/index.ts",
+      "si": "node --inspect --expose-gc ./node_modules/.bin/ts-node ./src/server/index.ts",
+      "sib": "node --inspect-brk --expose-gc ./node_modules/.bin/ts-node ./src/server/index.ts",
       "t": "node --expose-gc ./node_modules/.bin/jest",
       "tib": "node --inspect-brk --expose-gc ./node_modules/.bin/jest"
   },

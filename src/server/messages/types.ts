@@ -1,10 +1,5 @@
 import {MovementCommand} from '../../types';
 
-export enum EntityType {
-    Player = 1,
-    Bullet = 2,
-};
-
 export enum FrameType {
     CreateEntity = 1,
     UpdatePosition = 2,

@@ -1,58 +1,48 @@
+import { LocalContext } from '../../context';
 import BufferWriter from './buffer-writer';
-import { EntityType, FrameType, CreateType, CreateEntityResult } from './types';
+import { FrameType, CreateType, CreateEntityResult } from './types';
 import { EntityItem } from '../../entities';
+import {Player, Bullet} from '../../objects';
+import { EntityType } from '../../objects/types';
+import { decodables } from '../../objects';
+import { Encodable, Decodable } from '../../objects/encodable';
+import {
+    Pool,
+    PoolItem,
+    PoolFactory,
+    PoolFreeFunction,
+} from '../../util/pool';
 
-
-export type CreateEntity = {
-    entityId: EntityItem,
-    x: number,
-    y: number,
-};
-
-function getEntityLength(type: EntityType) {
-    switch (type) {
-        case EntityType.Player:
-            return 9;
-        case EntityType.Bullet:
-            return 13;
-        default:
-            throw new Error("Invalid Entity.  What are you doing with your life.");
-    }
-}
-
-//function addExtraData(
+import createLogger from '../../logger';
+const logger = createLogger("createEntity");
 
 // How to encode this ?
 // TODO: Bullets, they need to have direction, all of taht....
 // | FrameType : 1 | Type : 1 | x : 2 | y : 2 |
-export default function createEntity(entity: CreateEntity, type: EntityType = 0): Buffer {
-    const {
-        entityId,
-        x,
-        y,
-    } = entity;
-    const b = new BufferWriter(8);
+export default function createEntity(encodable: Encodable, encodeLength: number): Buffer {
+    const buffer = Buffer.alloc(1 + encodeLength);
+    buffer[0] = FrameType.CreateEntity;
+    encodable.encode(buffer, 1);
 
-    // TODO: Entity Type...
-    // TODO: Direction??...
-    b.write8(FrameType.CreateEntity);
-    //b.write8(type);
-    b.write24(entityId);
-    b.write16(x);
-    b.write16(y);
-
-    return b.buffer;
+    return buffer;
 };
 
-export function readCreateEntity(buf: Buffer, offset: number = 0): CreateEntityResult {
-    const out = {} as CreateEntityResult;
+const D = -9;
+export function readCreateEntity(context: LocalContext, buf: Buffer, offset: number = 0): EntityItem {
+    let entityId: EntityItem = -1;
+    for (let i = 0; entityId === -1 && i < decodables.length; ++i) {
+        logger("readEntity", entityId, buf[0], decodables[i].is(buf, offset));
+        if (decodables[i].is(buf, offset)) {
+            entityId = decodables[i].decode(context, buf, offset);
+        }
+    }
 
-    out.entityId = BufferWriter.read24(buf, offset);
-    offset += 3;
+    if (entityId - 8===D) {
+        // TODO: Actually do this
+        // TODO: Kick the user from the game.
+        logger("Unknown entity, probably should terminate the connection", buf);
+    }
 
-    out.x = BufferWriter.read16(buf, offset);
-    out.y = BufferWriter.read16(buf, offset + 2);
-
-    return out;
+    return entityId;
 }
 

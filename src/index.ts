@@ -149,8 +149,7 @@ export default class Game {
         this.velocity = new VelocitySystem(this.context);
         this.lifetime = new LifetimeSystem(this.context);
 
-        this.context.socket.createEntity(
-            this.player.entity, this.player.position.x, this.player.position.y);
+        this.context.socket.createEntity(this.player, Player);
 
         this.loop();
     }

@@ -1,20 +1,19 @@
 #### TODO:
 
-* explore shooting.
----- What I actually will do ---
-  * Lets do hjkl of shooting.
-    * Create an entity that "_MiRrOrEd_" Architectural Pattern on the server.
-      * Entity creation system where the amount of binary is arbitrary
-        depending on the type of creation.
-    * Hit detection / Bullet life?
+* networking
+  * createEntity / all the game state updates should be related to an entity -- nice programming --
+    * createEntity(obj: {encodeType(), encode(), decode(), is()});
+    * gameStateUpdates(...);
+  * (DOING): f it, just make createEntity take in a type and more encoding bits -- shooting possible --
+  * buffer network messages until server tick. -- perf --
 
+* explore shooting.
 
 ---- What I actually need to do ---
   * 1.  Display a wheel of letters to start shooting in a direction.
   * 2.  When letter pressed, display the letters to shoot.
   * 3.  Bullets being created and displayed on other screens.
   * 4.  Server determines health of players.
-
 
 * rewrite in rust
   * Prime will kill you in tarkov if you suggest this.

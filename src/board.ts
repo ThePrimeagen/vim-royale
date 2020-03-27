@@ -1,9 +1,3 @@
-import GlobalContext from './context';
-
-function clamp(num: number, upperBounds: number): number {
-    return Math.min(Math.max(num, 0), upperBounds - 1);
-}
-
 const whiteSpace = '\u202F';
 
 export default class Board {

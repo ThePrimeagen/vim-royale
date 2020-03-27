@@ -17,6 +17,7 @@ export default class LifetimeSystem {
 
     run() {
         const context = this.context;
+
         function forEach(entity: EntityItem, component: LifetimeComponent) {
             if (component.tilesOrMs <= 0) {
                 context.store.removeEntity(entity);

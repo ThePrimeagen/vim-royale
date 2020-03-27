@@ -109,7 +109,6 @@ export default class ServerUpdatePlayers {
                     // this does happen when the player has yet to upload their
                     // before another player has sent an update...
                     continue;
-
                 }
 
                 if (isWithinUpdateDistance(main, component)) {

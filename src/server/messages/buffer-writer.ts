@@ -10,8 +10,16 @@ export default class BufferWriter {
         this.ptr = 0;
     }
 
-    reset() {
+    movePointer(offset: number) {
+        this.ptr = offset;
+    }
+
+    reset(buffer?: Buffer) {
         this.ptr = 0;
+
+        if (buffer) {
+            this.buffer = buffer;
+        }
     }
 
     writeStr(str: string) {

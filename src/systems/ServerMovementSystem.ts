@@ -44,11 +44,13 @@ export default class ServerMovementSystem {
 
             const movement = getMovement(update.key);
 
+            debugger;
             // WHAT THE F
             const position =
             // @ts-ignore
                 this.context.store.getComponent(update.entityId, PositionComponent) as PositionComponent;
 
+            //
             // We got a problem
             const expectedX = position.x + movement[0];
             const expectedY = position.y + movement[1];

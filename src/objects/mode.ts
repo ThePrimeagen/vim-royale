@@ -9,10 +9,14 @@ const basicStrategy = new BasicCharacterStrategy();
 const characterStrategies = {
     [ScreenType.Normal]: new StyledCharacterStrategy({
         bold: true,
+        fg: 'FCFCFC',
+        bg: '333333'
+    }),
+    [ScreenType.Insert]: new StyledCharacterStrategy({
+        bold: true,
         fg: '96A537',
         bg: 'FF0000'
     }),
-    [ScreenType.Insert]: basicStrategy,
     [ScreenType.MainMenu]: basicStrategy
 };
 

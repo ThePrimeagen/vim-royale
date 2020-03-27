@@ -8,8 +8,10 @@ import { updatePosition, createEntity } from './server/messages';
 import GlobalContext, { LocalContext } from './context';
 import { WSMessage } from './server/commands';
 import getLogger from './logger';
+import { Encodable, Decodable } from './objects/encodable';
 
 const logger = getLogger('client-socket');
+
 let id = 0;
 export default class ClientSocket {
     private context: LocalContext;
@@ -92,15 +94,11 @@ export default class ClientSocket {
         this.ws.close();
     }
 
-    createEntity(entityId: EntityItem, x: number, y: number) {
+    createEntity(encodable: Encodable, info: Decodable) {
+        const buf = createEntity(encodable, info.encodeLength);
 
-        const buf = createEntity({
-            entityId,
-            x,
-            y
-        });
+        logger("createEntity", encodable.getEntityId(), this.id);
 
-        logger("createEntity", entityId, this.id);
         try {
             this.ws.send(buf);
         } catch (e) {
