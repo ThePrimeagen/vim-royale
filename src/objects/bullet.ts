@@ -25,6 +25,8 @@ export default class Bullet implements Encodable {
     public velocity: VelocityComponent;
     public lifetime: LifetimeComponent;
 
+    // TODO: Make the x,y,vel, and lyfetime use an object config.  Cache that
+    // object.
     constructor(position: PositionComponent, x: Direction, y: Direction,
         velocityX: number, velocityY: number, lifetime: number,
         context: LocalContext) {
@@ -54,6 +56,13 @@ export default class Bullet implements Encodable {
         context.socket.createEntity(this, Bullet);
     }
 
+    enableCreateEntity() {
+        const createEntity =
+            new CreateEntityComponent(this.entity, this, Bullet);
+
+        this.context.store.attachComponent(this.entity, createEntity);
+    }
+
     getEntityId(): number {
         return this.entity;
     }
@@ -81,9 +90,9 @@ export default class Bullet implements Encodable {
 
         // read off the type
         const type = readBuffer.read8();
-        if (type !== EntityType.Bullet) {
+        //if (type !== EntityType.Bullet) {
             throw new Error(`Encoding error got ${type} but expected ${EntityType.Player}`);
-        }
+        // }
 
         const entity = readBuffer.read24();
         const x = readBuffer.read16();
@@ -103,11 +112,6 @@ export default class Bullet implements Encodable {
         context.store.attachComponent(entity, movement);
         context.store.attachComponent(entity, velocity);
         context.store.attachComponent(entity, lifetime);
-
-        if (isServer()) {
-            const createEntity = new CreateEntityComponent();
-            context.store.attachComponent(entity, createEntity);
-        }
 
         return entity;
     }

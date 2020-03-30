@@ -21,6 +21,7 @@ export type GlobalContext = {
 };
 
 export type LocalContext = {
+    isServer: boolean;
     screen: ScreenType;
     player: Player;
     store: EntityStore;
@@ -37,12 +38,14 @@ export function createLocalContext({
     events,
     player,
     socket,
+    isServer,
 }: {
     screen?: ScreenType,
     store?: EntityStore,
     events?: Events,
     player?: Player,
-    socket?: ClientSocket
+    socket?: ClientSocket,
+    isServer?: boolean,
 } = {}): LocalContext {
     const out = {
         get screen() {
@@ -61,6 +64,7 @@ export function createLocalContext({
         events,
         store,
         dirty: true,
+        isServer: !!isServer,
         id: contextId++,
     } as LocalContext;
 

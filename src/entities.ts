@@ -1,3 +1,6 @@
+import createLogger from "./logger";
+const logger = createLogger("EntityStore");
+
 // createNewEntity: number
 // addBehavior(entity: number, behavior<Position>)
 //
@@ -57,24 +60,16 @@ export class EntityStore {
         return [...this.entityMap.keys()];
     }
 
-    forEach<T extends Component>(T, cb: (entityId: EntityItem, state: T) => void) {
-        const entities = this.entitiesByComponent.get(T.type);
+    forEach<T extends Component>(comp: Component, cb: (entityId: EntityItem, state: T) => void) {
+        const entities = this.entitiesByComponent.get(comp.type);
 
         if (!entities) {
             return;
         }
 
-        // TODO: Ask Jordan
-        // TODO: Whatatattatata
-        // for (k of entities) {
-        // for (k in entities.keys()) {
-        //   k becomes a string
-        // }
-        Array.from(entities.keys()).forEach(k => {
-            const entity: T = <any>entities.get(k);
-
-            cb(k, entity);
-        });
+        for (const [k, v] of entities) {
+            cb(k, v as T);
+        }
     }
 
     toCachedArray(component: Component): Component[] {
@@ -147,21 +142,22 @@ export class EntityStore {
         this.entitiesByComponent.get(comp.type).set(entity, comp);
     }
 
-    removeComponent(entity: EntityItem, type: string) {
+    removeComponent(entity: EntityItem, comp: Component) {
         const components = this.entityMap.get(entity);
+
         if (!components) {
             return;
         }
 
-        if (components.has(type)) {
-            components.delete(type);
+        if (components.has(comp.type)) {
+            components.delete(comp.type);
 
             if (components.size === 0) {
                 throw new Error("You should probabyl delete me, but can this ever happen?");
             }
         }
 
-        const entitiesByComp = this.entitiesByComponent.get(type);
+        const entitiesByComp = this.entitiesByComponent.get(comp.type);
         if (entitiesByComp && entitiesByComp.has(entity)) {
             entitiesByComp.delete(entity);
         }

@@ -1,7 +1,5 @@
 import * as dotenv from 'dotenv';
-dotenv.config({
-    IS_SERVER: "true"
-});
+dotenv.config();
 
 import WebSocket from 'ws';
 import ON_DEATH from 'death';
@@ -61,7 +59,9 @@ export default class Server {
         this.height = height;
         this.entitiesRange = entityIdRange;
         this.entitiesStart = 0;
-        this.context = createLocalContext();
+        this.context = createLocalContext({
+            isServer: true
+        });
 
         this.wss = new WebSocket.Server({
             port

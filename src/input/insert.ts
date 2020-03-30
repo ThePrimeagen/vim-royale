@@ -16,20 +16,23 @@ export default {
             return true;
         }
 
+        let b: Bullet;
         switch (key) {
             case 'h':
-                new Bullet(context.player.position, -1, 0, -BULLET_SPEED_HOR, 0, BULLET_DISTANCE_HOR, context);
+                b = new Bullet(context.player.position, -1, 0, -BULLET_SPEED_HOR, 0, BULLET_DISTANCE_HOR, context);
                 break;
             case 'j':
-                new Bullet(context.player.position, 0, 1, 0, BULLET_SPEED_VERT, BULLET_DISTANCES_VERT, context);
+                b = new Bullet(context.player.position, 0, 1, 0, BULLET_SPEED_VERT, BULLET_DISTANCES_VERT, context);
                 break;
             case 'k':
-                new Bullet(context.player.position, 0, -1, 0, -BULLET_SPEED_VERT, BULLET_DISTANCES_VERT, context);
+                b = new Bullet(context.player.position, 0, -1, 0, -BULLET_SPEED_VERT, BULLET_DISTANCES_VERT, context);
                 break;
             case 'l':
-                new Bullet(context.player.position, 1, 0, BULLET_SPEED_HOR, 0, BULLET_DISTANCE_HOR, context);
+                b = new Bullet(context.player.position, 1, 0, BULLET_SPEED_HOR, 0, BULLET_DISTANCE_HOR, context);
                 break;
         }
+
+        b.enableCreateEntity();
 
         // other stuffs???
         return true;

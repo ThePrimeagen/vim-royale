@@ -1,3 +1,4 @@
+// TODO: Refactor this heeeeeeeeapying pile of doo doo.
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -8,10 +9,12 @@ import { StartGameMessage } from "./server/commands";
 import { isCorrectPosition, readCorrectPosition } from "./server/messages/correctPosition";
 import { isGameStateUpdate, readGameStateUpdate } from "./server/messages/game-state-update";
 import { MapLayout }from "./server/commands";
+import ClientNetworkSyncSystem from "./systems/ClientNetworkSyncSystem";
 import LifetimeSystem from "./systems/LifetimeSystem";
 import VelocitySystem from "./systems/VelocitySystem";
 import RendererSystem from "./systems/ClientRenderSystem";
 import MovementSystem from "./systems/ClientMovementSystem";
+import CreateEntitySystem from "./systems/ClientCreateEntitySystem";
 import getEvents, {Events, EventType, BinaryData, EventData, Run} from "./events";
 import captureInput from "./input/index";
 import createMainMenu from "./screen/main-menu";
@@ -59,7 +62,9 @@ export default class Game {
     private velocity: VelocitySystem;
     private lifetime: LifetimeSystem;
     private movement: MovementSystem;
+    private network: ClientNetworkSyncSystem;
     private renderer: RendererSystem;
+    private createEntity: CreateEntitySystem;
     private store: EntityStore;
     private events: Events;
     private player: Player;
@@ -139,17 +144,20 @@ export default class Game {
             playerX,
             playerY,
         ] = data.position;
+
         this.player = new Player(playerX, playerY, "@", this.context);
+        this.player.enableForcedMovement();
+        this.player.enableCreateEntity();
 
         this.context.player = this.player;
         this.context.screen = ScreenType.Normal;
 
+        this.network = new ClientNetworkSyncSystem(this.context);
         this.renderer = new RendererSystem(this.screen, this.board, this.context);
         this.movement = new MovementSystem(this.board, this.context);
         this.velocity = new VelocitySystem(this.context);
         this.lifetime = new LifetimeSystem(this.context);
-
-        this.context.socket.createEntity(this.player, Player);
+        this.createEntity = new CreateEntitySystem(this.context);
 
         this.loop();
     }
@@ -167,10 +175,14 @@ export default class Game {
         const then = Date.now();
         const diff = this.loopLastCalled === 0 ? 0 : then - this.loopLastCalled;
 
+        this.createEntity.run();
         this.velocity.run(diff);
         this.movement.run();
+        this.network.run();
         this.renderer.run(diff);
         this.lifetime.run(diff);
+
+        this.movement.reset();
 
         if (++this.loopCount % 600 === 0) {
             logger("timer", Date.now() - then);

@@ -6,36 +6,46 @@ import {LocalContext} from '../context';
 import ForcePositionComponent from './components/force-position';
 import NetworkSyncComponent from './components/network-sync';
 import CreateEntityComponent from './components/create-entity';
-import {MovementCommand} from '../types';
 import {Encodable, writeBuffer, readBuffer} from './encodable';
 import {EntityType} from './types';
 import BufferWriter from '../server/messages/buffer-writer';
 import BufferReader from '../server/messages/buffer-reader';
 
 export default class Player implements Encodable {
+
     public entity: EntityItem;
     public context: LocalContext;
     public position: PositionComponent;
-    // public network: NetworkSyncComponent;
+    public network: NetworkSyncComponent;
     public movement: MovementComponent;
     public forcePosition: ForcePositionComponent;
 
-    public lastMovement: MovementCommand;
-
-    constructor(x: number, y: number, char: string, context: LocalContext) {
+    // TODO: I don't like this interface.
+    constructor(x: number, y: number, char: string, context: LocalContext, entityId?: number) {
         this.context = context;
-        this.entity = context.store.createNewEntity();
+
+        if (entityId !== undefined) {
+            this.entity = entityId;
+            context.store.setNewEntity(entityId);
+        }
+        else {
+            this.entity = context.store.createNewEntity();
+        }
 
         this.position = new PositionComponent(char, x, y, 100);
         this.movement = new MovementComponent(0, 0);
-
-        // TODO: Complicated for clients?  Should implement this.  But for now,
-        // it really seems like a server only component for players...
-        // this.network = new NetworkSyncComponent(this.position);
+        this.network = new NetworkSyncComponent();
 
         context.store.attachComponent(this.entity, this.position);
         context.store.attachComponent(this.entity, this.movement);
-        // context.store.attachComponent(this.entity, this.network);
+        context.store.attachComponent(this.entity, this.network);
+    }
+
+    enableCreateEntity() {
+        const createEntity =
+            new CreateEntityComponent(this.entity, this, Player);
+
+        this.context.store.attachComponent(this.entity, createEntity);
     }
 
     enableForcedMovement() {
@@ -77,23 +87,13 @@ export default class Player implements Encodable {
         const y = readBuffer.read16();
         const char = readBuffer.read8();
 
-        const position = new PositionComponent(String.fromCharCode(char), x, y);
-
-        context.store.setNewEntity(entity);
-        context.store.attachComponent(entity, position);
-
-        if (isServer()) {
-            const network = new NetworkSyncComponent();
-            const createEntity = new CreateEntityComponent();
-
-            context.store.attachComponent(entity, network);
-            context.store.attachComponent(entity, network);
-        }
+        // TODO: Consider a pool, especially when it comes to bullets.
+        new Player(x, y, String.fromCharCode(char), context, entity);
 
         return entity;
     }
 
-    static encodeLength: number = 9;
+    public static encodeLength: number = 9;
     static is(buffer: Buffer, offset: number = 0): boolean {
         return buffer[offset] === EntityType.Player;
     }

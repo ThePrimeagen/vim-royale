@@ -37,7 +37,7 @@ export default {
 
         player.movement.x = movement[0];
         player.movement.y = movement[1];
-        player.lastMovement = movementCommand;
+        player.movement.lastMovement = movementCommand;
 
         return processed;
     },

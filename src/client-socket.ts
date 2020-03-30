@@ -111,7 +111,7 @@ export default class ClientSocket {
         const pos = player.position;
 
         const buf = updatePosition({
-            cmd: player.lastMovement,
+            cmd: player.movement.lastMovement,
             movementId,
             entityId: player.entity,
             x: pos.x,

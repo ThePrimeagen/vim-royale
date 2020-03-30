@@ -2,6 +2,8 @@ import { FrameType, UpdatePositionResult } from './types';
 import { EntityItem } from '../../entities';
 import BufferWriter from './buffer-writer';
 import { MovementCommand } from '../../types';
+import createLogger from '../../logger';
+const logger = createLogger("UpdatePosition");
 
 // How to encode this ?
 // TODO: Bullets, they need to have direction, all of taht....
@@ -29,6 +31,8 @@ export default function createUpdatePosition({
     b.write16(x);
     b.write16(y);
 
+    logger("createUpdatePosition", b.buffer);
+
     return b.buffer;
 };
 
@@ -40,6 +44,8 @@ export function readUpdatePosition(buf: Buffer, offset: number = 0): UpdatePosit
     const key = String.fromCharCode(buf[offset + 6]);
     const x = BufferWriter.read16(buf, offset + 7);
     const y = BufferWriter.read16(buf, offset + 9);
+
+    logger("readUpdatePosition", buf);
 
     return {
         x,

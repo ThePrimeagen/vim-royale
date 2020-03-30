@@ -65,17 +65,17 @@ export default class ServerMovementSystem {
             }
 
             const movement = getMovement(update.key);
+            logger("Movement", movement);
 
-            // WHAT THE F
-            const position =
-            // @ts-ignore
-                this.context.store.getComponent(update.entityId, PositionComponent) as PositionComponent;
+            const position = this.context.store.getComponent<PositionComponent>(update.entityId, PositionComponent);
+            logger("Position", position, update);
 
             //
             // We got a problem
             const expectedX = position.x + movement[0];
             const expectedY = position.y + movement[1];
 
+            logger("Expected vs Update", expectedX !== update.x, "||", expectedY !== update.y);
             if (expectedX !== update.x || expectedY !== update.y) {
                 // this is insane way to do it, but we are doing it this way
                 // baby.

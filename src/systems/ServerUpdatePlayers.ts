@@ -113,6 +113,7 @@ export default class ServerUpdatePlayers {
                 // because i am dressed this way, does not mean, your buffer
                 // can hold my ascii
                 if (isWithinUpdateDistance(main, pos)) {
+                    logger("isWithinUpdateDistance", main, pos);
                     const buf = pool.malloc();
                     const playerData = createGameUpdate.
                         entityPositionUpdate(obj, buf.writer);
