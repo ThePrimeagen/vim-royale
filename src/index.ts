@@ -168,9 +168,9 @@ export default class Game {
         const diff = this.loopLastCalled === 0 ? 0 : then - this.loopLastCalled;
 
         this.velocity.run(diff);
-        this.movement.run(diff);
+        this.movement.run();
         this.renderer.run(diff);
-        this.lifetime.run();
+        this.lifetime.run(diff);
 
         if (++this.loopCount % 600 === 0) {
             logger("timer", Date.now() - then);

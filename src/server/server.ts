@@ -1,3 +1,4 @@
+import { getEntityIdFromBuffer, isUpdateEveryoneEntity } from '../objects';
 import Player from '../objects/player';
 import getEvents, {Events, EventType, MovesToProcess} from '../events';
 import {FrameType} from './messages/types';
@@ -8,6 +9,7 @@ import PositionComponent from '../objects/components/position';
 import MovementComponent from '../objects/components/movement';
 import ServerMovementSystem from '../systems/ServerMovementSystem';
 import LifetimeSystem from '../systems/LifetimeSystem';
+import VelocitySystem from '../systems/VelocitySystem';
 import ServerUpdatePlayers from '../systems/ServerUpdatePlayers';
 import GlobalContext, {createLocalContext, LocalContext} from '../context';
 import Board from '../board';
@@ -25,6 +27,7 @@ const pool = new ObjectPool();
 //TODO: Refactor this into a less heaping pile of shit.
 
 export default class ServerClientSync {
+    private loopLastCalled: number;
     private infos: TrackingInfo[];
     private movesToProcess: MovesToProcess[];
     private tick: number;
@@ -32,6 +35,7 @@ export default class ServerClientSync {
     private entities: number[];
     private boundUpdate: () => void;
     private lifetime: LifetimeSystem;
+    private velocity: VelocitySystem;
     private movement: ServerMovementSystem;
     private updatePlayers: ServerUpdatePlayers;
 
@@ -52,6 +56,7 @@ export default class ServerClientSync {
         this.movement = new ServerMovementSystem(this.map, this.context);
         this.updatePlayers = new ServerUpdatePlayers(this.map, this.context);
         this.lifetime = new LifetimeSystem(context);
+        this.velocity = new VelocitySystem(context);
         this.boundUpdate = this.update.bind(this);
 
         this.initializeEvents();
@@ -117,12 +122,15 @@ export default class ServerClientSync {
 
     public update() {
         const then = Date.now();
+        const diff = this.loopLastCalled === 0 ? 0 : then - this.loopLastCalled;
+        this.loopLastCalled = then;
 
         // Process all movements.
         // TODO: Server Movements System?
-        this.movement.run(this.movesToProcess);
+        const movements = this.velocity.run(diff);
+        this.movement.run(this.movesToProcess, movements);
         this.updatePlayers.run(this.infos);
-        this.lifetime.run();
+        this.lifetime.run(diff);
 
         const now = Date.now();
         if (this.tick < now - then) {
@@ -156,15 +164,14 @@ export default class ServerClientSync {
             }
         }
 
-
-        const diff = Date.now() - then;
-        sum += diff;
-        if (high < diff) {
-            high = diff;
+        const frameTimeDiff = Date.now() - then;
+        sum += frameTimeDiff;
+        if (high < frameTimeDiff) {
+            high = frameTimeDiff;
         }
 
-        if (low > diff) {
-            low = diff;
+        if (low > frameTimeDiff) {
+            low = frameTimeDiff;
         }
 
         if (count === 500) {

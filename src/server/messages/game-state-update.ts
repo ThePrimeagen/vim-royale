@@ -12,7 +12,7 @@ export {
 }
 
 export default {
-    playerMovement({entityId, char, x, y}: EntityMovementArgs, b?: BufferWriter): Buffer {
+    entityPositionUpdate({entityId, char, x, y}: EntityMovementArgs, b?: BufferWriter): Buffer {
 
         b = b || new BufferWriter(PLAYER_MOVEMENT_SIZE);
         b.write8(FrameType.GameStateUpdate);

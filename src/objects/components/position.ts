@@ -45,3 +45,5 @@ export default class PositionComponent implements Component {
         this._char = this._characterStrategy.buildChar(char);
     }
 }
+
+export const blankPosition = new PositionComponent('b', 0, 0);

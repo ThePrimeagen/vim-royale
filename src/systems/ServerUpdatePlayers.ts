@@ -1,7 +1,8 @@
 import GlobalContext, {LocalContext} from '../context';
 
 import getMovement from '../input/getMovement';
-import PC from '../objects/components/position';
+import PC, {blankPosition} from '../objects/components/position';
+import NSC from '../objects/components/network-sync';
 import createGameUpdate, {PLAYER_MOVEMENT_SIZE} from '../server/messages/game-state-update';
 import BufferWriter from '../server/messages/buffer-writer';
 import {TrackingInfo} from '../types';
@@ -63,7 +64,6 @@ const pool = new BufferPool(function(pool: BufferPool): BufferWriterWrapper {
 
 const { width, height } = GlobalContext.display;
 function isWithinUpdateDistance(a: PC, b: PC): boolean {
-    logger("isWithinUpdateDistance", a, b);
     return Math.abs(a.x - b.x) < width &&
         Math.abs(a.y - b.y) < height;
 }
@@ -78,12 +78,13 @@ export default class ServerUpdatePlayers {
     }
 
     run(listOfTrackingInfos: TrackingInfo[]) {
+        this.context.store.forEach(NSC, (entityId, component: NSC) => {
+            const pos = this.context.store.getComponent<PC>(entityId, PC);
 
-        this.context.store.forEach(PC, (entityId, component: PC) => {
             obj.entityId = entityId;
-            obj.char = component.char[0][0];
-            obj.x = component.x;
-            obj.y = component.y;
+            obj.char = pos.char[0][0];
+            obj.x = pos.x;
+            obj.y = pos.y;
 
             for (let i = 0; i < listOfTrackingInfos.length; ++i) {
                 const tracking = listOfTrackingInfos[i];
@@ -97,11 +98,7 @@ export default class ServerUpdatePlayers {
                 let main: PC;
                 if (process.env.MAP === 'true') {
                     main = GlobalContext.activePlayers[playerEntityId];
-                }
-                else {
-                    // Ask jordan (probably 5th comment in this project with this
-                    // in here.
-                    // @ts-ignore
+                } else {
                     main = this.context.store.getComponent<PC>(playerEntityId, PC);
                 }
 
@@ -111,10 +108,14 @@ export default class ServerUpdatePlayers {
                     continue;
                 }
 
-                if (isWithinUpdateDistance(main, component)) {
+                // This... This is naughty...  Not all things should be
+                // updated.  Specifically when it comes to bullets.  Just
+                // because i am dressed this way, does not mean, your buffer
+                // can hold my ascii
+                if (isWithinUpdateDistance(main, pos)) {
                     const buf = pool.malloc();
                     const playerData = createGameUpdate.
-                        playerMovement(obj, buf.writer);
+                        entityPositionUpdate(obj, buf.writer);
 
                     // TODO: Make sure that all this object creation does not F me.
                     tracking.ws.send(playerData, buf.detachCallback);

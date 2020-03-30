@@ -1,9 +1,21 @@
 #### TODO:
 
+* Tonights Game Plan
+  * Lets get createEntity with bullets showing up.
+  * Lets get damage driven from server.
+    * Collisions?
+    * Damage sent down to be displayed
+  * Storm
+  * Map
+
+
+* REAL TODO:
+  * Refactor the Client and Server Movement System's probably into 3? systems.
+    * MovementSystem - works on moveables.
+    * ServerValidation
+    * ClientForcing
+
 * networking
-  * createEntity / all the game state updates should be related to an entity -- nice programming --
-    * createEntity(obj: {encodeType(), encode(), decode(), is()});
-    * gameStateUpdates(...);
   * (DOING): f it, just make createEntity take in a type and more encoding bits -- shooting possible --
   * buffer network messages until server tick. -- perf --
 

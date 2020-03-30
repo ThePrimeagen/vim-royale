@@ -2,11 +2,13 @@ import {MovesToProcess, EventData, ServerMovement} from '../events';
 import GlobalContext, {LocalContext} from '../context';
 
 import getMovement from '../input/getMovement';
+import LifetimeComponent from '../objects/components/lifetime';
 import MovementComponent from '../objects/components/movement';
 import PositionComponent from '../objects/components/position';
 import Board from '../board';
 import {readUpdatePosition} from '../server/messages/updatePosition';
 import createCorrectPosition, {readCorrectPosition} from '../server/messages/correctPosition';
+import {MovementAndEntity} from './types';
 
 import getLogger from '../logger';
 
@@ -23,7 +25,27 @@ export default class ServerMovementSystem {
         this.context = context;
     }
 
-    run(listOfMovements: MovesToProcess[]) {
+    run(listOfMovements: MovesToProcess[], movements: MovementAndEntity[]) {
+        // TODO: Screaming: Refactor, please
+        for (let i = 0; i < movements.length; ++i) {
+            const {
+                movement,
+                entityId
+            } = movements[i];
+
+            const x = Math.abs(movement.x);
+            const y = Math.abs(movement.y);
+
+            LifetimeComponent.move(this.context, entityId, x + y);
+
+            // @ts-ignore
+            const position = this.context.store.getComponent<PositionComponent>(entityId, PositionComponent) as PositionComponent;
+
+            position.x += movement.x;
+            position.y += movement.y;
+            movement.x = 0;
+            movement.y = 0;
+        }
 
         listOfMovements.forEach(({buf, tracking}) => {
             const update = readUpdatePosition(buf, 1);
@@ -44,7 +66,6 @@ export default class ServerMovementSystem {
 
             const movement = getMovement(update.key);
 
-            debugger;
             // WHAT THE F
             const position =
             // @ts-ignore
@@ -76,8 +97,11 @@ export default class ServerMovementSystem {
                 tracking.movementId = update.movementId;
 
                 logger("Movement Approved!!!!", position.x, position.y);
+                const moveTotal = Math.abs(movement[0]) + Math.abs(movement[1]);
             }
+
         });
+
     }
 }
 

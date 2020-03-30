@@ -3,7 +3,7 @@ const dataV24 = new DataView(dataB24.buffer);
 
 export default class BufferWriter {
     public buffer: Buffer;
-    private ptr: number;
+    public ptr: number;
 
     constructor(length: number) {
         this.buffer = Buffer.allocUnsafe(length);
@@ -36,14 +36,12 @@ export default class BufferWriter {
     }
 
     write24(num: number) {
-        dataV24.setUint32(0, num);
-        this.buffer[this.ptr++] = dataB24[1];
-        this.buffer[this.ptr++] = dataB24[2];
-        this.buffer[this.ptr++] = dataB24[3];
+        this.buffer.writeIntBE(num, this.ptr, 3);
+        this.ptr += 3;
     }
 
     write32(num: number) {
-        this.buffer.writeUInt32BE(num, this.ptr);
+        this.buffer.writeInt32BE(num, this.ptr);
         this.ptr += 4;
     }
 

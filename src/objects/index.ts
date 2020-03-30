@@ -12,3 +12,10 @@ export const decodables = [
     Player,
 ] as Decodable[];
 
+export function isUpdateEveryoneEntity(buffer: Buffer, offset: number) {
+    return Bullet.is(buffer, offset);
+}
+
+export function getEntityIdFromBuffer(buffer: Buffer, offset: number) {
+}
+

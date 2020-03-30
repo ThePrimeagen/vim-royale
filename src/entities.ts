@@ -1,4 +1,3 @@
-// 1. Everything has behaViors
 // createNewEntity: number
 // addBehavior(entity: number, behavior<Position>)
 //
@@ -38,7 +37,7 @@ export class EntityStore {
         this.maxId = stop;
     }
 
-    getComponent<T extends Component>(entityId: EntityItem, comp: T): T | null {
+    getComponent<T extends Component>(entityId: EntityItem, comp: Component): T | null {
         const componentMap = this.entityMap.get(entityId);
 
         if (!componentMap) {
@@ -91,14 +90,17 @@ export class EntityStore {
         return cachedEntityArray;
     }
 
-    toArray<T extends Component>(T): T[] {
-        const entities = this.entitiesByComponent.get(T.type);
+    toArray<T extends Component>(comp: Component, out: T[] = []): T[] {
+        const entities = this.entitiesByComponent.get(comp.type);
 
         if (!entities) {
-            return [];
+            return out;
         }
 
-        return Array.from(entities.keys()).map(k => entities.get(k) as T);
+        for (const v of entities.values()) {
+            out.push(v as T);
+        }
+        return out;
     }
 
     getNextId(): number {
@@ -146,7 +148,23 @@ export class EntityStore {
     }
 
     removeComponent(entity: EntityItem, type: string) {
-        throw new Error("You should implement me...");
+        const components = this.entityMap.get(entity);
+        if (!components) {
+            return;
+        }
+
+        if (components.has(type)) {
+            components.delete(type);
+
+            if (components.size === 0) {
+                throw new Error("You should probabyl delete me, but can this ever happen?");
+            }
+        }
+
+        const entitiesByComp = this.entitiesByComponent.get(type);
+        if (entitiesByComp && entitiesByComp.has(entity)) {
+            entitiesByComp.delete(entity);
+        }
     }
 
     removeEntityRange(from: EntityItem, to: EntityItem) {

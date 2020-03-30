@@ -13,22 +13,21 @@ export default class BufferReader {
     }
 
     read24(): number {
-        dataB24[1] = this.buffer[this.ptr++];
-        dataB24[2] = this.buffer[this.ptr++];
-        dataB24[3] = this.buffer[this.ptr++];
+        const out = this.buffer.readIntBE(this.ptr, 3);
+        this.ptr += 3;
 
-        return dataV24.getUint32(0);
+        return out;
     }
 
     read16(): number {
-        const out = this.buffer.readUInt16BE(this.ptr);
+        const out = this.buffer.readInt16BE(this.ptr);
         this.ptr += 2;
 
         return out;
     }
 
     read8(): number {
-        return this.buffer.readUInt8(this.ptr++);
+        return this.buffer.readInt8(this.ptr++);
     }
 
     readChar8(): string {

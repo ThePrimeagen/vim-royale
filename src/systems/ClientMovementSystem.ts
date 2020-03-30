@@ -20,8 +20,7 @@ export default class MovementSystem {
         this.context = context;
     }
 
-    // TODO: Girth?
-    run(diff: number) {
+    run() {
 
         this.context.store.forEach(MovementComponent, (entity, component: MovementComponent) => {
 
@@ -77,13 +76,8 @@ export default class MovementSystem {
                 this.context.socket.confirmMovement(id);
             }
 
-            // @ts-ignore
-            const lifetime = this.context.store.
-                getComponent(entity, LifetimeComponent) as LifetimeComponent;
-
-            if (lifetime && !lifetime.decrementOnMs) {
-                lifetime.tilesOrMs -= Math.abs(newY - oldY + newX - oldX);
-            }
+            const moveTotal = Math.abs(newY - oldY) + Math.abs(newX - oldX);
+            LifetimeComponent.move(this.context, entity, moveTotal);
         });
     }
 }

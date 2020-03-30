@@ -4,6 +4,7 @@
 * Because Rust sucks.
 
 **May the best man *vim*.**
+**Cheaters never *vim*.**
 
 # Setup
 `npm install`

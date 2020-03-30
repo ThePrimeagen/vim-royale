@@ -4,8 +4,8 @@ import Bullet from '../objects/bullet';
 
 const logger = getLogger('input-insert');
 
-const BULLET_SPEED_HOR = 0.05;
-const BULLET_SPEED_VERT = 0.02;
+const BULLET_SPEED_HOR = 3;
+const BULLET_SPEED_VERT = 2;
 const BULLET_DISTANCE_HOR = 30;
 const BULLET_DISTANCES_VERT = 20;
 

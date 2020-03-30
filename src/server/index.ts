@@ -1,5 +1,7 @@
 import * as dotenv from 'dotenv';
-dotenv.config();
+dotenv.config({
+    IS_SERVER: "true"
+});
 
 import WebSocket from 'ws';
 import ON_DEATH from 'death';

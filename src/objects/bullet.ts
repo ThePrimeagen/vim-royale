@@ -1,4 +1,6 @@
+import isServer from '../util/is-server';
 import {EntityItem} from '../entities';
+import CreateEntityComponent from './components/create-entity';
 import PositionComponent from './components/position';
 import MovementComponent from './components/movement';
 import VelocityComponent from './components/velocity';
@@ -47,6 +49,8 @@ export default class Bullet implements Encodable {
         context.store.attachComponent(this.entity, this.movement);
         context.store.attachComponent(this.entity, this.velocity);
         context.store.attachComponent(this.entity, this.lifetime);
+
+        logger("Bullet Constructor", this.velocity);
         context.socket.createEntity(this, Bullet);
     }
 
@@ -65,8 +69,8 @@ export default class Bullet implements Encodable {
 
         //  I guess, but I'll have to do some server validation...
         // TODO: Do we do this ever?
-        writeBuffer.write16(this.velocity.x);
-        writeBuffer.write16(this.velocity.y);
+        writeBuffer.write8(this.velocity.velX);
+        writeBuffer.write8(this.velocity.velY);
 
         // TODO: Validate also
         writeBuffer.write8(this.lifetime.tilesOrMs);
@@ -84,8 +88,8 @@ export default class Bullet implements Encodable {
         const entity = readBuffer.read24();
         const x = readBuffer.read16();
         const y = readBuffer.read16();
-        const velocityX = readBuffer.read16();
-        const velocityY = readBuffer.read16();
+        const velocityX = readBuffer.read8();
+        const velocityY = readBuffer.read8();
         const lt = readBuffer.read8();
 
         const position = new PositionComponent(BULLET_CHAR, x, y);
@@ -93,12 +97,17 @@ export default class Bullet implements Encodable {
         const velocity = new VelocityComponent(x, y, velocityX, velocityY);
         const lifetime = new LifetimeComponent(lt, false);
 
-        logger("create from decode", entity);
+        logger("Decode", entity, velocity, position);
         context.store.setNewEntity(entity);
         context.store.attachComponent(entity, position);
         context.store.attachComponent(entity, movement);
         context.store.attachComponent(entity, velocity);
         context.store.attachComponent(entity, lifetime);
+
+        if (isServer()) {
+            const createEntity = new CreateEntityComponent();
+            context.store.attachComponent(entity, createEntity);
+        }
 
         return entity;
     }
@@ -107,7 +116,7 @@ export default class Bullet implements Encodable {
         return buffer[offset] === EntityType.Bullet;
     }
 
-    static encodeLength: number = 13;
+    static encodeLength: number = 11;
 }
 
 
