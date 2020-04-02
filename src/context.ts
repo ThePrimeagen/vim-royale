@@ -27,7 +27,6 @@ export type LocalContext = {
     store: EntityStore;
     events: Events;
     socket: ClientSocket;
-    dirty: boolean;
     id: number;
 };
 
@@ -63,7 +62,6 @@ export function createLocalContext({
         socket,
         events,
         store,
-        dirty: true,
         isServer: !!isServer,
         id: contextId++,
     } as LocalContext;

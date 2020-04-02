@@ -32,7 +32,7 @@ import {
     findMovementListener,
     toBlessedKeyEvent,
     getMovementFromDir,
-} from './utils';
+} from './_utils';
 
 import createInput from '../input';
 import PositionComponent from '../objects/components/position';
@@ -77,6 +77,7 @@ describe("integration", function() {
             port,
             host: 'localhost',
             context,
+            tick: 1000,
         });
         game.push(g);
         return g;

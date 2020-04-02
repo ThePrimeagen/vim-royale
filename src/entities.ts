@@ -123,6 +123,7 @@ export class EntityStore {
     }
 
     setNewEntity(id: number): boolean {
+        logger("setNewEntity", id);
         if (this.entityMap.has(id)) {
             return false;
         }
@@ -133,6 +134,7 @@ export class EntityStore {
     }
 
     attachComponent(entity: EntityItem, comp: Component) {
+        logger("attachComponent", entity, comp.type);
         this.entityMap.get(entity).set(comp.type, comp);
         if (!this.entitiesByComponent.has(comp.type)) {
             this.entitiesByComponent.set(comp.type, new Map());
@@ -145,6 +147,7 @@ export class EntityStore {
     removeComponent(entity: EntityItem, comp: Component) {
         const components = this.entityMap.get(entity);
 
+        logger("removeComponent", components);
         if (!components) {
             return;
         }

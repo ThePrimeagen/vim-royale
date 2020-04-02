@@ -12,6 +12,7 @@ export enum EventType {
     WsMessage = "ws-message",
     WsBinary = "ws-binary",
     ServerMovement = "server-movement",
+    Debug = "debug",
 }
 
 export interface WsClose {
@@ -61,9 +62,17 @@ export interface ServerMovement {
     data: MovesToProcess[]
 }
 
+export interface Debug {
+    type: EventType.Debug;
+    data: {
+        type: string,
+        [key: string]: any
+    },
+}
+
 export type EventData =
     ScreenTypeChanged | WsOpen | WsMessage |
-    StartGame | Run | BinaryData | ServerMovement | WsClose;
+    StartGame | Run | BinaryData | ServerMovement | WsClose | Debug;
 
 type EventCallback = (event: EventData, ...args: any[]) => void;
 

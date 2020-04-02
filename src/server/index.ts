@@ -18,11 +18,9 @@ const logger = getLogger("ServerIndex");
 
 let trackingInfoId = 0;
 export default class Server {
-    private currentPlayers: TrackingInfo[];
-    private callbacks: {
-        listening: (() => void)[]
-    };
+    public context: LocalContext;
 
+    private currentPlayers: TrackingInfo[];
     private entityId: number;
     private wss: WebSocket.Server;
     private map: Board;
@@ -30,7 +28,6 @@ export default class Server {
     private height: number;
     private entitiesRange: number;
     private entitiesStart: number;
-    private context: LocalContext;
     private optionalStartingPositions?: [number, number][];
     private optionIdx: number;
 
@@ -44,11 +41,9 @@ export default class Server {
             tick,
             entityIdRange = 10000,
             optionalStartingPositions,
+            debug = true,
         } = config;
 
-        this.callbacks = {
-            listening: []
-        };
         this.optionIdx = 0;
         this.optionalStartingPositions = optionalStartingPositions;
 
@@ -74,11 +69,17 @@ export default class Server {
             this.map, tick, this.currentPlayers, this.context);
 
         this.wss.on('listening', () => {
-            this.callbacks.listening.forEach(cb => cb());
+            this.context.events.emit({
+                type: EventType.Debug,
+                data: {
+                    type: "listening",
+                    trackingInfo,
+                },
+            });
+
         });
 
         this.wss.on('connection', ws => {
-            console.log("New Connection", trackingInfoId);
             logger("New Connection", trackingInfoId);
 
             const binaryMessage = {
@@ -163,20 +164,16 @@ export default class Server {
         ];
     }
 
-    public onListening(cb: () => void) {
-        this.callbacks.listening.push(cb);
-    }
-
     public shutdown() {
         flush();
         this.wss.close();
-        this.callbacks = null;
     }
 }
 
 if (require.main === module) {
     // then start server.
     new Server({
+        debug: false,
         port: +process.env.PORT,
         width: +process.env.WIDTH,
         height: +process.env.HEIGHT,

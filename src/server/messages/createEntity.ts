@@ -46,3 +46,7 @@ export function readCreateEntity(context: LocalContext, buf: Buffer, offset: num
     return entityId;
 }
 
+export function isCreateEntity(buffer: Buffer, offset: number = 0) {
+    return buffer[offset] === FrameType.CreateEntity;
+}
+

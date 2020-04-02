@@ -1,4 +1,5 @@
 import {EventType, BinaryData, EventData, Run} from '../events';
+import { readCreateEntity, isCreateEntity } from '../server/messages/createEntity';
 import { isCorrectPosition, readCorrectPosition } from '../server/messages/correctPosition';
 import { isGameStateUpdate, readGameStateUpdate } from '../server/messages/game-state-update';
 import { GameStateType } from '../server/messages/types';
@@ -44,10 +45,11 @@ function handleGameStateUpdate(context: LocalContext, buffer: Buffer) {
     context.events.emit(renderLoop);
 }
 
-export default function handleBinaryMessage(context: LocalContext, evt: BinaryData) {
+export default function handleBinaryMessage(context: LocalContext, evt: BinaryData, offset: number = 0) {
     const player = context.player;
 
-    if (isCorrectPosition(evt.data, 0)) {
+    logger("isCreateEntity", isCreateEntity(evt.data, offset));
+    if (isCorrectPosition(evt.data, offset)) {
         const posCorrection = readCorrectPosition(evt.data, 1);
 
         player.forcePosition.x = posCorrection.x;
@@ -56,8 +58,12 @@ export default function handleBinaryMessage(context: LocalContext, evt: BinaryDa
         player.forcePosition.force = true;
     }
 
-    else if (isGameStateUpdate(evt.data, 0)) {
+    else if (isGameStateUpdate(evt.data, offset)) {
         handleGameStateUpdate(context, evt.data);
+    }
+
+    else if (isCreateEntity(evt.data, offset)) {
+        logger("isCreateEntity", readCreateEntity(context, evt.data, offset + 1));
     }
 }
 

@@ -9,6 +9,7 @@ import PositionComponent from '../objects/components/position';
 import MovementComponent from '../objects/components/movement';
 import ServerMovementSystem from '../systems/ServerMovementSystem';
 import LifetimeSystem from '../systems/LifetimeSystem';
+import CreateEntitySystem from '../systems/ServerCreateEntitySystem';
 import VelocitySystem from '../systems/VelocitySystem';
 import ServerUpdatePlayers from '../systems/ServerUpdatePlayers';
 import GlobalContext, {createLocalContext, LocalContext} from '../context';
@@ -36,6 +37,7 @@ export default class ServerClientSync {
     private boundUpdate: () => void;
     private lifetime: LifetimeSystem;
     private velocity: VelocitySystem;
+    private createEntity: CreateEntitySystem;
     private movement: ServerMovementSystem;
     private updatePlayers: ServerUpdatePlayers;
 
@@ -56,6 +58,7 @@ export default class ServerClientSync {
         this.movement = new ServerMovementSystem(this.map, this.context);
         this.updatePlayers = new ServerUpdatePlayers(this.map, this.context);
         this.lifetime = new LifetimeSystem(context);
+        this.createEntity = new CreateEntitySystem(context);
         this.velocity = new VelocitySystem(context);
         this.boundUpdate = this.update.bind(this);
 
@@ -127,6 +130,7 @@ export default class ServerClientSync {
 
         // Process all movements.
         // TODO: Server Movements System?
+        this.createEntity.run(this.infos);
         const movements = this.velocity.run(diff);
         this.movement.run(this.movesToProcess, movements);
         this.updatePlayers.run(this.infos);

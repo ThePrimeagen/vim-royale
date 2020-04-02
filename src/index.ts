@@ -182,6 +182,8 @@ export default class Game {
         this.renderer.run(diff);
         this.lifetime.run(diff);
 
+        // TODO: Do I like this?
+        // I think this is a smell..
         this.movement.reset();
 
         if (++this.loopCount % 600 === 0) {
