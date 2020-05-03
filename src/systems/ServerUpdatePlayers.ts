@@ -1,10 +1,9 @@
 import GlobalContext, {LocalContext} from '../context';
 
-import getMovement from '../input/getMovement';
-import PC, {blankPosition} from '../objects/components/position';
+import PC from '../objects/components/position';
 import NSC from '../objects/components/network-sync';
-import createGameUpdate, {PLAYER_MOVEMENT_SIZE} from '../server/messages/game-state-update';
-import BufferWriter from '../server/messages/buffer-writer';
+import createGameUpdate from '../server/messages/game-state-update';
+import {ArrayPool, BufferWriterPool} from '../util/pool';
 import {TrackingInfo} from '../types';
 import Board from '../board';
 import getLogger from '../logger';
@@ -19,62 +18,38 @@ const obj = {
     y: 0,
 };
 
-class BufferPool {
-    private pool: BufferWriterWrapper[];
-    private factory: (pool: BufferPool) => BufferWriterWrapper;
-    constructor(factory: (pool: BufferPool) => BufferWriterWrapper) {
-        this.pool = [];
-        this.factory = factory;
-    }
-
-    public malloc() {
-        if (this.pool.length === 0) {
-            this.pool.push(this.factory(this));
-        }
-        return this.pool.pop();
-    }
-
-    public free(buf: BufferWriterWrapper) {
-        this.pool.push(buf);
-    }
-}
-
-class BufferWriterWrapper {
-    private pool: BufferPool;
-
-    public detachCallback: () => void;
-    public writer: BufferWriter;
-
-    constructor(size: number, pool: BufferPool) {
-        this.pool = pool;
-
-        this.writer = new BufferWriter(size);
-        this.detachCallback = this.detach.bind(this);
-    }
-
-    private detach() {
-        this.writer.reset();
-        this.pool.free(this);
-    }
-}
-
-const pool = new BufferPool(function(pool: BufferPool): BufferWriterWrapper {
-    return new BufferWriterWrapper(PLAYER_MOVEMENT_SIZE, pool);
-});
-
 const { width, height } = GlobalContext.display;
 function isWithinUpdateDistance(a: PC, b: PC): boolean {
     return Math.abs(a.x - b.x) < width &&
         Math.abs(a.y - b.y) < height;
 }
 
+type TickCallback = {
+    postTickCallback(cb: () => void);
+};
+
 export default class ServerUpdatePlayers {
     private board: Board;
     private context: LocalContext;
 
-    constructor(board: Board, context: LocalContext) {
+    // Probably should type this?
+    private wsMessages: Array<Array<any>>;
+
+    constructor(server: TickCallback, board: Board, context: LocalContext) {
+        this.wsMessages = [];
         this.board = board;
         this.context = context;
+
+        const self = this;
+        // TODO: Type check this at some point you goon.
+        server.postTickCallback(function onTickCallback() {
+            for (let i = 0; i < self.wsMessages.length; ++i) {
+                // TODO: Stop that tsignore
+                // @ts-ignore
+                self.wsMessages[0].send(self.wsMessages[1], self.wsMessages[2]);
+            }
+            self.wsMessages.length = 0;
+        });
     }
 
     run(listOfTrackingInfos: TrackingInfo[]) {
@@ -113,12 +88,14 @@ export default class ServerUpdatePlayers {
                 // because i am dressed this way, does not mean, your buffer
                 // can hold my ascii
                 if (isWithinUpdateDistance(main, pos)) {
-                    const buf = pool.malloc();
+                    const buf = BufferWriterPool.get();
                     const playerData = createGameUpdate.
-                        entityPositionUpdate(obj, buf.writer);
+                        entityPositionUpdate(obj, buf.item);
 
-                    // TODO: Make sure that all this object creation does not F me.
-                    tracking.ws.send(playerData, buf.detachCallback);
+                    const item = ArrayPool.malloc();
+                    item.push(tracking.ws);
+                    item.push(playerData);
+                    item.push(buf.free);
                 }
             };
         });

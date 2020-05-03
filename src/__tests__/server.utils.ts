@@ -1,5 +1,4 @@
 import Server from '../server';
-import Game from '../';
 import { TrackingInfo } from '../types';
 
 export function serverIsListening(server: Server) {

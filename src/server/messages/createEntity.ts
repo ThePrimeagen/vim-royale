@@ -1,16 +1,14 @@
 import { LocalContext } from '../../context';
-import BufferWriter from './buffer-writer';
 import { FrameType, CreateType, CreateEntityResult } from './types';
 import { EntityItem } from '../../entities';
 import {Player, Bullet} from '../../objects';
-import { EntityType } from '../../objects/types';
 import { decodables } from '../../objects';
 import { Encodable, Decodable } from '../../objects/encodable';
 import {
-    Pool,
-    PoolItem,
-    PoolFactory,
-    PoolFreeFunction,
+    AsyncPool,
+    AsyncPoolItem,
+    AsyncPoolFactory,
+    AsyncPoolFreeFunction,
 } from '../../util/pool';
 
 import createLogger from '../../logger';

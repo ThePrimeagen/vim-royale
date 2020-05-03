@@ -1,4 +1,3 @@
-import isServer from '../util/is-server';
 import {EntityItem} from '../entities';
 import PositionComponent from './components/position';
 import MovementComponent from './components/movement';
@@ -8,8 +7,6 @@ import NetworkSyncComponent from './components/network-sync';
 import CreateEntityComponent from './components/create-entity';
 import {Encodable, writeBuffer, readBuffer} from './encodable';
 import {EntityType} from './types';
-import BufferWriter from '../server/messages/buffer-writer';
-import BufferReader from '../server/messages/buffer-reader';
 
 export default class Player implements Encodable {
 

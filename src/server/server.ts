@@ -1,33 +1,30 @@
-import { getEntityIdFromBuffer, isUpdateEveryoneEntity } from '../objects';
 import Player from '../objects/player';
-import getEvents, {Events, EventType, MovesToProcess} from '../events';
+import getEvents, {EventType, MovesToProcess} from '../events';
 import {FrameType} from './messages/types';
 import {readCreateEntity} from './messages/createEntity';
-import {readUpdatePosition} from './messages/updatePosition';
 import createGameStateUpdate from './messages/game-state-update';
 import PositionComponent from '../objects/components/position';
-import MovementComponent from '../objects/components/movement';
 import ServerMovementSystem from '../systems/ServerMovementSystem';
 import LifetimeSystem from '../systems/LifetimeSystem';
 import CreateEntitySystem from '../systems/ServerCreateEntitySystem';
 import VelocitySystem from '../systems/VelocitySystem';
 import ServerUpdatePlayers from '../systems/ServerUpdatePlayers';
-import GlobalContext, {createLocalContext, LocalContext} from '../context';
+import GlobalContext, {LocalContext} from '../context';
 import Board from '../board';
 import getStore from '../entities';
 import {TrackingInfo} from '../types';
 import getLogger from '../logger';
-import ObjectPool from '../util/SyncObjectPool';
+import {ObjectPool} from '../util/pool';
 import getNextLoop from '../util/getNextLoop';
 
 const logger = getLogger("Server");
 const sliceCopy = Uint8Array.prototype.slice;
-const pool = new ObjectPool();
 
 //
 //TODO: Refactor this into a less heaping pile of shit.
 
 export default class ServerClientSync {
+    private tickCallbacks: (() => void)[];
     private loopLastCalled: number;
     private infos: TrackingInfo[];
     private movesToProcess: MovesToProcess[];
@@ -40,6 +37,7 @@ export default class ServerClientSync {
     private createEntity: CreateEntitySystem;
     private movement: ServerMovementSystem;
     private updatePlayers: ServerUpdatePlayers;
+    private boundTickCallbacker: () => void;
 
     public context: LocalContext;
 
@@ -47,16 +45,19 @@ export default class ServerClientSync {
         logger("Constructing new ServerClientSync");
         this.map = map;
         this.tick = tick;
+        this.boundTickCallbacker = this.tickCallback.bind(this);
         this.infos = infos;
         this.movesToProcess = [];
         this.entities = [];
+        this.tickCallbacks = [];
 
         this.context = context;
         this.context.events = getEvents();
         this.context.store = getStore();
 
         this.movement = new ServerMovementSystem(this.map, this.context);
-        this.updatePlayers = new ServerUpdatePlayers(this.map, this.context);
+        this.updatePlayers =
+            new ServerUpdatePlayers(this, this.map, this.context);
         this.lifetime = new LifetimeSystem(context);
         this.createEntity = new CreateEntitySystem(context);
         this.velocity = new VelocitySystem(context);
@@ -64,6 +65,12 @@ export default class ServerClientSync {
 
         this.initializeEvents();
         this.update();
+    }
+
+    private tickCallback() {
+        for (let i = 0; i < this.tickCallbacks.length; ++i) {
+            this.tickCallbacks[i]();
+        }
     }
 
     private initializeEvents() {
@@ -84,7 +91,7 @@ export default class ServerClientSync {
                         // 1 Object
                         // 2 Buffer
                         // TODO: Garbage
-                        const obj = pool.malloc();
+                        const obj = ObjectPool.malloc();
                         obj.buf = Buffer.from(evt.data);
                         obj.tracking = trackingInfo;
                         this.movesToProcess.push(obj as MovesToProcess);
@@ -123,6 +130,10 @@ export default class ServerClientSync {
         });
     }
 
+    public postTickCallback(cb: () => void) {
+        this.tickCallbacks.push(cb);
+    }
+
     public update() {
         const then = Date.now();
         const diff = this.loopLastCalled === 0 ? 0 : then - this.loopLastCalled;
@@ -137,15 +148,20 @@ export default class ServerClientSync {
         this.lifetime.run(diff);
 
         const now = Date.now();
-        if (this.tick < now - then) {
-            //console.log("GET IT TOGETHER");
+        if (this.tick > now - then) {
+            setTimeout(this.boundTickCallbacker, 0);
         }
 
-        setTimeout(this.boundUpdate, getNextLoop(this.tick, now - then));
+        // We already failed, lets keep failing!
+        else {
+            this.tickCallback();
+        }
+
+        setTimeout(this.boundUpdate, getNextLoop(this.tick, Date.now() - then));
 
         //console.log("Render Time.", Date.now() - then);
         for (let i = 0; i < this.movesToProcess.length; ++i) {
-            pool.free(this.movesToProcess[i]);
+            ObjectPool.free(this.movesToProcess[i]);
         }
 
         this.movesToProcess.length = 0;

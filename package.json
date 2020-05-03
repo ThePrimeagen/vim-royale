@@ -4,6 +4,7 @@
   "description": "* Because Nano sucks. * Because Emacs sucks. * Because Rust sucks.",
   "main": "index.js",
   "scripts": {
+      "build": "tsc",
       "c": "node ./node_modules/.bin/ts-node ./src/index.ts 2> out",
       "ci": "node --inspect ./node_modules/.bin/ts-node ./src/index.ts 2> out",
       "cib": "node --inspect-brk ./node_modules/.bin/ts-node ./src/index.ts 2> out",

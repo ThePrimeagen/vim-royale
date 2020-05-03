@@ -33,5 +33,13 @@ export default class BufferReader {
     readChar8(): string {
         return String.fromCharCode(this.read8());
     }
+
+    static read24(buffer: Buffer, ptr: number = 0): number {
+        return buffer.readUIntBE(ptr, 3);
+    }
+
+    static read16(buffer: Buffer, ptr: number = 0): number {
+        return buffer.readUInt16BE(ptr);
+    }
 }
 

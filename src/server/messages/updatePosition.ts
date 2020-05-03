@@ -1,6 +1,7 @@
 import { FrameType, UpdatePositionResult } from './types';
 import { EntityItem } from '../../entities';
-import BufferWriter from './buffer-writer';
+import BufferReader from '../../util/buffer-reader';
+import BufferWriter from '../../util/buffer-writer';
 import { MovementCommand } from '../../types';
 import createLogger from '../../logger';
 const logger = createLogger("UpdatePosition");
@@ -39,11 +40,11 @@ export default function createUpdatePosition({
 // We will get there
 export function readUpdatePosition(buf: Buffer, offset: number = 0): UpdatePositionResult {
 
-    const entityId = BufferWriter.read24(buf, offset);
-    const movementId = BufferWriter.read24(buf, offset + 3);
+    const entityId = BufferReader.read24(buf, offset);
+    const movementId = BufferReader.read24(buf, offset + 3);
     const key = String.fromCharCode(buf[offset + 6]);
-    const x = BufferWriter.read16(buf, offset + 7);
-    const y = BufferWriter.read16(buf, offset + 9);
+    const x = BufferReader.read16(buf, offset + 7);
+    const y = BufferReader.read16(buf, offset + 9);
 
     logger("readUpdatePosition", buf);
 

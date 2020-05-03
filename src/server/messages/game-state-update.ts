@@ -1,7 +1,6 @@
 import { FrameType, GameStateUpdateResults, GameStateType } from './types';
-import { EntityItem } from '../../entities';
-import BufferWriter from './buffer-writer';
-import BufferReader from './buffer-reader';
+import BufferWriter from '../../util/buffer-writer';
+import BufferReader from '../../util/buffer-reader';
 
 type EntityMovementArgs = {entityId: number, char: string, x: number, y: number};
 

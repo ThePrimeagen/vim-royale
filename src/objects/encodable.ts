@@ -1,5 +1,5 @@
-import BufferWriter from '../server/messages/buffer-writer';
-import BufferReader from '../server/messages/buffer-reader';
+import BufferWriter from '../util/buffer-writer';
+import BufferReader from '../util/buffer-reader';
 import {LocalContext} from '../context';
 import {EntityItem} from '../entities';
 

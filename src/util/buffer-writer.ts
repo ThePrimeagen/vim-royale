@@ -1,6 +1,3 @@
-const dataB24 = Buffer.alloc(4);
-const dataV24 = new DataView(dataB24.buffer);
-
 export default class BufferWriter {
     public buffer: Buffer;
     public ptr: number;
@@ -45,16 +42,5 @@ export default class BufferWriter {
         this.ptr += 4;
     }
 
-    static read24(buffer: Buffer, ptr: number = 0): number {
-        dataB24[1] = buffer[ptr++];
-        dataB24[2] = buffer[ptr++];
-        dataB24[3] = buffer[ptr++];
-
-        return dataV24.getUint32(0);
-    }
-
-    static read16(buffer: Buffer, ptr: number = 0): number {
-        return buffer.readUInt16BE(ptr);
-    }
 }
 

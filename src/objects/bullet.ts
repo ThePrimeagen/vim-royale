@@ -8,8 +8,6 @@ import LifetimeComponent from './components/lifetime';
 import {LocalContext} from '../context';
 import {EntityType} from './types';
 import {Encodable, writeBuffer, readBuffer} from './encodable';
-import BufferWriter from '../server/messages/buffer-writer';
-import BufferReader from '../server/messages/buffer-reader';
 import createLogger from '../logger';
 
 const logger = createLogger("Bullet");

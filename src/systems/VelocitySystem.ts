@@ -5,13 +5,12 @@ import GlobalContext, {LocalContext} from "../context";
 
 import VelocityComponent from "../objects/components/velocity";
 import MovementComponent from "../objects/components/movement";
-import SyncPool from "../util/SyncObjectPool";
+import {ObjectPool} from "../util/pool";
 
 import getLogger from "../logger";
 import {MovementAndEntity} from './types';
 
 const logger = getLogger("VelocitySystem");
-const pool = new SyncPool();
 const movements: MovementAndEntity[] = [];
 
 let movementPtr: number = 0;
@@ -49,13 +48,15 @@ export default class VelocitySystem {
             movement.y += Math.floor(component.y) - y;
 
             if (movement.x || movement.y) {
-                const obj = pool.malloc() as MovementAndEntity;
+                const obj = ObjectPool.malloc() as MovementAndEntity;
                 obj.entityId = entity;
                 obj.movement = movement;
                 movements[movementPtr++] = obj;
             }
         }
 
+        // Hey man you are leaking...
+        // TODO: ??? FIX THIS LEAK
         movements.length = movementPtr;
         this.context.store.forEach(VelocityComponent, forEach);
 

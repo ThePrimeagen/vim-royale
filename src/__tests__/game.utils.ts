@@ -6,9 +6,19 @@ import { EventType } from '../events';
 import Game from '../';
 import GameController from '../game-controller';
 
+export function createGameWithContext(port: number, screen: any, context: LocalContext) {
+    const g = new Game(screen, {
+        port,
+        host: 'localhost',
+        context,
+        tick: +process.env.TICK
+    });
+    return g;
+}
+
 // TODO: This makes me sad
 export function createGame(port: number, screen: any, {
-    tick = 1000
+    tick = +process.env.TICK
 } = {}, context: LocalContext = createLocalContext()): Game {
 
     const g = new Game(screen, {
@@ -34,12 +44,13 @@ export function gameIsConnected(game: Game) {
     });
 }
 
-const keypress = ["onkeypress"];
 export type AlmostBlessedKeyEvent = {
     ctrl: boolean,
     name: string,
 };
 export type KeyListener = [string[], (ch: string, key: AlmostBlessedKeyEvent) => void];
+
+const keypress = ["onkeypress"];
 export function createScreen(keyListeners: KeyListener[] = []) {
     // @ts-ignore
     return {
@@ -48,11 +59,12 @@ export function createScreen(keyListeners: KeyListener[] = []) {
         key: function(keys: string[], callback: (ch: string) => void) {
             keyListeners.push([keys, callback]);
         },
-        on: jest.fn((_: string, callback: (ch: string) => void) => {
+        on: (_: string, callback: (ch: string) => void) => {
             keyListeners.push([keypress, callback]);
-        }),
+        },
     } as blessed.Widgets.Screen;
 }
+
 
 export function findMovementListener(listeners: KeyListener[]): KeyListener {
     return listeners.filter(listener => {
