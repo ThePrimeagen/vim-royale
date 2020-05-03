@@ -11,7 +11,9 @@ type StyleTags = [string, string];
 const decorators = {
     bold(styleTags: StyleTags, enabled: boolean) {
         // only add tags if enabled is `true`
-        if (enabled) { buildTag(styleTags, 'bold'); }
+        if (enabled) {
+            buildTag(styleTags, 'bold');
+        }
     },
     fg(styleTags: StyleTags, rgb: string) {
         buildTag(styleTags, `#${rgb}-fg`);
@@ -27,15 +29,19 @@ function buildTag(styleTags: StyleTags, tag: string) {
 }
 
 export default class StyledCharacterStrategy implements CharacterStrategy {
-    private styles: StyleOpts;
     private styleTags: StyleTags;
+    private _char: string[][];
 
-    constructor(opts: StyleOpts = {}) {
-        this.styles = opts;
-        this.styleTags = this._buildTags();
+    get char() {
+        return this._char;
     }
 
-    buildChar(char: string) {
+    constructor(chars: string, opts: StyleOpts = {}) {
+        this.styleTags = this._buildTags(opts);
+        this.setChar(chars);
+    }
+
+    setChar(char: string) {
         const newChar: string[][] = [char.split("")];
         const [openingTags, closingTags] = this.styleTags;
 
@@ -43,14 +49,14 @@ export default class StyledCharacterStrategy implements CharacterStrategy {
         const last = newChar[0].length;
         newChar[0][last - 1] = newChar[0][last - 1] + `${closingTags}`;
 
-        return newChar;
+        this._char = newChar;
     }
 
-    private _buildTags() {
+    private _buildTags(styles) {
         const styleTags: StyleTags = ['', ''];
 
-        Object.keys(this.styles).forEach((styleKey)  => {
-            decorators[styleKey](styleTags, this.styles[styleKey]);
+        Object.keys(styles).forEach((styleKey)  => {
+            decorators[styleKey](styleTags, styles[styleKey]);
         })
 
         return styleTags;

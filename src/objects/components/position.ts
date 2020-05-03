@@ -2,7 +2,8 @@ import {Component} from '../../entities';
 import BasicCharacterStrategy from '../../characters/basic';
 
 export interface CharacterStrategy {
-    buildChar(Char: string): string[][];
+    char: string[][];
+    setChar(Char: string): void;
 }
 
 // What we render
@@ -13,22 +14,25 @@ export default class PositionComponent implements Component {
     x: number;
     y: number;
     z: number;
-    private _char: string[][];
-    private _rawChar: string;
     private _characterStrategy: CharacterStrategy;
 
-    get char(): string[][] {
-        return this._char;
+    get char() {
+        return this._characterStrategy.char;
     }
 
     get characterStrategy(): CharacterStrategy {
         return this._characterStrategy;
     }
 
-    constructor(char: string, x: number, y: number, z: number = 0, absolute = false) {
-        this._characterStrategy = new BasicCharacterStrategy();
-        this._rawChar = char; // save raw char so we have it when we switch strategies
-        this.setChar(char);
+    constructor(defaultCharacterStrategyOrText: CharacterStrategy | string,
+      x: number, y: number, z: number = 0, absolute = false) {
+        if (typeof defaultCharacterStrategyOrText === 'string') {
+            this._characterStrategy = new BasicCharacterStrategy(
+              defaultCharacterStrategyOrText)
+        } else {
+            this._characterStrategy = defaultCharacterStrategyOrText;
+        }
+
         this.x = x;
         this.y = y;
         this.z = z;
@@ -37,12 +41,10 @@ export default class PositionComponent implements Component {
 
     setCharacterStrategy(strategy: CharacterStrategy) {
         this._characterStrategy = strategy;
-        this.setChar(this._rawChar);
     }
 
     setChar(char: string) {
-        this._rawChar = char;
-        this._char = this._characterStrategy.buildChar(char);
+        this._characterStrategy.setChar(char);
     }
 }
 
