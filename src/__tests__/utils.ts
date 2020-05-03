@@ -1,4 +1,6 @@
-import {LocalContext, createLocalContext} from "../context";
-
-const entities = jest.genMockFromModule("../entities");
+export function wait(ms: number) {
+    return new Promise(res => {
+        setTimeout(res, ms);
+    });
+}
 

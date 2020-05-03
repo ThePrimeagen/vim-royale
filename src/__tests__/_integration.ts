@@ -1,20 +1,4 @@
-import dotenv from 'dotenv';
-dotenv.config();
-
 import util from 'util';
-
-process.env.LOGGER_TYPE = 'log';
-process.env.SUPPRESS_LOGS = 'true';
-
-jest.doMock('blessed', () => {
-    return {
-        box: () => {
-            return {
-                setContent: jest.fn()
-            };
-        },
-    };
-});
 
 import * as mockBlessed from 'blessed';
 import GlobalContext, {LocalContext, createLocalContext} from '../context';

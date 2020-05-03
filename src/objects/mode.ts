@@ -25,6 +25,7 @@ export default class Mode {
     public position: PositionComponent;
 
     constructor(context: LocalContext) {
+
         this.entity = context.store.createNewEntity();
 
         // TODO: HAHAH 100 hard coded Z? What is this css?
@@ -40,9 +41,6 @@ export default class Mode {
         context.store.attachComponent(this.entity, this.position);
         context.events.on(evt => {
             if (evt.type === EventType.ScreenTypeChanged) {
-                this.position.setCharacterStrategy(
-                  characterStrategies[context.screen]);
-                this.position.setChar(context.screen);
             }
         });
     }

@@ -30,7 +30,16 @@ export type LocalContext = {
     id: number;
 };
 
+// TODO: Determine if I want this...
+export const GameContext = {
+    bulletSpeedHor: 3,
+    bulletSpeedVert: 2,
+    bulletDistanceHor: 30,
+    bulletDistancesVert: 20,
+};
+
 let contextId = 0;
+
 export function createLocalContext({
     screen,
     store,

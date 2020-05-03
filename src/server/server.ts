@@ -94,12 +94,12 @@ export default class ServerClientSync {
                         const buf = evt.data;
                         const entityId = readCreateEntity(this.context, buf, 1);
 
+                        // @ts-ignore
+                        const pos = this.context.store.
+                            getComponent(entityId, PositionComponent) as PositionComponent;
+
                         if (Player.is(buf, 1) &&
                             !GlobalContext.activePlayers[entityId]) {
-                            // @ts-ignore
-                            const pos = this.context.store.
-                                getComponent(entityId, PositionComponent) as PositionComponent;
-
                             GlobalContext.activePlayers[entityId] = pos;
                         }
 

@@ -12,6 +12,7 @@ const timeoutTime = +process.env.logTimeout || 500;
 const queue: string[] = [];
 let timeoutId: ReturnType<typeof setTimeout> | null = null;
 let isWriting = false;
+let log = consoleLogger;
 
 function toString(x: any) {
     if (typeof x === 'string') {
@@ -41,7 +42,6 @@ function logData(sync: boolean = false) {
     });
 }
 
-let log = consoleLogger;
 scythe(() => {
     if (timeoutId !== null) {
         clearTimeout(timeoutId);
@@ -74,7 +74,12 @@ export default function createLogger(prefix: string) {
             }, timeoutTime);
         }
 
-        queue.push(`${prefix} ${args.map(toString).join(' ')}`);
+        let timestamp = "";
+        if (process.env.TIMESTAMP_LOGS === 'true') {
+            timestamp = Date.now() + " ";
+        }
+
+        queue.push(`${timestamp}${prefix} ${args.map(toString).join(' ')}`);
     }
 
 }

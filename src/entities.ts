@@ -1,4 +1,5 @@
 import createLogger from "./logger";
+
 const logger = createLogger("EntityStore");
 
 // createNewEntity: number
