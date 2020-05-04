@@ -70,14 +70,17 @@ export class AsyncPool<T> {
     }
 };
 
-function bufferWriterFactory(free) {
-    return {
-        free,
-        item: new BufferWriter(0)
+export function createBufferWriterPool(length: number): AsyncPool<BufferWriter> {
+    function bufferWriterFactory(free) {
+        return {
+            free,
+            item: new BufferWriter(length)
+        }
     }
-}
 
-const BufferWriterPool = new AsyncPool<BufferWriter>(bufferWriterFactory);
+
+    return new AsyncPool<BufferWriter>(bufferWriterFactory);
+}
 
 function bufferReaderFactory(free) {
     return {
@@ -89,7 +92,6 @@ function bufferReaderFactory(free) {
 const BufferReaderPool = new AsyncPool<BufferReader>(bufferReaderFactory);
 
 export {
-    BufferWriterPool,
     BufferReaderPool,
 }
 

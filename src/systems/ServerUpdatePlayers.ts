@@ -3,12 +3,13 @@ import GlobalContext, {LocalContext} from '../context';
 import PC from '../objects/components/position';
 import NSC from '../objects/components/network-sync';
 import createGameUpdate from '../server/messages/game-state-update';
-import {ArrayPool, BufferWriterPool} from '../util/pool';
+import {ArrayPool, createBufferWriterPool} from '../util/pool';
 import {TrackingInfo} from '../types';
 import Board from '../board';
 import getLogger from '../logger';
 
 const logger = getLogger("ServerUpdatePlayers");
+const bufferPool = createBufferWriterPool(50);
 
 const obj = {
     entityId: 0,
@@ -88,7 +89,7 @@ export default class ServerUpdatePlayers {
                 // because i am dressed this way, does not mean, your buffer
                 // can hold my ascii
                 if (isWithinUpdateDistance(main, pos)) {
-                    const buf = BufferWriterPool.get();
+                    const buf = bufferPool.get();
                     const playerData = createGameUpdate.
                         entityPositionUpdate(obj, buf.item);
 
