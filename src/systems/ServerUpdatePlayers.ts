@@ -30,31 +30,46 @@ type TickCallback = {
 };
 
 export default class ServerUpdatePlayers {
-    private board: Board;
     private context: LocalContext;
 
-    // Probably should type this?
-    private wsMessages: Array<Array<any>>;
+    // TODO: Measure?
+    private updateMap: Map<TrackingInfo, Map<TrackingInfo, number>>
 
-    constructor(server: TickCallback, board: Board, context: LocalContext) {
+    // Probably should type this?
+    // TODO: Type thsi
+    private wsMessages: Array<[TrackingInfo, Buffer, () => void]>;
+
+    constructor(server: TickCallback, context: LocalContext) {
+        this.updateMap = new Map();
         this.wsMessages = [];
-        this.board = board;
         this.context = context;
 
         const self = this;
         // TODO: Type check this at some point you goon.
         server.postTickCallback(function onTickCallback() {
             for (let i = 0; i < self.wsMessages.length; ++i) {
-                // TODO: Stop that tsignore
-                // @ts-ignore
-                self.wsMessages[0].send(self.wsMessages[1], self.wsMessages[2]);
+                const msg = self.wsMessages[i];
+
+                msg[0].ws.send(msg[1], msg[2]);
+                ArrayPool.free(msg);
             }
+
             self.wsMessages.length = 0;
         });
     }
 
+    // TODO: 1, stop updating the player with the same message over and over again.
+    //   ->> Player0 -> Player1
+    //   ->> Player0 -> Player2
+    // TODO: 2, Quad tree?
     run(listOfTrackingInfos: TrackingInfo[]) {
-        this.context.store.forEach(NSC, (entityId, component: NSC) => {
+        const entities = this.context.store.getComponents(NSC);
+
+        if (!entities) {
+            return;
+        }
+
+        for (const [entityId, component] of entities) {
             const pos = this.context.store.getComponent<PC>(entityId, PC);
 
             obj.entityId = entityId;
@@ -94,13 +109,16 @@ export default class ServerUpdatePlayers {
                         entityPositionUpdate(obj, buf.item);
 
                     const item = ArrayPool.malloc();
-                    item.push(tracking.ws);
+
+                    item.push(tracking);
                     item.push(playerData);
                     item.push(buf.free);
+
+                    // Why cannot this work? I IS CONFUSED...
+                    // @ts-ignore
+                    this.wsMessages.push(item);
                 }
             };
-        });
+        }
     }
 }
-
-

@@ -56,8 +56,7 @@ export default class ServerClientSync {
         this.context.store = getStore();
 
         this.movement = new ServerMovementSystem(this.map, this.context);
-        this.updatePlayers =
-            new ServerUpdatePlayers(this, this.map, this.context);
+        this.updatePlayers = new ServerUpdatePlayers(this, this.context);
         this.lifetime = new LifetimeSystem(context);
         this.createEntity = new CreateEntitySystem(context);
         this.velocity = new VelocitySystem(context);

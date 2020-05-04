@@ -62,7 +62,8 @@ export class AsyncPool<T> {
             this.pool.push(this.factory(this.boundFree));
         }
 
-        return this.pool.pop() as AsyncPoolItem<T>;
+        const retVal = this.pool.pop() as AsyncPoolItem<T>;
+        return retVal;
     }
 
     private free(item: AsyncPoolItem<T>) {
@@ -72,10 +73,14 @@ export class AsyncPool<T> {
 
 export function createBufferWriterPool(length: number): AsyncPool<BufferWriter> {
     function bufferWriterFactory(free) {
-        return {
-            free,
+        const retVal = {
+            free: () => {
+                retVal.item.reset();
+                free(retVal)
+            },
             item: new BufferWriter(length)
-        }
+        };
+        return retVal;
     }
 
 

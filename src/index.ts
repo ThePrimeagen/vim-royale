@@ -4,18 +4,14 @@ dotenv.config();
 
 import * as blessed from "blessed";
 
-import PositionComponent from "./objects/components/position";
 import { StartGameMessage } from "./server/commands";
-import { isCorrectPosition, readCorrectPosition } from "./server/messages/correctPosition";
-import { isGameStateUpdate, readGameStateUpdate } from "./server/messages/game-state-update";
-import { MapLayout }from "./server/commands";
 import ClientNetworkSyncSystem from "./systems/ClientNetworkSyncSystem";
 import LifetimeSystem from "./systems/LifetimeSystem";
 import VelocitySystem from "./systems/VelocitySystem";
 import RendererSystem from "./systems/ClientRenderSystem";
 import MovementSystem from "./systems/ClientMovementSystem";
 import CreateEntitySystem from "./systems/ClientCreateEntitySystem";
-import getEvents, {Events, EventType, BinaryData, EventData, Run} from "./events";
+import getEvents, {Events, EventType, EventData} from "./events";
 import captureInput from "./input/index";
 import createMainMenu from "./screen/main-menu";
 import createLogger, {setLogger, flush} from "./logger";
@@ -27,7 +23,7 @@ import Player from "./objects/player";
 import Mode from "./objects/mode";
 import ClientSocket from "./client-socket";
 import getEntityStore, {EntityStore} from "./entities";
-import GlobalContext, {ScreenType, LocalContext, createLocalContext} from "./context";
+import {ScreenType, LocalContext, createLocalContext} from "./context";
 import Board from "./board";
 import getNextLoop from './util/getNextLoop';
 

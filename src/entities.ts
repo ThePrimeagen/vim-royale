@@ -61,6 +61,11 @@ export class EntityStore {
         return [...this.entityMap.keys()];
     }
 
+    getComponents<T extends Component>(component: Component): Map<number, T> {
+        // @ts-ignore
+        return this.entitiesByComponent.get(component.type);
+    }
+
     forEach<T extends Component>(comp: Component, cb: (entityId: EntityItem, state: T) => void) {
         const entities = this.entitiesByComponent.get(comp.type);
 
