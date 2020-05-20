@@ -7,6 +7,15 @@
 **May the best man *vim*.**
 **Cheaters never *vim*.**
 
+# Warning
+I have _literally_ done no offline development of this project.  This 
+project is purely stream only developed.  So if there are large periods 
+of time with no improvement it is due to shiny object syndrome that I have.
+
+If you wish to heckle me streaming this, especially since its my first 
+game ever, check out the [Twitch Stream](https://twitch.tv/ThePrimeagen).
+
+
 # Intro
 Vim Royale is a game meant to make you better at vim movements by making a
 gamification of Vim itself.  The game is not an educational game, but instead
