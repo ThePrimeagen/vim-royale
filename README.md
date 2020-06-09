@@ -54,7 +54,7 @@ Inspect Break
 ```
 // Run the server
 // REMEMBER THE PID you goon
-TICK=50 SERVER=true node --expose-gc --perf-basic-prof-only-functions ./build/test.js &
+TICK=50 SERVER=true node --expose-gc --perf-basic-prof-only-functions ./build/test.js & PID=$!
 
 // Run the client
 PLAYER_COUNT=20 SERVER=false node ./node_modules/.bin/ts-node ./src/test.ts
