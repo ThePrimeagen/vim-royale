@@ -13,6 +13,7 @@ export enum ScreenType {
 export type GlobalContext = {
     display: {
         width: number;
+        widthOffset: number;
         height: number;
     };
     activePlayers: {
@@ -81,7 +82,8 @@ export function createLocalContext({
 export default {
     display: {
         width: 80,
-        height: 24,
+        height: 25,
+        widthOffset: 3,
     },
     activePlayers: {}
 } as GlobalContext;

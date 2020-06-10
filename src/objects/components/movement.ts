@@ -1,11 +1,12 @@
-import {MovementCommand} from '../../types';
+import {InputCommand} from '../../types';
 import {Component} from '../../entities';
 
 export default class MovementComponent implements Component {
     public static type: string = "movement";
     type: string = "movement";
 
-    public lastMovement: MovementCommand;
+    public lastMovement: InputCommand;
+
     public movementId: number;
 
     x: number;

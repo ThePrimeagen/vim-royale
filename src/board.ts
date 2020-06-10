@@ -20,6 +20,7 @@ export default class Board {
                 if (!map[j]) {
                     map[j] = [];
                 }
+
                 if (i === 0 || j === 0 || i === width - 1 || j === height - 1) {
                     map[j][i] = 'x';
                 }

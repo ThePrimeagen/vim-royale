@@ -1,6 +1,5 @@
 import WebSocket from 'ws';
 import Stats from './stats/index';
-import PositionComponent from './objects/components/position';
 
 export type GameOptions = {
     width: number;
@@ -15,7 +14,10 @@ export type TrackingInfo = {
     id: number;
 };
 
-export type MovementCommand = 'k' | 'j' | 'l' | 'h';
+export type InputCommand = {
+    count: number;
+    key: string;
+};
 
 
 

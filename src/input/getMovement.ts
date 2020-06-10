@@ -1,6 +1,9 @@
-export default function getMovement(ch: string) {
+import { InputCommand } from "../types";
+
+export default function getMovement(ch: InputCommand) {
     const outArr = [0, 0];
-    switch (ch) {
+
+    switch (ch.key) {
         case 'h':
             outArr[0] = -1;
             break;
@@ -17,6 +20,11 @@ export default function getMovement(ch: string) {
             outArr[1] = -1;
             break;
     }
+
+    for (let i = 0; i < outArr.length; ++i) {
+        outArr[i] *= ch.count;
+    }
+
     return outArr;
 }
 

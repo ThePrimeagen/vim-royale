@@ -1,4 +1,4 @@
-import {MovementCommand} from '../../types';
+import {InputCommand} from '../../types';
 
 export enum FrameType {
     CreateEntity = 1,
@@ -52,5 +52,5 @@ export type UpdatePositionResult = {
     y: number;
     entityId: number;
     movementId: number;
-    key: MovementCommand;
+    key: InputCommand;
 };

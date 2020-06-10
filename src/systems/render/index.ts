@@ -3,18 +3,21 @@ import apply from './apply';
 import getRenderBounds from './get-render-bounds';
 import isInWindow from './is-in-window';
 import makeRelative from './make-relative';
+import GlobalContext from '../../context';
 
 export default function render(
     board: string[][],
     renderSpace: string[][],
     positions: PositionComponent[],
     playerPosition: PositionComponent,
-    display: {width: number, height: number}): string[][] {
+    display: {width: number, height: number}): [string[][], number, number] {
 
     const {x, y} = playerPosition;
     const [
         leftX,
         leftY,
+        offsetX,
+        offsetY,
     ] = getRenderBounds(board, display.width, display.height, x, y);
 
     // 1. apply the game board to the renderSpace.
@@ -51,6 +54,10 @@ export default function render(
 
     apply(renderSpace, playerPosition.char, relX, relY, 0, 0);
 
-    return renderSpace;
+    return [
+        renderSpace,
+        offsetX,
+        offsetY,
+    ];
 };
 

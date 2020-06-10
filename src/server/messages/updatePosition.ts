@@ -2,7 +2,7 @@ import { FrameType, UpdatePositionResult } from './types';
 import { EntityItem } from '../../entities';
 import BufferReader from '../../util/buffer-reader';
 import BufferWriter from '../../util/buffer-writer';
-import { MovementCommand } from '../../types';
+import { InputCommand } from '../../types';
 import createLogger from '../../logger';
 const logger = createLogger("UpdatePosition");
 
@@ -20,15 +20,16 @@ export default function createUpdatePosition({
     movementId: number,
     x: number,
     y: number,
-    cmd: MovementCommand,
+    cmd: InputCommand,
 }): Buffer {
 
-    const b = new BufferWriter(12);
+    const b = new BufferWriter(13);
 
     b.write8(FrameType.UpdatePosition);
     b.write24(entityId);
     b.write24(movementId);
-    b.writeStr(cmd);
+    b.write8(cmd.count);
+    b.writeStr(cmd.key);
     b.write16(x);
     b.write16(y);
 
@@ -37,14 +38,19 @@ export default function createUpdatePosition({
     return b.buffer;
 };
 
+const reader = new BufferReader();
+
 // We will get there
 export function readUpdatePosition(buf: Buffer, offset: number = 0): UpdatePositionResult {
+    // 12
 
-    const entityId = BufferReader.read24(buf, offset);
-    const movementId = BufferReader.read24(buf, offset + 3);
-    const key = String.fromCharCode(buf[offset + 6]);
-    const x = BufferReader.read16(buf, offset + 7);
-    const y = BufferReader.read16(buf, offset + 9);
+    reader.reset(buf, offset);
+    const entityId = reader.read24();
+    const movementId = reader.read24();
+    const count = reader.read8();
+    const key = reader.readChar8();
+    const x = reader.read16();
+    const y = reader.read16();
 
     logger("readUpdatePosition", buf);
 
@@ -53,9 +59,10 @@ export function readUpdatePosition(buf: Buffer, offset: number = 0): UpdatePosit
         y,
         entityId,
         movementId,
-
-        // @ts-ignore
-        key,
+        key: {
+            count,
+            key,
+        },
     };
 };
 
