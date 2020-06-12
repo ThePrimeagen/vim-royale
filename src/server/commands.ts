@@ -12,6 +12,8 @@ export type StatusMessage = {
     encoding: string;
 };
 
+export type JumpLetters = string[][];
+
 export type MapLayout = {
     width: number;
     height: number;
@@ -21,6 +23,7 @@ export type MapLayout = {
 export type StartGameMessage = {
     type: 'map';
     map: MapLayout;
+    jumpLetters: JumpLetters;
     position: [number, number];
     entityIdRange: [number, number];
 }

@@ -1,22 +1,24 @@
-import * as dotenv from 'dotenv';
+import * as dotenv from "dotenv";
 dotenv.config();
 
-import WebSocket from 'ws';
-import ON_DEATH from 'death';
+import WebSocket from "ws";
+import ON_DEATH from "death";
 
-import Board from '../board';
-import Stats from '../stats';
+import Board from "../board";
+import Stats from "../stats";
 
-import ServerClientSync from './server';
-import getLogger, {flush} from '../logger';
-import {Events, BinaryData, EventType} from '../events';
-import {TrackingInfo} from '../types';
-import {createLocalContext, LocalContext} from '../context';
-import {ServerConfig} from './types';
+import ServerClientSync from "./server";
+import getLogger, {flush} from "../logger";
+import {Events, BinaryData, EventType} from "../events";
+import {TrackingInfo} from "../types";
+import {createLocalContext, LocalContext} from "../context";
+import {ServerConfig} from "./types";
+import {randomInBetween} from "../util/random";
 
 const logger = getLogger("ServerIndex");
 
 let trackingInfoId = 0;
+
 export default class Server {
     private currentPlayers: TrackingInfo[];
     private callbacks: {
@@ -24,7 +26,6 @@ export default class Server {
         onTrackingInfo: ((info: TrackingInfo) => void)[],
     };
 
-    private entityId: number;
     private wss: WebSocket.Server;
     private map: Board;
     private width: number;
@@ -55,7 +56,6 @@ export default class Server {
         this.optionalStartingPositions = optionalStartingPositions;
 
         this.currentPlayers = [];
-        this.entityId = 0;
         this.map = Board.generate(width, height);
         this.width = width;
         this.height = height;
@@ -163,8 +163,8 @@ export default class Server {
         }
 
         return [
-            Math.floor(Math.random() * this.width - 2) + 1,
-            Math.floor(Math.random() * this.height - 2) + 1
+            randomInBetween(1, this.width - 2),
+            randomInBetween(1, this.height - 2),
         ];
     }
 

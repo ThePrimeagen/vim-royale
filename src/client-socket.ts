@@ -47,6 +47,7 @@ export default class ClientSocket {
 
             logger("message", this.id, context.id, type);
             if (typeof msg === 'string') {
+                console.log("LOOK AT THIS", msg);
 
                 // @ts-ignore
                 let wsMessage = JSON.parse(msg) as WSMessage;
