@@ -100,6 +100,7 @@ export default class Game {
 
         this.on = (evt, ...args) => {
             logger("Received Event", this.id, evt.type);
+
             switch (evt.type) {
                 case EventType.StartGame:
                     this.createMainGame(evt.data);
@@ -133,7 +134,7 @@ export default class Game {
     private createMainGame(data: StartGameMessage) {
         logger("createMainGame", this.id, this.context.socket.id, data.entityIdRange, data.position);
 
-        this.board = new Board(data.map.map, data.jumpLetters);
+        this.board = new Board(data.map.map, data.map.jumpLetters);
         this.store.setEntityRange(data.entityIdRange[0], data.entityIdRange[1]);
 
         const [

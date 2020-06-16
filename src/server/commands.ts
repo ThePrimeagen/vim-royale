@@ -18,12 +18,12 @@ export type MapLayout = {
     width: number;
     height: number;
     map: string[][];
+    jumpLetters: JumpLetters;
 };
 
 export type StartGameMessage = {
     type: 'map';
     map: MapLayout;
-    jumpLetters: JumpLetters;
     position: [number, number];
     entityIdRange: [number, number];
 }

@@ -42,7 +42,6 @@ export default class Board {
         // Starting at the upper left hand, add floor(1/4N) nodes to it.  Then
         // keep moving to each node, bfstyle.
         //
-        //
         return new Board(map, generateJumps(width, height));
     }
 }

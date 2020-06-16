@@ -1,12 +1,15 @@
-import PositionComponent from '../../objects/components/position';
-import apply from './apply';
-import getRenderBounds from './get-render-bounds';
-import isInWindow from './is-in-window';
-import makeRelative from './make-relative';
-import GlobalContext from '../../context';
+import PositionComponent from "../../objects/components/position";
+import apply from "./apply";
+import getRenderBounds from "./get-render-bounds";
+import isInWindow from "./is-in-window";
+import makeRelative from "./make-relative";
+import GlobalContext from "../../context";
+import Board from "../../board";
+
+const tmp: PositionComponent[] = [];
 
 export default function render(
-    board: string[][],
+    board: Board,
     renderSpace: string[][],
     positions: PositionComponent[],
     playerPosition: PositionComponent,
@@ -18,17 +21,40 @@ export default function render(
         leftY,
         offsetX,
         offsetY,
-    ] = getRenderBounds(board, display.width, display.height, x, y);
+    ] = getRenderBounds(board.map, display.width, display.height, x, y);
+
+    tmp.length = 0;
+    const hEnd = GlobalContext.display.height + playerPosition.y;
+    const wEnd = GlobalContext.display.width + playerPosition.x;
+
+    // TODO: Don't care, client
+    // TODO: I do slightly care that I am creating all this nasty garbage
+    // TODO: I do actually really care, this is terrible.  This is really
+    // terrible bad, no good, at all
+    const startHeight = Math.max(playerPosition.y - hEnd, 0);
+    const startWidth = Math.max(playerPosition.x - wEnd, 0);
+
+    for (let y = startHeight; y < hEnd && y < board.height; ++y) {
+        for (let x = startWidth; x < wEnd && x < board.width; ++x) {
+            const char = board.jumpLetters[y][x];
+            if (char) {
+                tmp.push(new PositionComponent(
+                    char, x, y
+                ));
+            }
+        }
+    }
 
     // 1. apply the game board to the renderSpace.
+    // 1.b apply the game board jumpletters to the renderSpace.
     // 2. draw positions
     // 3. draw player
     //
     // 1.
-    apply(renderSpace, board, 0, 0, leftX, leftY);
+    apply(renderSpace, board.map, 0, 0, leftX, leftY);
 
     // 2.
-    positions.
+    tmp.concat(positions).
         filter(pos => {
             const {
                 x, y

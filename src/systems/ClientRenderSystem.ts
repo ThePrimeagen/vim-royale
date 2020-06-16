@@ -85,7 +85,7 @@ export default class RendererSystem {
             tmp,
             offsetX,
             offsetY,
-        ] = render(this.board.map, this.tmp, positions, pPosition, display)
+        ] = render(this.board, this.tmp, positions, pPosition, display)
 
         const coords = [pPosition.x, pPosition.y].toString().split('');
         apply(tmp, [coords], display.width - (coords.length + 1), 0);
