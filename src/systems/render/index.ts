@@ -3,7 +3,6 @@ import apply from "./apply";
 import getRenderBounds from "./get-render-bounds";
 import isInWindow from "./is-in-window";
 import makeRelative from "./make-relative";
-import GlobalContext from "../../context";
 import Board from "../../board";
 
 const tmp: PositionComponent[] = [];
@@ -11,7 +10,7 @@ const tmp: PositionComponent[] = [];
 export default function render(
     board: Board,
     renderSpace: string[][],
-    positions: PositionComponent[],
+    positions: PositionComponent[][],
     playerPosition: PositionComponent,
     display: {width: number, height: number}): [string[][], number, number] {
 
@@ -24,26 +23,6 @@ export default function render(
     ] = getRenderBounds(board.map, display.width, display.height, x, y);
 
     tmp.length = 0;
-    const hEnd = GlobalContext.display.height + playerPosition.y;
-    const wEnd = GlobalContext.display.width + playerPosition.x;
-
-    // TODO: Don't care, client
-    // TODO: I do slightly care that I am creating all this nasty garbage
-    // TODO: I do actually really care, this is terrible.  This is really
-    // terrible bad, no good, at all
-    const startHeight = Math.max(playerPosition.y - hEnd, 0);
-    const startWidth = Math.max(playerPosition.x - wEnd, 0);
-
-    for (let y = startHeight; y < hEnd && y < board.height; ++y) {
-        for (let x = startWidth; x < wEnd && x < board.width; ++x) {
-            const char = board.jumpLetters[y][x];
-            if (char) {
-                tmp.push(new PositionComponent(
-                    char, x, y
-                ));
-            }
-        }
-    }
 
     // 1. apply the game board to the renderSpace.
     // 1.b apply the game board jumpletters to the renderSpace.
@@ -54,7 +33,7 @@ export default function render(
     apply(renderSpace, board.map, 0, 0, leftX, leftY);
 
     // 2.
-    tmp.concat(positions).
+    positions.forEach(p => p.
         filter(pos => {
             const {
                 x, y
@@ -70,7 +49,8 @@ export default function render(
                 y,
             ] = makeRelative(leftX, leftY, pos);
             apply(renderSpace, pos.char, x, y, 0, 0);
-        });
+        })
+    );
 
     // 3. draw player.
     const [

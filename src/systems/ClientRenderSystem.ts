@@ -7,8 +7,11 @@ import getBox from '../util/getBox';
 import Board from '../board';
 import apply from './render/apply';
 import render from './render';
+import { Renderer } from './render/types';
+import jumpPointRenderer from './render/jumpPointRender';
 
 export default class RendererSystem {
+    private rendererer: Renderer;
     private screen: blessed.Widgets.Screen;
     private board: Board;
     private context: LocalContext;
@@ -22,6 +25,8 @@ export default class RendererSystem {
         this.context = context;
         this.tmp = [];
         this.actual = [];
+        this.rendererer = jumpPointRenderer(board, render);
+
         const {width, height} = GlobalContext.display;
 
         for (let y = 0; y < height; ++y) {
@@ -83,9 +88,9 @@ export default class RendererSystem {
         // APPLY THAT GAME BOARD
         const [
             tmp,
-            offsetX,
+            _,
             offsetY,
-        ] = render(this.board, this.tmp, positions, pPosition, display)
+        ] = this.rendererer(this.board, this.tmp, [positions], pPosition, display)
 
         const coords = [pPosition.x, pPosition.y].toString().split('');
         apply(tmp, [coords], display.width - (coords.length + 1), 0);
