@@ -3,8 +3,9 @@ import GlobalContext from "../context";
 
 const MAX_SEEN_COUNT : number = 50;
 const MAX_SEEN_LETTER_COUNT : number = 25;
-const LETTER_LIST = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const JUMP_COUNT_DIVISOR: number = +process.env.JUMP_COUNT_DIVISOR;
+
+export const LETTER_LIST = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 export function getUniqueChar(seenBefore: string[]): string {
     let tries = 0;

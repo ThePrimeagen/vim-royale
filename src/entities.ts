@@ -2,15 +2,6 @@ import createLogger from "./logger";
 
 const logger = createLogger("EntityStore");
 
-// createNewEntity: number
-// addBehavior(entity: number, behavior<Position>)
-//
-// Renderererer(board) {
-//    entities.forEach(<Position>, (positionEntity) => {
-//    });
-// }
-//
-
 export interface Component {
     type: string;
 }

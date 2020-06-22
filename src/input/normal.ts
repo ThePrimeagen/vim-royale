@@ -1,6 +1,6 @@
-import { LocalContext, ScreenType } from '../context';
-import getMovement from './getMovement';
-import { InputCommand } from '../types';
+import { LocalContext, ScreenType } from "../context";
+import getMovement from "./getMovement";
+import { CommandType, Command, FNode, HjklNode, CountNode, CommandNode } from "./command-node";
 
 const MODIFIER_TTL = +process.env.MODIFIER_TTL;
 
@@ -23,17 +23,38 @@ function isMovementKey(key: string): boolean {
     return false;
 }
 
-// You cannot move, more than 12 spaces at once with <number>jhkl
-// TODO: Really actually do an eventing system.  This is just do do garbage
-//
+export class CommandProcessor {
+    private timerId = 0;
+    private commands: CommandNode[];
+    private curr?: CommandNode;
+    private listOfExecuted: CommandNode[];
+
+    constructor() {
+        this.listOfExecuted = [];
+
+        this.commands = [
+            new HjklNode(),
+            new CountNode(),
+            new FNode(),
+        ];
+
+        this.curr = null;
+    }
+
+    processKey(key: string): boolean {
+        return false;
+    }
+}
 
 let lastKeyTime = 0;
 let lastCountKey: number | null = null;
 
-const tmpMovementObj = {
-    key: "",
-    count: 0
-};
+// <number>hjkl, ftFT<onscreen>
+// v :
+//   fFtT<letter>
+//   <number>hjkl
+//
+//
 
 export default {
     handle(context: LocalContext, key: string, ctrl?: boolean): boolean {
@@ -43,9 +64,27 @@ export default {
             return true;
         }
 
+        // TODO: We should probably do some sort of menu.
         if (key === "c" && ctrl) {
             process.exit(0);
         }
+
+        // TODO: Putting the kids down.
+        // TODO: Putting the kids down.
+        // TODO: Putting the kids down.
+        // TODO: Putting the kids down.
+        // TODO: Putting the kids down.
+        // TODO: Putting the kids down.
+        // TODO: Putting the kids down.
+        // TODO: Putting the kids down.
+        // TODO: Putting the kids down.
+        // TODO: Putting the kids down.
+        // TODO: Putting the kids down.
+        // TODO: Putting the kids down.
+        // TODO: Putting the kids down.
+        // TODO: Putting the kids down.
+        // TODO: Putting the kids down.
+        // TODO: Putting the kids down.
 
         let processed = false;
         if (isMovementKey(key)) {
