@@ -1,24 +1,23 @@
+import { Command, CommandType } from "./types";
 import { LETTER_LIST } from "../board/jumps";
 
-export enum CommandType {
-    Count = 0,
-    Motion,
-    Input,
-};
+const MODIFIER_TTL = +process.env.MODIFIER_TTL;
 
-export type Command = {
-    type: CommandType;
-    char: string;
-}
+// <number>hjkl, ftFT<onscreen>
+// v :
+//   fFtT<letter>
+//   <number>hjkl
+//
+//
 
 export abstract class CommandNode {
     protected ch?: string;
-    constructor(private isTerminal: boolean,
+    constructor(private terminal: boolean,
                 private typeOfCommand: CommandType,
                 private matchString: string) { }
 
-    atTerminal(): boolean {
-        return this.isTerminal;
+    isTerminal(): boolean {
+        return this.terminal;
     }
 
     getCommand(): Command | null {
@@ -32,15 +31,15 @@ export abstract class CommandNode {
         };
     }
 
-    processKey(ch: string): null | CommandNode {
+    processKey(ch: string): boolean {
         this.ch = null;
 
         if (~this.matchString.indexOf(ch)) {
             this.ch = ch;
-            return this.getNextCommandNode();
+            return true;
         }
 
-        return null;
+        return false;
     }
 
     getNextCommandNode(): CommandNode | null {
@@ -82,4 +81,74 @@ export class CountNode extends CommandNode {
     getNextCommandNode() { return this.hjkl; }
 }
 
+export class CommandProcessor {
+    private timerId: ReturnType<typeof setTimeout>;
+    private commands: CommandNode[];
+    private curr?: CommandNode;
+    private listOfExecuted!: Command[];
+
+    constructor() {
+        this.commands = [
+            new HjklNode(),
+            new CountNode(),
+            new FNode(),
+        ];
+        this.reset();
+    }
+
+    // don't be wasteful
+    private getNextCommandNodeList(): CommandNode[] {
+        return this.curr && [this.curr] || this.commands;
+    }
+
+    // Resets all the stuffs
+    private timerReset() {
+        clearTimeout(this.timerId);
+        this.timerId = null;
+    }
+
+    public reset() {
+        this.listOfExecuted = [];
+        this.curr = null;
+        this.timerReset();
+    }
+
+    // Everytime we reach a terminal point, I am going to return the list of
+    processKey(key: string): null | Command[] {
+        const nextNodes = this.getNextCommandNodeList();
+
+        let success = false;
+
+        for (let i = 0; !success && i < nextNodes.length; ++i) {
+            const next = nextNodes[i];
+            const result = next.processKey(key);
+
+            if (result) {
+                this.listOfExecuted.push(next.getCommand());
+                this.curr = next;
+                success = true;
+            }
+        }
+
+        if (!success) {
+            this.reset();
+            return null;
+        }
+
+        if (this.curr.isTerminal()) {
+            const result = this.listOfExecuted;
+            this.reset();
+
+            return result;
+        }
+
+        this.timerReset();
+        this.timerId = setTimeout(() => {
+            this.reset();
+        }, MODIFIER_TTL);
+        this.curr = this.curr.getNextCommandNode();
+
+        return null;
+    }
+}
 

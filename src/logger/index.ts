@@ -81,5 +81,4 @@ export default function createLogger(prefix: string) {
 
         queue.push(`${timestamp}${prefix} ${args.map(toString).join(' ')}`);
     }
-
 }

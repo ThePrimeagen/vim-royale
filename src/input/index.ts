@@ -1,13 +1,13 @@
-import * as blessed from 'blessed';
+import * as blessed from "blessed";
 
-import {EventType} from '../events';
-import GlobalContext, {ScreenType, LocalContext} from '../context';
-import insert from './insert';
-import normal from './normal';
-import mainMenu from './normal';
-import getLogger from '../logger';
+import {EventType} from "../events";
+import {ScreenType, LocalContext} from "../context";
+import insert from "./insert";
+import normal from "./normal";
+import mainMenu from "./normal";
+import getLogger from "../logger";
 
-const logger = getLogger('input');
+const logger = getLogger("InputHandler");
 
 type InputHandler = {
     handle: (context: LocalContext, ch: string, ctrl?: boolean) => boolean;
@@ -30,7 +30,7 @@ export default function captureInput(screen: blessed.Widgets.Screen, context: Lo
         logger("Got Input", context.id, key.name, key.ctrl, key);
 
         // @ts-ignore because it actually has that as a property when using
-        // '.' or ','
+        // "." or ","
         const letter = key.name || key.ch;
 
         if (inputFn && inputFn.handle(context, letter, key.ctrl)) {

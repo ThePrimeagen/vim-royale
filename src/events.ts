@@ -1,7 +1,24 @@
+// TODO: Stop doing whatever this entire file is right now.
+// TODO: Stop doing whatever this entire file is right now.
+// TODO: Stop doing whatever this entire file is right now.
+// TODO: Stop doing whatever this entire file is right now.
+// TODO: Stop doing whatever this entire file is right now.
+// TODO: Stop doing whatever this entire file is right now.
+// TODO: Stop doing whatever this entire file is right now.
+// TODO: Stop doing whatever this entire file is right now.
+// TODO: Stop doing whatever this entire file is right now.
+// TODO: Stop doing whatever this entire file is right now.
+// TODO: Stop doing whatever this entire file is right now.
+// TODO: Stop doing whatever this entire file is right now.
+// TODO: Stop doing whatever this entire file is right now.
+// TODO: Stop doing whatever this entire file is right now.
+// TODO: Stop doing whatever this entire file is right now.
+// TODO: Stop doing whatever this entire file is right now.
 import WebSocket from 'ws';
 import { StartGameMessage, WSMessage } from './server/commands';
 import Stats from './stats';
 import { TrackingInfo } from './types';
+import { Command } from './input/types';
 
 export enum EventType {
     ScreenTypeChanged = "screen-type-changed",
@@ -13,7 +30,13 @@ export enum EventType {
     WsBinary = "ws-binary",
     ServerMovement = "server-movement",
     Debug = "debug",
+    Input = "input",
 }
+
+export type InputEvent = {
+    type: EventType.Input;
+    data: Command[];
+};
 
 export interface WsClose {
     type: EventType.WsClose;
@@ -72,21 +95,36 @@ export interface Debug {
 
 export type EventData =
     ScreenTypeChanged | WsOpen | WsMessage |
-    StartGame | Run | BinaryData | ServerMovement | WsClose | Debug;
+    StartGame | Run | BinaryData | ServerMovement | WsClose | Debug | InputEvent;
 
 type EventCallback = (event: EventData, ...args: any[]) => void;
 
 const runObject: Run = { type: EventType.Run };
 
-export class Events {
+interface IEvents {
+    on(cb: EventCallback);
+    on(str: EventType | string, cb: EventCallback);
+}
+
+export class Events implements IEvents {
     private callbacks: EventCallback[];
+    private callbacksByType: { [key: string]: EventCallback[] };
 
     constructor() {
         this.callbacks = [];
     }
 
-    on(cb: EventCallback): void {
-        this.callbacks.push(cb);
+    on(cbOrType: EventCallback | EventType | string, cb?: EventCallback): void {
+        if (typeof cb === "function") {
+            this.callbacks.push(cb);
+        }
+        else if (typeof cbOrType === "string") {
+            if (!this.callbacksByType[cbOrType]) {
+                this.callbacksByType[cbOrType] = [];
+            }
+
+            this.callbacksByType[cbOrType].push(cb);
+        }
     }
 
     // Do i even like this?  It creates an addition object allocation every
