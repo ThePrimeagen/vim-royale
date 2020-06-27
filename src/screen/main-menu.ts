@@ -30,7 +30,10 @@ export default function mainMenu(screen: blessed.Widgets.Screen, context: LocalC
     });
 
     screen.append(box);
+
     screen.render();
+
+    logger("Rendered");
 
     // Wait for tit to go to connected state.
     function onEvent(evt: EventData) {

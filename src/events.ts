@@ -14,11 +14,14 @@
 // TODO: Stop doing whatever this entire file is right now.
 // TODO: Stop doing whatever this entire file is right now.
 // TODO: Stop doing whatever this entire file is right now.
-import WebSocket from 'ws';
-import { StartGameMessage, WSMessage } from './server/commands';
-import Stats from './stats';
-import { TrackingInfo } from './types';
-import { Command } from './input/types';
+import WebSocket from "ws";
+import { StartGameMessage, WSMessage } from "./server/commands";
+import Stats from "./stats";
+import { TrackingInfo } from "./types";
+import { Command } from "./input/types";
+import createLogger from "./logger";
+
+const logger = createLogger("Events");
 
 export enum EventType {
     ScreenTypeChanged = "screen-type-changed",
@@ -102,8 +105,8 @@ type EventCallback = (event: EventData, ...args: any[]) => void;
 const runObject: Run = { type: EventType.Run };
 
 interface IEvents {
-    on(cb: EventCallback);
-    on(str: EventType | string, cb: EventCallback);
+    on(cb: EventCallback): void;
+    on(str: EventType | string, cb: EventCallback): void;
 }
 
 export class Events implements IEvents {
@@ -115,9 +118,10 @@ export class Events implements IEvents {
     }
 
     on(cbOrType: EventCallback | EventType | string, cb?: EventCallback): void {
-        if (typeof cb === "function") {
-            this.callbacks.push(cb);
+        if (typeof cbOrType === "function") {
+            this.callbacks.push(cbOrType);
         }
+
         else if (typeof cbOrType === "string") {
             if (!this.callbacksByType[cbOrType]) {
                 this.callbacksByType[cbOrType] = [];
