@@ -17,6 +17,7 @@ export default class RendererSystem {
     private context: LocalContext;
     private box: blessed.Widgets.BoxElement;
     private tmp: string[][];
+
     private actual: string[][];
 
     constructor(screen: blessed.Widgets.Screen, board: Board, context: LocalContext) {
