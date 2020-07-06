@@ -1,8 +1,9 @@
-import Player from './objects/player';
-import PositionComponent from './objects/components/position';
-import {EntityStore} from './entities';
-import {Events, EventType} from './events';
-import ClientSocket from './client-socket';
+import Board from "./board";
+import Player from "./objects/player";
+import PositionComponent from "./objects/components/position";
+import {EntityStore} from "./entities";
+import {Events, EventType} from "./events";
+import ClientSocket from "./client-socket";
 
 export enum ScreenType {
     Normal = "NORMAL",
@@ -27,6 +28,7 @@ export type LocalContext = {
     player: Player;
     store: EntityStore;
     events: Events;
+    board: Board;
     socket: ClientSocket;
     id: number;
 };
@@ -48,7 +50,9 @@ export function createLocalContext({
     player,
     socket,
     isServer,
+    board,
 }: {
+    board?: Board,
     screen?: ScreenType,
     store?: EntityStore,
     events?: Events,
@@ -56,6 +60,7 @@ export function createLocalContext({
     socket?: ClientSocket,
     isServer?: boolean,
 } = {}): LocalContext {
+
     const out = {
         get screen() {
             return screen;
@@ -72,6 +77,7 @@ export function createLocalContext({
         socket,
         events,
         store,
+        board: board,
         isServer: !!isServer,
         id: contextId++,
     } as LocalContext;

@@ -66,7 +66,7 @@ export class FNode extends CommandNode {
 
 export class HjklNode extends CommandNode {
     constructor() {
-        super(true, CommandType.Input, "hjkl");
+        super(true, CommandType.Motion, "hjkl");
     }
 }
 

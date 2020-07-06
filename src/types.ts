@@ -1,6 +1,17 @@
 import WebSocket from 'ws';
 import Stats from './stats/index';
 
+export enum CommandType {
+    Count = 0,
+    Motion,
+    Input,
+};
+
+export type Command = {
+    type: CommandType;
+    char: string;
+}
+
 export type GameOptions = {
     width: number;
     height: number;
@@ -16,7 +27,7 @@ export type TrackingInfo = {
 
 export type InputCommand = {
     count: number;
-    key: string;
+    key: Command[];
 };
 
 

@@ -4,7 +4,7 @@
         "outDir": "./build/",
         "sourceMap": true,
         "noImplicitAny": false,
-        "lib": ["es6"],
+        "lib": ["es6", "es2019"],
         "module": "commonjs",
         "target": "es6",
         "esModuleInterop": true,

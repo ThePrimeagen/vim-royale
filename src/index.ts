@@ -134,7 +134,9 @@ export default class Game {
     private createMainGame(data: StartGameMessage) {
         logger("createMainGame", this.id, this.context.socket.id, data.entityIdRange, data.position);
 
+        // TODO: This? Eww
         this.board = new Board(data.map.map, data.map.jumpLetters);
+        this.context.board = this.board;
         this.store.setEntityRange(data.entityIdRange[0], data.entityIdRange[1]);
 
         const [

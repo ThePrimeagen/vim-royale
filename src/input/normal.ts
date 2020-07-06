@@ -30,22 +30,14 @@ export default {
 
         const results = this.processor.processKey(key);
         if (results) {
-            const movementObj = {
-                key: results[results.length - 1].char,
-                count: 1
-            };
-
-            if (results.length === 2) {
-                movementObj.count = +results[0].char;
-            }
-
-            const movement = getMovement(movementObj);
+            const movement = getMovement(context, results);
+            logger("Moving Player", movement, results);
 
             const {player} = context;
             player.movement.x = movement[0];
             player.movement.y = movement[1];
 
-            player.movement.lastMovement = movementObj;
+            player.movement.lastMovement = results;
 
             return true;
         }

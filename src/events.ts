@@ -18,7 +18,7 @@ import WebSocket from "ws";
 import { StartGameMessage, WSMessage } from "./server/commands";
 import Stats from "./stats";
 import { TrackingInfo } from "./types";
-import { Command } from "./input/types";
+import { Command } from "./types";
 import createLogger from "./logger";
 
 const logger = createLogger("Events");

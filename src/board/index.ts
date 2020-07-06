@@ -1,7 +1,16 @@
 import GlobalContext from "../context";
+import PositionComponent from "../objects/components/position";
 import { generateJumps } from "./jumps";
 
 const whiteSpace = '\u202F';
+
+// TODO(Garbage): due to object allocation with x and y)
+const letters: JumpCoordinate[] = [];
+
+export type JumpCoordinate = {
+    letter: string;
+    position: {x: number, y: number};
+}
 
 export default class Board {
     public readonly width: number;
@@ -16,6 +25,39 @@ export default class Board {
 
         this.height = this.map.length;
         this.width = this.map[0].length;
+    }
+
+    getBoundedY(x: number) {
+        return Math.max(Math.min(x, this.width - 1), 0);
+    }
+
+    getBoundedX(x: number) {
+        return Math.max(Math.min(x, this.width - 1), 0);
+    }
+
+    getLetters(position: PositionComponent): JumpCoordinate[] {
+        const {
+            display: { width },
+        } = GlobalContext;
+
+        const w = Math.ceil(width / 2);
+
+        const lowerX = this.getBoundedX(position.x - w);
+        const higherX = this.getBoundedX(position.x + w);
+
+        letters.length = 0;
+        const row = this.jumpLetters[position.y];
+        for (let i = lowerX; i <= higherX; ++i) {
+            if (row[i] !== "") {
+                // TODO: GARBAGE???
+                letters.push({
+                    letter: row[i],
+                    position: {x: i, y: position.y}
+                });
+            }
+        }
+
+        return letters;
     }
 
     static generate(width: number, height: number): Board {

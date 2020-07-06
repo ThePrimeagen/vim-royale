@@ -6,7 +6,6 @@ import StyledCharacterStrategy from '../characters/styled';
 import BasicCharacterStrategy from '../characters/basic';
 
 const characterStrategies = {
-
     [ScreenType.Normal]: new StyledCharacterStrategy(ScreenType.Normal, {
         bold: true,
         fg: 'FCFCFC',

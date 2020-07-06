@@ -3,7 +3,6 @@ import GlobalContext, {LocalContext} from '../context';
 
 import getMovement from '../input/getMovement';
 import LifetimeComponent from '../objects/components/lifetime';
-import MovementComponent from '../objects/components/movement';
 import PositionComponent from '../objects/components/position';
 import Board from '../board';
 import {readUpdatePosition} from '../server/messages/updatePosition';
@@ -64,7 +63,7 @@ export default class ServerMovementSystem {
                 return;
             }
 
-            const movement = getMovement(update.key);
+            const movement = getMovement(update);
             logger("Movement", movement);
 
             const position = this.context.store.getComponent<PositionComponent>(update.entityId, PositionComponent);
