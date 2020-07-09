@@ -1,6 +1,9 @@
-import GlobalContext, { LocalContext } from "../context";
-import { InputCommand, Command, CommandType } from "../types";
-import { JumpCoordinate } from "../board";
+import { Command, CommandType } from "../types";
+import Board, { JumpCoordinate, LookDirection } from "../board";
+import createLogger from "../logger";
+import PositionComponent from "../objects/components/position";
+
+const logger = createLogger("getMovement");
 
 export function getCommand(commands: Command[], type: CommandType): Command | void {
     let command: Command;
@@ -26,25 +29,26 @@ export function getCountCommand(commands: Command[]): Command | void {
     return getCommand(commands, CommandType.Count);
 }
 
-export default function getMovement(context: LocalContext, commands: Command[]) {
+export default function getMovement(board: Board, pos: PositionComponent, commands: Command[]) {
     const outArr = [0, 0];
     const command = getMotionCommand(commands);
+    const countCommand = getCountCommand(commands);
+    const count = countCommand && +countCommand.char || 1;
 
     if (!command) {
         return outArr;
     }
+
+    logger("motion", command.char, "count", count);
 
     switch (command.char) {
         case 'T':
         case 't':
         case 'F':
         case 'f': {
-            if (!context.board) {
-                break;
-            }
-
-            const player = context.player;
-            const letters = context.board.getLetters(player.position);
+            const lookDir = (command.char.charCodeAt(0) & 32) === 0 ?
+                    LookDirection.Left : LookDirection.Right;
+            const letters = board.getLetters(pos, lookDir);
             const letter = getInputCommand(commands);
 
             // Nothing to return
@@ -63,31 +67,28 @@ export default function getMovement(context: LocalContext, commands: Command[]) 
                 break;
             }
 
-            outArr[0] = nextSpot.position.x - player.position.x;
+            outArr[0] = nextSpot.position.x - pos.x;
             break;
         }
 
         case 'h':
-            outArr[0] = -1;
+            outArr[0] = -1 * count;
             break;
 
         case 'l':
-            outArr[0] = 1;
+            outArr[0] = 1 * count;
             break;
 
         case 'j':
-            outArr[1] = 1;
+            outArr[1] = 1 * count;
             break;
 
         case 'k':
-            outArr[1] = -1;
+            outArr[1] = -1 * count;
             break;
     }
 
-    for (let i = 0; i < outArr.length; ++i) {
-        outArr[i] *= ch.count;
-    }
-
+    logger("getMovement returning", outArr);
     return outArr;
 }
 

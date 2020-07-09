@@ -23,14 +23,11 @@ export default {
             return true;
         }
 
-        // TODO: We should probably do some sort of menu.
-        if (key === "c" && ctrl) {
-            process.exit(0);
-        }
-
         const results = this.processor.processKey(key);
         if (results) {
-            const movement = getMovement(context, results);
+            const movement = getMovement(
+                context.board, context.player.position, results);
+
             logger("Moving Player", movement, results);
 
             const {player} = context;

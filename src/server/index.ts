@@ -62,7 +62,8 @@ export default class Server {
         this.entitiesRange = entityIdRange;
         this.entitiesStart = 0;
         this.context = createLocalContext({
-            isServer: true
+            isServer: true,
+            board: this.map,
         });
 
         this.wss = new WebSocket.Server({

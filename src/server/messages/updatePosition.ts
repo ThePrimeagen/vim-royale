@@ -1,9 +1,10 @@
-import { FrameType, UpdatePositionResult } from './types';
-import { EntityItem } from '../../entities';
-import BufferReader from '../../util/buffer-reader';
-import BufferWriter from '../../util/buffer-writer';
-import { InputCommand } from '../../types';
-import createLogger from '../../logger';
+import { FrameType, UpdatePositionResult } from "./types";
+import { EntityItem } from "../../entities";
+import BufferReader from "../../util/buffer-reader";
+import BufferWriter from "../../util/buffer-writer";
+import { encodeCommands, decodeCommands } from "../../network/components";
+import { Command } from "../../types";
+import createLogger from "../../logger";
 const logger = createLogger("UpdatePosition");
 
 // How to encode this ?
@@ -20,18 +21,17 @@ export default function createUpdatePosition({
     movementId: number,
     x: number,
     y: number,
-    cmd: InputCommand,
+    cmd: Command[],
 }): Buffer {
 
-    const b = new BufferWriter(13);
+    const b = new BufferWriter(24);
 
     b.write8(FrameType.UpdatePosition);
     b.write24(entityId);
     b.write24(movementId);
-    b.write8(cmd.count);
-    b.writeStr(cmd.key);
     b.write16(x);
     b.write16(y);
+    encodeCommands(cmd, b);
 
     logger("createUpdatePosition", b.buffer);
 
@@ -47,10 +47,9 @@ export function readUpdatePosition(buf: Buffer, offset: number = 0): UpdatePosit
     reader.reset(buf, offset);
     const entityId = reader.read24();
     const movementId = reader.read24();
-    const count = reader.read8();
-    const key = reader.readChar8();
     const x = reader.read16();
     const y = reader.read16();
+    const commands = decodeCommands(reader);
 
     logger("readUpdatePosition", buf);
 
@@ -59,10 +58,6 @@ export function readUpdatePosition(buf: Buffer, offset: number = 0): UpdatePosit
         y,
         entityId,
         movementId,
-        key: {
-            count,
-            key,
-        },
+        commands,
     };
 };
-

@@ -31,7 +31,12 @@ export default function captureInput(screen: blessed.Widgets.Screen, context: Lo
 
         // @ts-ignore because it actually has that as a property when using
         // "." or ","
-        const letter = key.name || key.ch;
+        const letter = key.sequence || key.name || key.ch;
+
+        // TODO: We should probably do some sort of menu.
+        if (key.name === "c" && key.ctrl) {
+            process.exit(0);
+        }
 
         if (inputFn && inputFn.handle(context, letter, key.ctrl)) {
             context.events.emit({

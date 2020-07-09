@@ -1,11 +1,19 @@
 import GlobalContext from "../context";
 import PositionComponent from "../objects/components/position";
 import { generateJumps } from "./jumps";
+import createLogger from "../logger";
+
+const logger = createLogger("Board");
 
 const whiteSpace = '\u202F';
 
 // TODO(Garbage): due to object allocation with x and y)
 const letters: JumpCoordinate[] = [];
+
+export enum LookDirection {
+    Left = 0,
+    Right,
+}
 
 export type JumpCoordinate = {
     letter: string;
@@ -35,21 +43,23 @@ export default class Board {
         return Math.max(Math.min(x, this.width - 1), 0);
     }
 
-    getLetters(position: PositionComponent): JumpCoordinate[] {
+    getLetters(position: PositionComponent, side: LookDirection): JumpCoordinate[] {
         const {
             display: { width },
         } = GlobalContext;
 
         const w = Math.ceil(width / 2);
+        const lowerX = side === LookDirection.Left ?
+            this.getBoundedX(position.x - w) : this.getBoundedX(position.x + 1);
 
-        const lowerX = this.getBoundedX(position.x - w);
-        const higherX = this.getBoundedX(position.x + w);
+        const higherX = side === LookDirection.Left ?
+            this.getBoundedX(position.x - 1) : this.getBoundedX(position.x + w);
 
         letters.length = 0;
         const row = this.jumpLetters[position.y];
         for (let i = lowerX; i <= higherX; ++i) {
             if (row[i] !== "") {
-                // TODO: GARBAGE???
+                // TODO(Garbage): Pool these items for a sync pool.
                 letters.push({
                     letter: row[i],
                     position: {x: i, y: position.y}
@@ -57,6 +67,7 @@ export default class Board {
             }
         }
 
+        logger("getLetters", letters);
         return letters;
     }
 

@@ -48,7 +48,6 @@ function handleGameStateUpdate(context: LocalContext, buffer: Buffer) {
 export default function handleBinaryMessage(context: LocalContext, evt: BinaryData, offset: number = 0) {
     const player = context.player;
 
-    logger("isCreateEntity", isCreateEntity(evt.data, offset));
     if (isCorrectPosition(evt.data, offset)) {
         const posCorrection = readCorrectPosition(evt.data, 1);
 
@@ -56,6 +55,7 @@ export default function handleBinaryMessage(context: LocalContext, evt: BinaryDa
         player.forcePosition.y = posCorrection.y;
         player.forcePosition.movementId = posCorrection.nextId;
         player.forcePosition.force = true;
+        context.events.emit({type: EventType.Run});
     }
 
     else if (isGameStateUpdate(evt.data, offset)) {

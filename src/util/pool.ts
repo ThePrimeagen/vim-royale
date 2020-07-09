@@ -1,6 +1,9 @@
 import BufferWriter from './buffer-writer';
 import BufferReader from './buffer-reader';
 
+// TODO(Garbage): Create a after round cleanup pool.  This pool will reclaim
+// all objects created on the next tick after the WS messages have been
+// processed, but the next server tick still has some time.
 export type Object = {[key: string]: any};
 class ObjectSyncPool {
     private pool: Object[];

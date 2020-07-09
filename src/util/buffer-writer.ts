@@ -1,6 +1,6 @@
 export default class BufferWriter {
+    private ptr: number;
     public buffer: Buffer;
-    public ptr: number;
 
     constructor(length: number) {
         this.buffer = Buffer.allocUnsafe(length);
@@ -9,6 +9,10 @@ export default class BufferWriter {
 
     movePointer(offset: number) {
         this.ptr = offset;
+    }
+
+    length(): number {
+        return this.ptr;
     }
 
     reset(buffer?: Buffer) {

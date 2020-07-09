@@ -37,8 +37,8 @@ export default class ServerMovementSystem {
 
             LifetimeComponent.move(this.context, entityId, x + y);
 
-            // @ts-ignore
-            const position = this.context.store.getComponent<PositionComponent>(entityId, PositionComponent) as PositionComponent;
+            const position = this.context.store.getComponent<PositionComponent>(
+                entityId, PositionComponent);
 
             position.x += movement.x;
             position.y += movement.y;
@@ -63,11 +63,13 @@ export default class ServerMovementSystem {
                 return;
             }
 
-            const movement = getMovement(update);
-            logger("Movement", movement);
-
             const position = this.context.store.getComponent<PositionComponent>(update.entityId, PositionComponent);
             logger("Position", position, update);
+
+            const movement =
+                getMovement(this.context.board, position, update.commands);
+
+            logger("Movement", movement, update.commands);
 
             //
             // We got a problem

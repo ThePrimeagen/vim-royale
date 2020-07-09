@@ -1,6 +1,8 @@
-import { Command, CommandType } from "./types";
+import { Command, CommandType } from "../types";
 import { LETTER_LIST } from "../board/jumps";
+import createLogger from "../logger";
 
+const logger = createLogger("CommandNode");
 const MODIFIER_TTL = +process.env.MODIFIER_TTL;
 
 // <number>hjkl, ftFT<onscreen>
@@ -116,6 +118,7 @@ export class CommandProcessor {
     // Everytime we reach a terminal point, I am going to return the list of
     processKey(key: string): null | Command[] {
         const nextNodes = this.getNextCommandNodeList();
+        const prev = this.curr;
 
         let success = false;
 
@@ -130,6 +133,7 @@ export class CommandProcessor {
             }
         }
 
+        logger("processKey", key, success, prev, this.curr, nextNodes);
         if (!success) {
             this.reset();
             return null;
