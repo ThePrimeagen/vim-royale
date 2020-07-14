@@ -2,7 +2,7 @@
 * Because Nano sucks.
 * Because Emacs sucks.
 * Because Rust sucks.
-* Because VSCode sucks.
+* Because VSCode ~~sucks~~ is okay.
 
 **May the best man *vim*.**
 **Cheaters never *vim*.**
