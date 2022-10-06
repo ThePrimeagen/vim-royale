@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Result, Context};
 use deku::prelude::*;
 use std::convert::TryInto;
 
@@ -11,20 +11,25 @@ pub const WHO_AM_I_CLIENT: u8 = 1;
 // if you're open to changing the format a bit
 #[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(type = "u8", endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
-enum Message {
+pub enum Message {
     #[deku(id = "0")]
     Whoami(u8),
 }
 
 #[derive(Debug, PartialEq, DekuRead, DekuWrite)]
 #[deku(endian = "big")]
-struct ServerMessage {
+pub struct ServerMessage {
     seq_nu: u16,
     version: u8,
     msg: Message, // Message here is now u8
 }
 
 impl ServerMessage {
+    pub fn deserialize(bytes: &[u8]) -> Result<ServerMessage> {
+        let (_, server_msg) =  ServerMessage::from_bytes((bytes, 0))?;
+        return Ok(server_msg);
+    }
+
     pub fn serialize(self) -> Result<Vec<u8>> {
         return Ok(self.try_into()?);
     }
