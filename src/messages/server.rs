@@ -10,15 +10,15 @@ pub const WHO_AM_I_CLIENT: u8 = 1;
 // Here's an alternative, we can include `typ` in the enum and get rid of the context passing
 // if you're open to changing the format a bit
 #[derive(Debug, PartialEq, DekuRead, DekuWrite)]
-#[deku(type = "u8", endian = "big")]
+#[deku(type = "u8", endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
 enum Message {
     #[deku(id = "0")]
     Whoami(u8),
 }
 
 #[derive(Debug, PartialEq, DekuRead, DekuWrite)]
+#[deku(endian = "big")]
 struct ServerMessage {
-    #[deku(endian = "big")]
     seq_nu: u16,
     version: u8,
     msg: Message, // Message here is now u8
