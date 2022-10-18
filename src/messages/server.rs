@@ -11,12 +11,59 @@ pub const WHO_AM_I_CLIENT: u8 = 1;
 #[derive(Debug, PartialEq, DekuRead, DekuWrite, Serialize)]
 #[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
 pub struct PlayerStart {
+    #[deku(bits = 24)]
+    entity_id: usize,
+    range: u16,
+    position: u32,
+}
 
+#[derive(Debug, PartialEq, DekuRead, DekuWrite, Serialize)]
+#[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
+pub struct PlayerPositionUpdate {
+    #[deku(bits = 24)]
+    entity_id: usize,
+    position: u32,
+}
+
+#[derive(Debug, PartialEq, DekuRead, DekuWrite, Serialize)]
+#[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
+pub struct CreateEntity {
+    #[deku(bits = 24)]
+    entity_id: usize,
+    position: u32,
+    info: u8,
+}
+
+#[derive(Debug, PartialEq, DekuRead, DekuWrite, Serialize)]
+#[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
+pub struct DeleteEntity {
+    #[deku(bits = 24)]
+    entity_id: usize,
+}
+
+#[derive(Debug, PartialEq, DekuRead, DekuWrite, Serialize)]
+#[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
+pub struct HealthUpdate {
     #[deku(bits = 24)]
     entity_id: usize,
 
-    range: u16,
+    health: u16,
+}
+
+#[derive(Debug, PartialEq, DekuRead, DekuWrite, Serialize)]
+#[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
+pub struct CirclePosition {
+    size: u16,
     position: u32,
+    seconds: u8,
+}
+
+// TODO: i think i am wrong completely on this.  probably needs to be circleupdate
+// with a new position and time to move to that point
+#[derive(Debug, PartialEq, DekuRead, DekuWrite, Serialize)]
+#[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
+pub struct CircleStart {
+    seconds: u8,
 }
 
 // Here's an alternative, we can include `typ` in the enum and get rid of the context passing
@@ -30,86 +77,42 @@ pub enum Message {
 
     #[deku(id = "1")]
     PlayerStart(PlayerStart),
+
+    #[deku(id = "2")]
+    PlayerPositionUpdate(PlayerPositionUpdate),
+
+    #[deku(id = "3")]
+    CreateEntity(CreateEntity),
+
+    #[deku(id = "4")]
+    DeleteEntity(DeleteEntity),
+
+    #[deku(id = "5")]
+    HealthUpdate(HealthUpdate),
+
+    #[deku(id = "6")]
+    CirclePosition(CirclePosition),
+
+    // TODO: This is definitely wrong
+    #[deku(id = "7")]
+    CircleStart(CircleStart),
+
+    #[deku(id = "8")]
+    PlayerCount(u8),
+
+    #[deku(id = "9")]
+    PlayerQueueCount,
+
+    #[deku(id = "10")]
+    GameCount,
+
+    #[deku(id = "11")]
+    PlayerQueueCountResult(u8),
+
+    #[deku(id = "12")]
+    GameCountResult(u16),
+
 }
-
-/*
-export type PlayerPositionUpdate = {
-    type: MessageType.PlayerPositionUpdate,
-    value: Entity & {
-        position: Position,
-    }
-}
-
-export type CreateEntity = {
-    type: MessageType.CreateEntity,
-    value: Entity & {
-        position: Position,
-        info: number,
-    }
-}
-
-export type DeleteEntity = {
-    type: MessageType.DeleteEntity,
-    value: Entity,
-}
-
-export type HealthUpdate = {
-    type: MessageType.HealthUpdate,
-    value: Entity & {
-        health: number,
-    }
-}
-
-export type CirclePosition = {
-    type: MessageType.CirclePosition,
-    value: {
-        size: number,
-        position: Position,
-        seconds: number,
-    }
-}
-
-export type CircleStart = {
-    type: MessageType.CircleStart,
-    value: {
-        seconds: number,
-    }
-}
-
-export type PlayerCount = {
-    type: MessageType.PlayerCount,
-    value: {
-        count: number,
-    }
-}
-
-export type WhoAmI = {
-    type: MessageType.WhoAmI,
-    value: WhoAmIType;
-}
-
-export type PlayerQueueCount = {
-    type: MessageType.PlayerQueueCount,
-    value: undefined
-}
-
-export type GameCount = {
-    type: MessageType.GameCount,
-    value: undefined
-}
-
-export type PlayerQueueCountResult = {
-    type: MessageType.PlayerQueueCountResult,
-    value: number
-}
-
-export type GameCountResult = {
-    type: MessageType.GameCountResult,
-    value: number
-}
-
-
-*/
 
 #[derive(Debug, PartialEq, DekuRead, DekuWrite, Serialize)]
 #[deku(endian = "big")]
