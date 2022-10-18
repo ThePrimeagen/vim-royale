@@ -1,5 +1,6 @@
 use std::io::{Read, self};
 
+
 use tokio::{net::{TcpStream, tcp::{OwnedWriteHalf, OwnedReadHalf}}, sync::mpsc, task::JoinHandle, io::AsyncReadExt};
 
 use crate::messages::server::ServerMessage;
@@ -45,40 +46,61 @@ impl Connection for TcpConnection {
     }
 }
 
+/*
+async fn process_data(data: &[u8]) {
+    loop {
+        if bytes == 0 {
+            remaining_data = 0;
+            break;
+        }
+
+        let len = remaining[0] as usize;
+        if len > remaining.len() - 1 {
+            remaining_data = remaining.len();
+
+            // TODO: I am dumb, become less of that
+            data.fill(0);
+
+            for (idx, byte) in remaining.iter().enumerate() {
+                data[idx] = *byte;
+            }
+            break;
+        }
+
+        match ServerMessage::deserialize(&remaining[1..]) {
+            Ok(server_msg) => {
+                remaining = &remaining[1 + len..];
+                bytes -= len + 1;
+
+                tx.send(server_msg).await;
+            },
+            Err(_) => {
+                todo!("this can happen but i don't know how it can...");
+            }
+        }
+    }
+}
+
+type ScratchBuf = [u8; 32];
 async fn handle_incoming_messages(ident: usize, mut read: OwnedReadHalf) {
-    let mut data: Vec<u8> = vec![0; 32];
-    let mut offset = 0;
+    let mut data: ScratchBuf = [0; 32];
+    let mut remaining_data = 0;
 
     loop {
-        let res = read.read(&mut data[offset..]).await;
+        let mut inner_data: ScratchBuf = if remaining_data > 0 {
+            data.clone()
+        } else {
+            [0; 32]
+        };
+
+        let res = read.read(&mut inner_data[remaining_data..]).await;
+        remaining_data = 0;
+
         if let Ok(mut bytes) = res {
             if bytes == 0 {
                 todo!("Communicate that the read side is closed");
             }
 
-            let mut remaining = data.as_slice();
-            loop {
-                if bytes == 0 {
-                    offset = 0;
-                    break;
-                }
-
-                let len = remaining[0] as usize;
-                if len > remaining.len() - 1 {
-                    todo!("store the rest for next time");
-                }
-
-                match ServerMessage::deserialize(&remaining[1..]) {
-                    Ok(server_msg) => {
-                        // TODO: server message
-                        remaining = &remaining[1 + len..];
-                        bytes -= len + 1;
-                    },
-                    Err(_) => {
-
-                    }
-                }
-            }
         } else if let Err(e) = res {
             if e.kind() != io::ErrorKind::WouldBlock {
                 todo!("Communicate that the read side is closed");
@@ -107,3 +129,8 @@ impl TcpConnection {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+}
+*/
