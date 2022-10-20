@@ -4,15 +4,14 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::{extract::Extension, routing::get, Router};
 use clap::Parser;
+use log::{error, warn};
 use serde::Deserialize;
-use tokio::io::{AsyncWriteExt, AsyncReadExt};
-use tokio::net::TcpStream;
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::{Arc, RwLock};
+use tokio::net::TcpStream;
 use uuid::Uuid;
 use vim_royale::args::ServerArgs;
-use log::{warn, error};
 
 struct ServerInfo {
     player_count: u8,
@@ -21,14 +20,13 @@ struct ServerInfo {
 
 struct ServerState {
     args: ServerArgs,
-    servers: HashMap<String, ServerInfo>
+    servers: HashMap<String, ServerInfo>,
 }
 
 type State = Arc<RwLock<ServerState>>;
 const VERSION: usize = 69;
 
-async fn read_server_updates(server: String, mut stream: TcpStream, state: State) {
-}
+async fn read_server_updates(server: String, mut stream: TcpStream, state: State) {}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -42,7 +40,6 @@ async fn main() -> Result<()> {
         args,
     }));
 
-
     for server in &servers {
         match TcpStream::connect(server).await {
             Ok(stream) => {
@@ -51,10 +48,13 @@ async fn main() -> Result<()> {
                     game_count: 0,
                 };
 
-                read_server_updates(server.to_string(), stream, shared_state.clone());
-            },
+                read_server_updates(server.to_string(), stream, shared_state.clone()).await;
+            }
             Err(e) => {
-                error!("received an error establishing the tcp connection to {} {}", server, e);
+                error!(
+                    "received an error establishing the tcp connection to {} {}",
+                    server, e
+                );
             }
         }
     }

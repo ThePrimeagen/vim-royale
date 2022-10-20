@@ -9,5 +9,3 @@ pub struct ServerArgs {
     #[clap(long = "servers")]
     pub servers: Vec<String>,
 }
-
-

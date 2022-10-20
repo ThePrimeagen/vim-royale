@@ -1,10 +1,7 @@
-use log::error;
 use clap::Parser;
+use log::error;
+use std::{io::Write, net::TcpStream, sync::Arc, time::Duration};
 use tokio::sync::Semaphore;
-use std::{
-    io::{Read, Write},
-    net::TcpStream, time::Duration, sync::Arc,
-};
 
 use anyhow::Result;
 use vim_royale::messages::server::{Message, ServerMessage};
@@ -63,29 +60,27 @@ async fn main() -> Result<()> {
             let mut stream = match TcpStream::connect(format!("0.0.0.0:{}", args.port)) {
                 Ok(stream) => stream,
                 Err(e) => {
-                    error!("unable to connect to {} got error {}", format!("0.0.0.0:{}", args.port), e);
+                    error!(
+                        "unable to connect to {} got error {}",
+                        format!("0.0.0.0:{}", args.port),
+                        e
+                    );
                     drop(permit);
                     return;
                 }
             };
 
             for _ in 0..args.conn_count {
-                match stream.write(&[stop_serialize.len() as u8]) {
-                    Err(e) => {
-                        error!("unable to write to stream {}", e);
-                        drop(permit);
-                        return;
-                    },
-                    _ => {}
+                if let Err(e) = stream.write(&[stop_serialize.len() as u8]) {
+                    error!("unable to write to stream {}", e);
+                    drop(permit);
+                    return;
                 }
 
-                match stream.write(&stop_serialize.as_slice()) {
-                    Err(e) => {
-                        error!("unable to write to stream {}", e);
-                        drop(permit);
-                        return;
-                    },
-                    _ => {}
+                if let Err(e) = stream.write(stop_serialize.as_slice()) {
+                    error!("unable to write to stream {}", e);
+                    drop(permit);
+                    return;
                 }
             }
 
@@ -95,4 +90,3 @@ async fn main() -> Result<()> {
 
     return Ok(());
 }
-

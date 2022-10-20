@@ -47,7 +47,7 @@ fn main() -> Result<()> {
     let server_msg_1 = ServerMessage {
         seq_nu: 0x6969,
         version: 0xAB,
-        msg: Message::Whoami(3)
+        msg: Message::Whoami(3),
     };
 
     let server_ser_1: Vec<u8> = server_msg_1.try_into()?;
@@ -55,21 +55,14 @@ fn main() -> Result<()> {
 
     let test_data: &[u8] = [
         // ServerMessage1
-        0x69,
-        0x69,
-        0xAB,
-        0x00,
-        0x03,
-        // ServerMessage2
-        0x69,
-        0x69,
-        0xAB,
-        0x01,
+        0x69, 0x69, 0xAB, 0x00, 0x03, // ServerMessage2
+        0x69, 0x69, 0xAB, 0x01,
     ]
     .as_ref();
 
     // let's read a message from the buffer
-    let (rest, msg1) = ServerMessage::from_bytes((test_data, 0 /* bit offset starts at 0 */)).unwrap();
+    let (rest, msg1) =
+        ServerMessage::from_bytes((test_data, 0 /* bit offset starts at 0 */)).unwrap();
     println!("msg: {:?}", msg1);
 
     assert_eq!(
@@ -104,4 +97,3 @@ fn main() -> Result<()> {
     assert_eq!(test_data[5..].to_vec(), codes);
     return Ok(());
 }
-

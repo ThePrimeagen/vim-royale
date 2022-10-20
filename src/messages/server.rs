@@ -1,4 +1,4 @@
-use anyhow::{Result};
+use anyhow::Result;
 use deku::prelude::*;
 use serde::Serialize;
 use std::convert::TryInto;
@@ -8,7 +8,7 @@ use crate::version::VERSION;
 pub const WHO_AM_I_SERVER: u8 = 0;
 pub const WHO_AM_I_CLIENT: u8 = 1;
 
-#[derive(Debug, PartialEq, DekuRead, DekuWrite, Serialize)]
+#[derive(Debug, PartialEq, Eq, DekuRead, DekuWrite, Serialize)]
 #[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
 pub struct PlayerStart {
     #[deku(bits = 24)]
@@ -17,7 +17,7 @@ pub struct PlayerStart {
     position: u32,
 }
 
-#[derive(Debug, PartialEq, DekuRead, DekuWrite, Serialize)]
+#[derive(Debug, PartialEq, Eq, DekuRead, DekuWrite, Serialize)]
 #[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
 pub struct PlayerPositionUpdate {
     #[deku(bits = 24)]
@@ -25,7 +25,7 @@ pub struct PlayerPositionUpdate {
     position: u32,
 }
 
-#[derive(Debug, PartialEq, DekuRead, DekuWrite, Serialize)]
+#[derive(Debug, PartialEq, Eq, DekuRead, DekuWrite, Serialize)]
 #[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
 pub struct CreateEntity {
     #[deku(bits = 24)]
@@ -34,14 +34,14 @@ pub struct CreateEntity {
     info: u8,
 }
 
-#[derive(Debug, PartialEq, DekuRead, DekuWrite, Serialize)]
+#[derive(Debug, PartialEq, Eq, DekuRead, DekuWrite, Serialize)]
 #[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
 pub struct DeleteEntity {
     #[deku(bits = 24)]
     entity_id: usize,
 }
 
-#[derive(Debug, PartialEq, DekuRead, DekuWrite, Serialize)]
+#[derive(Debug, PartialEq, Eq, DekuRead, DekuWrite, Serialize)]
 #[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
 pub struct HealthUpdate {
     #[deku(bits = 24)]
@@ -50,7 +50,7 @@ pub struct HealthUpdate {
     health: u16,
 }
 
-#[derive(Debug, PartialEq, DekuRead, DekuWrite, Serialize)]
+#[derive(Debug, PartialEq, Eq, DekuRead, DekuWrite, Serialize)]
 #[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
 pub struct CirclePosition {
     size: u16,
@@ -60,7 +60,7 @@ pub struct CirclePosition {
 
 // TODO: i think i am wrong completely on this.  probably needs to be circleupdate
 // with a new position and time to move to that point
-#[derive(Debug, PartialEq, DekuRead, DekuWrite, Serialize)]
+#[derive(Debug, PartialEq, Eq, DekuRead, DekuWrite, Serialize)]
 #[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
 pub struct CircleStart {
     seconds: u8,
@@ -68,10 +68,13 @@ pub struct CircleStart {
 
 // Here's an alternative, we can include `typ` in the enum and get rid of the context passing
 // if you're open to changing the format a bit
-#[derive(Debug, PartialEq, DekuRead, DekuWrite, Serialize)]
-#[deku(type = "u8", endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
+#[derive(Debug, PartialEq, Eq, DekuRead, DekuWrite, Serialize)]
+#[deku(
+    type = "u8",
+    endian = "parent_endian",
+    ctx = "parent_endian: deku::ctx::Endian"
+)]
 pub enum Message {
-
     #[deku(id = "0")]
     Whoami(u8),
 
@@ -111,10 +114,9 @@ pub enum Message {
 
     #[deku(id = "12")]
     GameCountResult(u16),
-
 }
 
-#[derive(Debug, PartialEq, DekuRead, DekuWrite, Serialize)]
+#[derive(Debug, PartialEq, Eq, DekuRead, DekuWrite, Serialize)]
 #[deku(endian = "big")]
 pub struct ServerMessage {
     pub seq_nu: u16,
@@ -124,7 +126,7 @@ pub struct ServerMessage {
 
 impl ServerMessage {
     pub fn deserialize(bytes: &[u8]) -> Result<ServerMessage> {
-        let (_, server_msg) =  ServerMessage::from_bytes((bytes, 0))?;
+        let (_, server_msg) = ServerMessage::from_bytes((bytes, 0))?;
         return Ok(server_msg);
     }
 
@@ -147,7 +149,7 @@ mod test {
 
     use crate::messages::server::PlayerStart;
 
-    use super::{ServerMessage, Message};
+    use super::{Message, ServerMessage};
 
     #[test]
     fn test_serialization() -> Result<()> {
@@ -158,7 +160,7 @@ mod test {
                 entity_id: 5,
                 position: 6,
                 range: 7,
-            })
+            }),
         };
 
         println!("codes: {:x?}", msg.serialize());
@@ -166,6 +168,3 @@ mod test {
         return Ok(());
     }
 }
-
-
-
