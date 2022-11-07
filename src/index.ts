@@ -6,7 +6,7 @@ let count = 0;
 let start: number = 0;
 const server = net.createServer((c) => {
     if (start === 0) {
-        start = Date.now() + 10000;
+        start = Date.now() + 1000000;
     }
     // 'connection' listener.
     c.on('end', () => {

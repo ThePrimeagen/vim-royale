@@ -137,12 +137,36 @@ export type ServerMessage = {
     msg: Message, // Message here is now u8
 }
 
+
+
+
+
+
+
+
+
+
+
+
 function whoAmI(msg: Buffer, offset: number): WhoAmI {
     return {
         type: MessageType.WhoAmI,
         value: msg.readUint8(offset),
     };
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 function playerStart(msg: Buffer, offset: number): PlayerStart {
     return {

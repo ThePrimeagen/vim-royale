@@ -10,7 +10,7 @@ use anyhow::Result;
 use vim_royale::messages::server::{Message, ServerMessage};
 
 #[derive(clap::ValueEnum, Clone, Debug)]
-enum SerializationType {
+pub enum SerializationType {
     JSON = 0,
     Deku = 1,
 }
@@ -44,6 +44,7 @@ async fn main() -> Result<()> {
         seq_nu: 420,
         version: 69,
     };
+
     let stop_serialize = if let SerializationType::JSON = args.ser {
         serde_json::to_vec(&stop_msg)?
     } else {

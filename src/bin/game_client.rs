@@ -1,10 +1,7 @@
-use log::error;
 use clap::Parser;
+use log::error;
+use std::{io::Write, net::TcpStream, sync::Arc, time::Duration};
 use tokio::sync::Semaphore;
-use std::{
-    io::{Read, Write},
-    net::TcpStream, time::Duration, sync::Arc,
-};
 
 use anyhow::Result;
 use vim_royale::messages::server::{Message, ServerMessage};
@@ -30,7 +27,7 @@ struct Args {
     #[clap(short = 'l', long = "parallel", default_value_t = 100)]
     parallel: usize,
 
-    #[clap(short = 'p', long = "port", default_value_t = 42000)]
+    #[clap(short = 'p', long = "port", default_value_t = 42001)]
     port: u16,
 }
 
@@ -63,7 +60,11 @@ async fn main() -> Result<()> {
             let mut stream = match TcpStream::connect(format!("0.0.0.0:{}", args.port)) {
                 Ok(stream) => stream,
                 Err(e) => {
-                    error!("unable to connect to {} got error {}", format!("0.0.0.0:{}", args.port), e);
+                    error!(
+                        "unable to connect to {} got error {}",
+                        format!("0.0.0.0:{}", args.port),
+                        e
+                    );
                     drop(permit);
                     return;
                 }
@@ -75,7 +76,7 @@ async fn main() -> Result<()> {
                         error!("unable to write to stream {}", e);
                         drop(permit);
                         return;
-                    },
+                    }
                     _ => {}
                 }
 
@@ -84,7 +85,7 @@ async fn main() -> Result<()> {
                         error!("unable to write to stream {}", e);
                         drop(permit);
                         return;
-                    },
+                    }
                     _ => {}
                 }
             }

@@ -1,12 +1,14 @@
-local M = {}
-
 local container_win_id = -1
 
+--- Should i do something better than this?
 local main_win_id = -1
 local main_bufnr = -1
 
 local status_win_id = -1
 local status_bufnr = -1
+
+local hidden_win_id = -1
+local hidden_bufnr = -1
 
 local MAIN_WIDTH = 80 + 2
 local MAIN_HEIGHT = 24 + 2
@@ -93,7 +95,17 @@ local function get_window_config()
         width = STATUS_WIDTH,
         height = STATUS_HEIGHT,
     }
-    return main, status
+
+    local hidden = {
+        relative="win",
+        win = container_win_id,
+        row = height * 10,
+        col = width * 10,
+        width = 1,
+        height = 1,
+    }
+
+    return main, status, hidden
 end
 
 local function create_window(bufnr, enter, config)
@@ -106,21 +118,30 @@ local function create_window(bufnr, enter, config)
 end
 
 local function royale_windows()
-    local main, status = get_window_config()
+    local main, status, hidden = get_window_config()
 
     if royale_open() then
         vim.api.nvim_win_set_config(main_win_id, main)
         vim.api.nvim_win_set_config(status_win_id, status)
+        vim.api.nvim_win_set_config(hidden_win_id, hidden)
     else
         container_win_id = vim.api.nvim_get_current_win()
 
         main_bufnr = create_bufnr()
-        main_win_id = create_window(main_bufnr, true, main)
+        main_win_id = create_window(main_bufnr, false, main)
 
         status_bufnr = create_bufnr()
         status_win_id = create_window(status_bufnr, false, status)
-    end
 
+        hidden_bufnr = create_bufnr()
+        hidden_win_id = create_window(hidden_bufnr, true, hidden)
+    end
+end
+
+local function display_update(strings)
+end
+
+local function status_update(life, stamina, player_count)
 end
 
 local function setup_autocmds()
@@ -134,8 +155,8 @@ local function setup_autocmds()
         callback = function()
             if royale_open() then
                 local win_id = vim.api.nvim_get_current_win()
-                if win_id ~= main_win_id then
-                    vim.api.nvim_set_current_win(main_win_id)
+                if win_id ~= hidden_win_id then
+                    vim.api.nvim_set_current_win(hidden_win_id)
                 end
             end
         end
@@ -145,7 +166,7 @@ local function setup_autocmds()
         group = ThePrimeagenVimRoyale,
         pattern = "*",
         callback = function()
-            if main_win_id ~= -1 then
+            if hidden_win_id ~= -1 then
                 close_all()
             end
         end
@@ -165,7 +186,11 @@ local function setup_autocmds()
 
 end
 
-setup_autocmds()
 royale_windows()
+setup_autocmds()
 
-return M
+return {
+    setup_autocmds = setup_autocmds,
+    royale_windows = royale_windows,
+    royale_open = royale_open
+}
