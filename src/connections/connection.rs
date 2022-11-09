@@ -1,7 +1,8 @@
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use log::error;
-use std::io::{self, Read, Write};
+use std::io::{self, Read, Write, ErrorKind};
+use tokio::io::{BufReader, AsyncRead};
 
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
@@ -75,99 +76,24 @@ impl Connection for TcpConnection {
     }
 }
 
-struct ParseData<'a> {
-    pub data: &'a [u8],
-    pub offset: usize,
-    pub data_len: usize,
-    pub data_type: SerializationType,
+async fn next_message(read: &mut (dyn AsyncRead + Unpin + Send)) -> Result<Vec<u8>, std::io::Error> {
+    let mut len_buf: [u8; 1] = [0; 1];
+    read.read_exact(&mut len_buf).await?;
+
+    let len = *len_buf.get(0).expect("expect a length to be there") as usize;
+
+    let mut data_buf: Vec<u8> = vec![0u8; len];
+    read.read_exact(&mut data_buf).await?;
+
+    return Ok(data_buf);
 }
 
-impl<'a> ParseData<'a> {
-    pub fn new(data: &'a [u8], data_type: SerializationType) -> ParseData {
-        return ParseData {
-            data,
-            offset: 0,
-            data_len: 0,
-            data_type,
-        };
+fn deserialize(vec: Vec<u8>, ser: &SerializationType) -> Result<ServerMessage> {
+    if let SerializationType::JSON = ser {
+        todo!("json serialize");
     }
 
-    pub fn parse(&mut self) -> Option<ServerMessage> {
-        let len = self.data[self.offset] as usize;
-        self.offset = self.offset + 1;
-
-        if self.offset + len > self.data_len {
-            return None;
-        }
-
-        if let SerializationType::JSON = self.data_type {
-            todo!("FINISH THIS BECAUSE I NEED TO SET THE OFFSET");
-            match serde_json::from_slice(&self.data[self.offset..self.offset + len]) {
-                Ok(server_msg) => {
-                    return Some(server_msg);
-                }
-                Err(_) => {
-                    todo!("???? How to handle this?");
-                }
-            }
-        } else {
-            println!(
-                "data_length: {} -- offset {} -- len {}, total: {}",
-                self.data_len,
-                self.offset,
-                len,
-                self.offset + len
-            );
-            for i in 0..len + 1 {
-                print!("{:#x} ", self.data[self.offset + i - 1]);
-            }
-            println!();
-
-            match ServerMessage::deserialize(&self.data[self.offset..self.offset + len]) {
-                Ok(server_msg) => {
-                    self.offset = self.offset + len;
-                    return Some(server_msg);
-                }
-                Err(e) => {
-                    todo!("this can happen but i don't know how it can...: {}", e);
-                }
-            }
-        }
-    }
-
-    pub fn reset(&mut self, offset: usize, data_length: usize) {
-        self.offset = offset;
-        self.data_len = data_length;
-    }
-}
-
-async fn process_datas(
-    data: &mut [u8],
-    mut offset: usize,
-    len: usize,
-    ident: usize,
-    tx: PlayerToGame,
-    ser: &SerializationType,
-) -> Result<usize> {
-    /*
-    while let Some((msg, o)) = process_data(&data, offset, len, ser) {
-        offset = o;
-        tx.send(ConnectionMessage::Msg(msg, ident)).await.ok();
-    }
-
-    if offset < len {
-        print!("COPY WITHIN: ");
-        for i in 0..(len - offset) {
-            print!("{:#x} ", data[offset + i]);
-        }
-        println!();
-        data.copy_within(offset..len, 0);
-        offset = len - offset;
-    }
-
-    return Ok(offset);
-    */
-    todo!("Fix me daddy");
+    return ServerMessage::deserialize(&vec);
 }
 
 type ScratchBuf = [u8; 32];
@@ -177,32 +103,31 @@ async fn handle_incoming_messages(
     tx: PlayerToGame,
     ser: SerializationType,
 ) {
-    let mut data: ScratchBuf = [0; 32];
-    let mut offset = 0;
 
+    let mut read = BufReader::new(read);
+
+    let mut count = 0;
+    let now = tokio::time::Instant::now();
     loop {
-        let res = read.read(&mut data[offset..]).await;
-        offset = 0;
+        let msg = match next_message(&mut read).await {
+            Err(e) if e.kind() == ErrorKind::UnexpectedEof => {
+                break;
+            }
+            Err(e) => {
+                todo!("handle this erorr?");
+            }
+            Ok(msg) => msg,
+        };
 
-        if let Ok(bytes) = res {
-            if bytes == 0 {
-                tx.send(ConnectionMessage::Close(ident)).await.ok();
+        let msg = match deserialize(msg, &ser) {
+            Err(e) => {
+                todo!("handle deserialize error");
             }
-
-            match process_datas(&mut data, offset, bytes, ident, tx.clone(), &ser).await {
-                Ok(o) => {
-                    offset = o;
-                }
-                Err(_) => {
-                    tx.send(ConnectionMessage::Error(ident)).await.ok();
-                }
-            }
-        } else if let Err(e) = res {
-            if e.kind() != io::ErrorKind::WouldBlock {
-                tx.send(ConnectionMessage::Error(ident)).await.ok();
-            }
-        }
+            Ok(msg) => msg,
+        };
+        count += 1;
     }
+    println!("time taken({}) {}", ident, now.elapsed().as_micros());
 }
 
 impl TcpConnection {
@@ -308,3 +233,13 @@ mod test {
         return Ok(());
     }
 }
+
+
+
+
+
+
+
+
+
+

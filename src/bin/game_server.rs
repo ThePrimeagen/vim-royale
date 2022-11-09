@@ -15,7 +15,8 @@ struct Args {
     serialization: SerializationType,
 }
 
-#[tokio::main(flavor = "current_thread")]
+// #[tokio::main(flavor = "current_thread")]
+#[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
     let server = TcpListener::bind(format!("0.0.0.0:{}", args.port)).await?;
