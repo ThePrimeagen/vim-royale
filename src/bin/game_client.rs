@@ -1,6 +1,6 @@
 use clap::Parser;
 use log::error;
-use std::{io::Write, sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration};
 use tokio::sync::Semaphore;
 use tokio::{io::{AsyncWriteExt, BufWriter}, net::TcpStream};
 
@@ -31,6 +31,9 @@ struct Args {
 
     #[clap(short = 'p', long = "port", default_value_t = 42001)]
     port: u16,
+
+    #[clap(short = 'a', long = "addr", default_value_t = String::from("0.0.0.0"))]
+    addr: String,
 }
 
 #[tokio::main]
@@ -50,19 +53,20 @@ async fn main() -> Result<()> {
     };
     stop_serialize.insert(0, stop_serialize.len() as u8);
 
+    let addr: &'static str = Box::leak(Box::new(format!("{}:{}", &args.addr, args.port)));
+
     let stop_serialize: &'static Vec<u8> = Box::leak(Box::new(stop_serialize));
     let semaphore = Arc::new(Semaphore::new(args.parallel));
 
     let mut handles = vec![];
     for i in 0..args.count {
-        println!("RUNNING {} out of {}", i, args.count);
         if i < args.parallel {
             tokio::time::sleep(Duration::from_millis(5 as u64)).await;
         }
 
         let permit = semaphore.clone().acquire_owned().await;
         handles.push(tokio::spawn(async move {
-            let mut stream = match TcpStream::connect(format!("0.0.0.0:{}", args.port)).await {
+            let stream = match TcpStream::connect(addr).await {
                 Ok(stream) => stream,
                 Err(e) => {
                     error!(
@@ -75,7 +79,6 @@ async fn main() -> Result<()> {
                 }
             };
 
-            let now = tokio::time::Instant::now();
             let (_, write) = stream.into_split();
             let mut write = BufWriter::new(write);
 
@@ -89,8 +92,6 @@ async fn main() -> Result<()> {
                     _ => {}
                 }
             }
-
-            println!("time taken({}) {}", i, now.elapsed().as_micros());
 
             drop(permit);
         }));

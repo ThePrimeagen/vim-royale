@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+/app/game_client -s $SERIAL -a $ADDR -c $COUNT -p $PARALLEL
+

@@ -1,5 +1,5 @@
 
-struct Game {
+struct _Game {
     connections: Vec<u8>
 }
 

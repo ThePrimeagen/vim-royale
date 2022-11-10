@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+/app/game_server -s $SERIAL
+

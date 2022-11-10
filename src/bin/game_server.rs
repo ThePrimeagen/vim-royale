@@ -2,7 +2,7 @@ use anyhow::Result;
 use log::warn;
 use tokio::net::TcpListener;
 use clap::Parser;
-use vim_royale::connections::connection::{SerializationType, TcpConnection, Connection, ConnectionMessage};
+use vim_royale::connections::connection::{handle_incoming_messages, SerializationType};
 
 #[derive(Parser, Debug)]
 #[clap()]
@@ -24,30 +24,19 @@ async fn main() -> Result<()> {
     warn!("starting the server on {}", args.port);
     let mut player_id = 0;
 
-    while let Ok((stream, _)) = server.accept().await {
-        let mut conn = TcpConnection::new(player_id, stream, args.serialization.clone());
-        player_id += 1;
+    loop {
+        match server.accept().await {
+            Ok((stream, _)) => {
+                player_id += 1;
+                let (read, _) = stream.into_split();
+                tokio::spawn(handle_incoming_messages(player_id, read, args.serialization.clone()));
+            },
 
-        let mut receive_rx = conn.player_to_game().expect("to exist");
-
-        tokio::spawn(async move {
-            while let Some(msg) = receive_rx.recv().await {
-                match msg {
-                    ConnectionMessage::Msg(msg, player_id) => {
-                        println!("msg: {:?} player_id: {}", msg, player_id);
-                    }
-
-                    ConnectionMessage::Error(e) => {
-                        println!("the connection has error {}", e);
-                        break;
-                    }
-                    ConnectionMessage::Close(_) => {
-                        println!("the connection has closed");
-                        break;
-                    }
-                }
+            Err(e) => {
+                println!("error {}", e);
+                break;
             }
-        });
+        }
     }
 
     return Ok(());
