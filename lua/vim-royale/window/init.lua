@@ -10,14 +10,17 @@ local status_bufnr = -1
 local hidden_win_id = -1
 local hidden_bufnr = -1
 
-local MAIN_WIDTH = 80 + 2
-local MAIN_HEIGHT = 24 + 2
+local MAIN_WIDTH = 80
+local MAIN_HEIGHT = 24
 
-local STATUS_WIDTH = 80 + 2
-local STATUS_HEIGHT = 1 + 2
+local STATUS_WIDTH = 80
+local STATUS_HEIGHT = 1
 
-local TOTAL_REQUIRED_WIDTH = 80
-local TOTAL_REQUIRED_HEIGHT = MAIN_HEIGHT + STATUS_HEIGHT
+-- plus 2 for border
+local TOTAL_REQUIRED_WIDTH = 80 + 2
+
+-- plus 4 for 2 borders
+local TOTAL_REQUIRED_HEIGHT = MAIN_HEIGHT + STATUS_HEIGHT + 4
 
 local function get_nvim_size()
     local uis = vim.api.nvim_list_uis()
@@ -86,14 +89,16 @@ local function get_window_config()
         col = offset_col,
         width = MAIN_WIDTH,
         height = MAIN_HEIGHT,
+        border = "single",
     }
     local status = {
         relative="win",
         win = container_win_id,
-        row = offset_row - 2,
+        row = offset_row - 4,
         col = offset_col,
         width = STATUS_WIDTH,
         height = STATUS_HEIGHT,
+        border = "single",
     }
 
     local hidden = {

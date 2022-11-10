@@ -14,7 +14,7 @@ EXPOSE 42069
 WORKDIR /app
 RUN apt update && apt install -y ca-certificates
 COPY --from=FETCH_THE_EFFIN_RUST /usr/local/cargo/bin/game_client /app
-COPY run /app/client
+COPY client /app/client
 ARG SERIAL
 ARG ADDR
 ARG COUNT

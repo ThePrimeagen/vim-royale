@@ -52,8 +52,8 @@ pub async fn handle_incoming_messages(
             Err(e) if e.kind() == ErrorKind::UnexpectedEof => {
                 break;
             }
-            Err(_e) => {
-                todo!("handle this erorr?");
+            Err(e) => {
+                todo!("handle this erorr? {}", e);
             }
             Ok(msg) => msg,
         };
