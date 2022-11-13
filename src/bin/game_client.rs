@@ -1,12 +1,13 @@
 use clap::Parser;
 use log::error;
+use tokio_tungstenite::connect_async;
+use tokio_tungstenite::tungstenite::Message;
 use std::{sync::Arc, time::Duration};
 use tokio::sync::Semaphore;
-use tokio::{io::{AsyncWriteExt, BufWriter}, net::TcpStream};
-
+use futures::{StreamExt, SinkExt};
 
 use anyhow::Result;
-use vim_royale::messages::server::{Message, ServerMessage};
+use vim_royale::messages::server::{ServerMessage, self};
 
 #[derive(clap::ValueEnum, Clone, Debug)]
 enum SerializationType {
@@ -50,7 +51,7 @@ async fn run(args: &'static Args, stop_serialize: &'static Vec<u8>, addr: &'stat
 
         let permit = semaphore.clone().acquire_owned().await;
         handles.push(tokio::spawn(async move {
-            let stream = match TcpStream::connect(addr).await {
+            let (stream, _) = match connect_async(format!("ws://{}", addr)).await {
                 Ok(stream) => stream,
                 Err(e) => {
                     error!("unable to connect to {} got error {}", addr, e);
@@ -59,11 +60,11 @@ async fn run(args: &'static Args, stop_serialize: &'static Vec<u8>, addr: &'stat
                 }
             };
 
-            let (_, write) = stream.into_split();
-            let mut write = BufWriter::new(write);
+            let (mut write, mut read) = stream.split();
 
+            let msg = Message::Binary(stop_serialize.clone());
             for _ in 0..args.conn_count {
-                match write.write_all(&stop_serialize.as_slice()).await {
+                match write.send(msg.clone()).await {
                     Err(e) => {
                         error!("unable to write to stream {}", e);
                         drop(permit);
@@ -71,8 +72,11 @@ async fn run(args: &'static Args, stop_serialize: &'static Vec<u8>, addr: &'stat
                     }
                     _ => {}
                 }
+
+                let _ = read.next().await;
             }
 
+            write.close().await;
             drop(permit);
         }));
     }
@@ -86,19 +90,17 @@ async fn main() -> Result<()> {
     env_logger::init();
     let args: &'static Args = Box::leak(Box::new(Args::parse()));
     let stop_msg = ServerMessage {
-        msg: Message::Whoami(0x45),
+        msg: server::Message::Whoami(0x45),
         seq_nu: 420,
         version: 69,
     };
-    let mut stop_serialize = if let SerializationType::JSON = args.ser {
+    let stop_serialize = if let SerializationType::JSON = args.ser {
         serde_json::to_vec(&stop_msg)?
     } else {
         stop_msg.serialize()?
     };
-    stop_serialize.insert(0, stop_serialize.len() as u8);
 
     let addr: &'static str = Box::leak(Box::new(format!("{}:{}", &args.addr, args.port)));
-
     let stop_serialize: &'static Vec<u8> = Box::leak(Box::new(stop_serialize));
 
     for _ in 0..args.runs {

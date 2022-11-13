@@ -3,6 +3,7 @@ use log::warn;
 use tokio::net::TcpListener;
 use clap::Parser;
 use vim_royale::connections::connection::{handle_incoming_messages, SerializationType};
+use futures_util::StreamExt;
 
 #[derive(Parser, Debug)]
 #[clap()]
@@ -18,7 +19,10 @@ struct Args {
 // #[tokio::main(flavor = "current_thread")]
 #[tokio::main]
 async fn main() -> Result<()> {
+    env_logger::init();
+
     let args = Args::parse();
+    println!("args {:?}", args);
     let server = TcpListener::bind(format!("0.0.0.0:{}", args.port)).await?;
 
     warn!("starting the server on {}", args.port);
@@ -28,8 +32,10 @@ async fn main() -> Result<()> {
         match server.accept().await {
             Ok((stream, _)) => {
                 player_id += 1;
-                let (read, _) = stream.into_split();
-                tokio::spawn(handle_incoming_messages(player_id, read, args.serialization.clone()));
+
+                let stream = tokio_tungstenite::accept_async(stream).await?;
+                let (write, read) = stream.split();
+                tokio::spawn(handle_incoming_messages(player_id, read, write, args.serialization.clone())).await.ok();
             },
 
             Err(e) => {
