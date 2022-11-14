@@ -1,5 +1,4 @@
 use anyhow::{Context, Result};
-use async_trait::async_trait;
 use futures::{AsyncWrite, Stream, Sink, SinkExt};
 use futures::stream::{SplitSink, SplitStream};
 use log::{error, warn};

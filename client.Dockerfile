@@ -19,6 +19,7 @@ ARG SERIAL
 ARG ADDR
 ARG COUNT
 ARG PARALLEL
+ARG ENCODE_COUNT
 CMD ["sh", "-c", "/app/client"]
 
 

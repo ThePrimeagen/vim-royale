@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-echo "-s $SERIAL -a $ADDR -c $COUNT -p $PARALLEL"
-/app/game_client -s $SERIAL -a $ADDR -c $COUNT -l $PARALLEL
+echo "-s $SERIAL -a $ADDR -c $COUNT -p $PARALLEL -p $ENCODE_COUNT"
+/app/game_client -s $SERIAL -a $ADDR -c $COUNT -l $PARALLEL -q $ENCODE_COUNT
 
