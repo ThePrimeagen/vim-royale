@@ -12,3 +12,4 @@ gloo = { version = "0.8.0", features = ["futures"] }
 reqwasm = "0.5.0"
 wasm-bindgen-futures = "0.4.33"
 yew = "0.19.3"
+encoding = { path = "../encoding" }

@@ -134,13 +134,17 @@ impl ServerMessage {
         return Ok(self.try_into()?);
     }
 
-    pub fn create_whoami_server() -> ServerMessage {
-        return ServerMessage {
-            seq_nu: 0,
-            version: VERSION,
-            msg: Message::Whoami(WHO_AM_I_SERVER),
-        };
-    }
+    pub const CLIENT_WHO_AM_I: Self = ServerMessage {
+        seq_nu: 0,
+        version: VERSION,
+        msg: Message::Whoami(WHO_AM_I_CLIENT),
+    };
+    
+    pub const SERVER_WHO_AM_I: Self = ServerMessage {
+        seq_nu: 0,
+        version: VERSION,
+        msg: Message::Whoami(WHO_AM_I_CLIENT),
+    };
 }
 
 #[cfg(test)]

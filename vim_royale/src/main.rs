@@ -27,15 +27,22 @@ async fn main() -> Result<()> {
 
     warn!("starting the server on {}", args.port);
     let mut player_id = 0;
+    let (tx, mut rx) = tokio::sync::mpsc::channel(100);
+
+    tokio::spawn(async move {
+        println!("await a message");
+        while let Some(msg) = rx.recv().await {
+            println!("got message {:?}", msg);
+        }
+    });
 
     loop {
         match server.accept().await {
             Ok((stream, _)) => {
                 player_id += 1;
-
                 let stream = tokio_tungstenite::accept_async(stream).await?;
                 let (write, read) = stream.split();
-                tokio::spawn(handle_incoming_messages(player_id, read, write, args.serialization.clone())).await.ok();
+                tokio::spawn(handle_incoming_messages(player_id, read, write, tx.clone(), args.serialization.clone())).await.ok();
             },
 
             Err(e) => {

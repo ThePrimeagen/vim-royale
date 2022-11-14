@@ -1279,6 +1279,7 @@ name = "vim_royale_view"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "encoding",
  "futures",
  "gloo 0.8.0",
  "reqwasm",

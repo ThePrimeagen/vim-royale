@@ -3,6 +3,7 @@ use encoding::server::ServerMessage;
 use futures::{AsyncWrite, Stream, Sink, SinkExt};
 use futures::stream::{SplitSink, SplitStream};
 use log::{error, warn};
+use tokio::sync::mpsc::Sender;
 use tokio_tungstenite::{WebSocketStream, tungstenite};
 use tokio_tungstenite::tungstenite::Message;
 use futures_util::StreamExt;
@@ -33,12 +34,17 @@ pub async fn handle_incoming_messages(
     ident: usize,
     mut read: impl Stream<Item = Result<Message, tungstenite::Error>> + Unpin + Send,
     mut write: impl Sink<Message> + Unpin + Sync,
+    tx: Sender<ServerMessage>,
     ser: SerializationType,
 ) -> Result<()> {
 
     loop {
-        let msg = match read.next().await {
+        let msg = read.next().await;
+        println!("got a message {:?}", msg);
+
+        let msg = match msg {
             Some(Ok(Message::Binary(msg))) => msg,
+
             Some(Ok(Message::Text(msg))) => {
                 error!("received text message from {}.  removing connection from game", ident);
                 break;
@@ -58,17 +64,9 @@ pub async fn handle_incoming_messages(
             }
         };
 
-        /* 
-        let msg = deserialize(msg, &ser)?;
-        let msg = match ser {
-            SerializationType::Deku => msg.serialize()?,
-            SerializationType::JSON => serde_json::to_vec(&msg)?,
-        };
-        */
-        println!("has message {:?}", msg);
-
-        let out = Message::Binary(msg);
-        write.send(out).await.ok();
+        println!("got a message {:?}", msg);
+        let _ = tx.send(deserialize(msg, &ser)?).await;
+        println!("done sending msg");
     }
 
     write.close().await.ok();
