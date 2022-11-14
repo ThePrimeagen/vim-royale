@@ -212,6 +212,12 @@ dependencies = [
 [[package]]
 name = "encoding"
 version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "deku",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "env_logger"
@@ -926,7 +932,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
- "deku",
+ "encoding",
  "env_logger",
  "futures",
  "futures-util",

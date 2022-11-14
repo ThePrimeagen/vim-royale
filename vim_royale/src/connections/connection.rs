@@ -1,4 +1,5 @@
 use anyhow::{Context, Result};
+use encoding::server::ServerMessage;
 use futures::{AsyncWrite, Stream, Sink, SinkExt};
 use futures::stream::{SplitSink, SplitStream};
 use log::{error, warn};
@@ -14,8 +15,6 @@ use tokio::{
     net::tcp::{OwnedReadHalf, OwnedWriteHalf},
 };
 
-use crate::messages::server::ServerMessage;
-
 #[derive(clap::ValueEnum, Clone, Debug)]
 pub enum SerializationType {
     JSON = 0,
@@ -30,7 +29,6 @@ fn deserialize(vec: Vec<u8>, ser: &SerializationType) -> Result<ServerMessage> {
     return ServerMessage::deserialize(&vec);
 }
 
-type ReadHalf = SplitStream<WebSocketStream<tokio::net::TcpStream>>;
 pub async fn handle_incoming_messages(
     ident: usize,
     mut read: impl Stream<Item = Result<Message, tungstenite::Error>> + Unpin + Send,
