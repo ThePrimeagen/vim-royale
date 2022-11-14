@@ -32,7 +32,7 @@ fn deserialize(vec: Vec<u8>, ser: &SerializationType) -> Result<ServerMessage> {
 pub async fn handle_incoming_messages(
     ident: usize,
     mut read: impl Stream<Item = Result<Message, tungstenite::Error>> + Unpin + Send,
-    mut write: impl Sink<Message> + Unpin,
+    mut write: impl Sink<Message> + Unpin + Sync,
     ser: SerializationType,
 ) -> Result<()> {
 
@@ -58,15 +58,20 @@ pub async fn handle_incoming_messages(
             }
         };
 
+        /* 
         let msg = deserialize(msg, &ser)?;
         let msg = match ser {
             SerializationType::Deku => msg.serialize()?,
             SerializationType::JSON => serde_json::to_vec(&msg)?,
         };
+        */
+        println!("has message {:?}", msg);
 
         let out = Message::Binary(msg);
         write.send(out).await.ok();
     }
+
+    write.close().await.ok();
 
     return Ok(());
 }

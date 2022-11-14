@@ -8,6 +8,7 @@ out2
 out*
 .zshrc.bak
 test.js
+dist
 
 
 # Added by cargo
