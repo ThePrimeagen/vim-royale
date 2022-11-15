@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
-use encoding::server::ServerMessage;
+use encoding::server::{ServerMessage, self, PlayerStart};
+use encoding::version::VERSION;
 use futures::{AsyncWrite, Stream, Sink, SinkExt};
 use futures::stream::{SplitSink, SplitStream};
 use log::{error, warn};
@@ -38,11 +39,9 @@ pub async fn handle_incoming_messages(
     ser: SerializationType,
 ) -> Result<()> {
 
+    let mut receivedFirst = false;
     loop {
-        let msg = read.next().await;
-        println!("got a message {:?}", msg);
-
-        let msg = match msg {
+        let msg = match read.next().await {
             Some(Ok(Message::Binary(msg))) => msg,
 
             Some(Ok(Message::Text(msg))) => {
@@ -64,9 +63,34 @@ pub async fn handle_incoming_messages(
             }
         };
 
-        println!("got a message {:?}", msg);
-        let _ = tx.send(deserialize(msg, &ser)?).await;
-        println!("done sending msg");
+        let msg = tx.send(deserialize(msg, &ser)?).await;
+        if receivedFirst == false {
+            receivedFirst = true;
+            
+            let start = PlayerStart {
+                entity_id: 0,
+                range: 500,
+                position: (69, 420),
+                seed: 0x69420,
+            };
+            println!("using seed: {}", start.seed);
+
+            let message = server::Message::PlayerStart(start);
+
+            match write.send(Message::Binary(
+                ServerMessage {
+                    msg: message,
+                    seq_nu: 0,
+                    version: VERSION,
+                }.serialize()?
+            )).await {
+                Ok(_) => {},
+                Err(e) => {
+                    error!("Got an error, no idea how to display it, suck it me");
+                    break;
+                }
+            };
+        }
     }
 
     write.close().await.ok();

@@ -1,6 +1,8 @@
+use std::io::Bytes;
+
 use anyhow::{Result, Context};
 use wasm_bindgen_futures::spawn_local;
-use encoding::server::ServerMessage;
+use encoding::server::{ServerMessage, self};
 use yew::prelude::*;
 use futures::{StreamExt, SinkExt};
 
@@ -14,12 +16,12 @@ fn app() -> Html {
     }
 }
 
-#[derive(Properties, PartialEq)] 
-struct Props { 
+#[derive(Properties, PartialEq)]
+struct Props {
     error: String
-} 
+}
 
-#[function_component(Err)] 
+#[function_component(Err)]
 fn err(props: &Props) -> Html {
     html! {
         <h1>{ format!("hel me daddy {:?}", props.error) }</h1>
@@ -28,10 +30,20 @@ fn err(props: &Props) -> Html {
 
 async fn run_main_application(ws: WebSocket) {
     let (mut write, mut read) = ws.split();
-    
+
     spawn_local(async move {
-        while let Some(Ok(msg)) = read.next().await {
-            println!("hello {:?}", msg);
+        while let Some(Ok(Message::Bytes(msg))) = read.next().await {
+            let msg = ServerMessage::deserialize(&msg).unwrap();
+            match msg.msg {
+                server::Message::PlayerStart(start) => {
+                    let mut map = game::board::Map::new(start.seed);
+                    let points = map.generate();
+                    gloo::console::log!(format!("points: {:?}", points));
+                },
+                _ => {
+                    gloo::console::log!("what a weird thing, got a non player start message");
+                }
+            }
         }
     });
 
@@ -47,13 +59,12 @@ fn main() -> Result<()> {
 
     spawn_local(async move {
         let mut ws = WebSocket::open("ws://vim-royale.theprimeagen.tv:42001").unwrap();
-        gloo::console::log!("about to send message");
         match ws.send(Message::Bytes(msg)).await {
             Err(e) => {
                 gloo::console::log!("message was a failure");
                 yew::start_app_with_props::<Err>(Props { error: format!("encountered error: {}", e) });
             }
-            
+
             Ok(_) => {
                 gloo::console::log!("lets go, it worked, rendering application");
                 let _ = run_main_application(ws).await;

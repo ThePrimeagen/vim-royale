@@ -12,50 +12,50 @@ pub const WHO_AM_I_CLIENT: u8 = 1;
 #[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
 pub struct PlayerStart {
     #[deku(bits = 24)]
-    entity_id: usize,
-    range: u16,
-    position: u32,
+    pub entity_id: usize,
+    pub range: u16,
+    pub position: (u16, u16),
+    pub seed: u32,
 }
 
 #[derive(Clone, Debug, PartialEq, DekuRead, DekuWrite, Serialize, Deserialize)]
 #[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
 pub struct PlayerPositionUpdate {
     #[deku(bits = 24)]
-    entity_id: usize,
-    position: u32,
+    pub entity_id: usize,
+    pub position: (u16, u16),
 }
 
 #[derive(Clone, Debug, PartialEq, DekuRead, DekuWrite, Serialize, Deserialize)]
 #[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
 pub struct CreateEntity {
     #[deku(bits = 24)]
-    entity_id: usize,
-    position: u32,
-    info: u8,
+    pub entity_id: usize,
+    pub position: (u16, u16),
+    pub info: u8,
 }
 
 #[derive(Clone, Debug, PartialEq, DekuRead, DekuWrite, Serialize, Deserialize)]
 #[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
 pub struct DeleteEntity {
     #[deku(bits = 24)]
-    entity_id: usize,
+    pub entity_id: usize,
 }
 
 #[derive(Clone, Debug, PartialEq, DekuRead, DekuWrite, Serialize, Deserialize)]
 #[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
 pub struct HealthUpdate {
     #[deku(bits = 24)]
-    entity_id: usize,
-
-    health: u16,
+    pub entity_id: usize,
+    pub health: u16,
 }
 
 #[derive(Clone, Debug, PartialEq, DekuRead, DekuWrite, Serialize, Deserialize)]
 #[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
 pub struct CirclePosition {
-    size: u16,
-    position: u32,
-    seconds: u8,
+    pub size: u16,
+    pub position: (u16, u16),
+    pub seconds: u8,
 }
 
 // TODO: i think i am wrong completely on this.  probably needs to be circleupdate

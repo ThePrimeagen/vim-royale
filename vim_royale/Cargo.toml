@@ -15,3 +15,4 @@ serde_json = "1.0.87"
 tokio = { version = "1.21.2", features = ["full"] }
 tokio-tungstenite = "0.17.2"
 encoding = { path = "../encoding" }
+game = { path = "../game" }

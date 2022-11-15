@@ -2,7 +2,7 @@ use anyhow::Result;
 use log::warn;
 use tokio::net::TcpListener;
 use clap::Parser;
-use vim_royale::connections::connection::{handle_incoming_messages, SerializationType};
+use vim_royale::{connections::connection::{handle_incoming_messages, SerializationType}};
 use futures_util::StreamExt;
 
 #[derive(Parser, Debug)]
@@ -30,11 +30,12 @@ async fn main() -> Result<()> {
     let (tx, mut rx) = tokio::sync::mpsc::channel(100);
 
     tokio::spawn(async move {
-        println!("await a message");
         while let Some(msg) = rx.recv().await {
             println!("got message {:?}", msg);
         }
     });
+
+    let map = game::board::Map::new(0x69420);
 
     loop {
         match server.accept().await {

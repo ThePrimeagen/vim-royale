@@ -13,3 +13,4 @@ reqwasm = "0.5.0"
 wasm-bindgen-futures = "0.4.33"
 yew = "0.19.3"
 encoding = { path = "../encoding" }
+game = { path = "../game" }
