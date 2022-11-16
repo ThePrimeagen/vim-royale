@@ -66,7 +66,7 @@ pub async fn handle_incoming_messages(
         let msg = tx.send(deserialize(msg, &ser)?).await;
         if receivedFirst == false {
             receivedFirst = true;
-            
+
             let start = PlayerStart {
                 entity_id: 0,
                 range: 500,
