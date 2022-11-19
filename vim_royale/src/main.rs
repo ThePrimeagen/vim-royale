@@ -1,8 +1,8 @@
 use anyhow::Result;
+use game::connection::handle_incoming_messages;
 use log::warn;
 use tokio::net::TcpListener;
 use clap::Parser;
-use vim_royale::{connections::connection::{handle_incoming_messages, SerializationType}};
 use futures_util::StreamExt;
 
 #[derive(Parser, Debug)]
@@ -22,6 +22,8 @@ async fn main() -> Result<()> {
     env_logger::init();
 
     let args = Args::parse();
+    let args2 = Args::parse();
+
     println!("args {:?}", args);
     let server = TcpListener::bind(format!("0.0.0.0:{}", args.port)).await?;
 
@@ -35,7 +37,7 @@ async fn main() -> Result<()> {
         }
     });
 
-    let map = game::board::Map::new(0x69420);
+    let game_manager = game::game::GameManager::new();
 
     loop {
         match server.accept().await {
@@ -43,7 +45,9 @@ async fn main() -> Result<()> {
                 player_id += 1;
                 let stream = tokio_tungstenite::accept_async(stream).await?;
                 let (write, read) = stream.split();
-                tokio::spawn(handle_incoming_messages(player_id, read, write, tx.clone(), args.serialization.clone())).await.ok();
+                game_manager.add_connection(read, write);
+
+                tokio::spawn(handle_incoming_messages(player_id, read, tx.clone(), args.serialization.clone())).await.ok();
             },
 
             Err(e) => {
