@@ -13,7 +13,7 @@ pub const WHO_AM_I_CLIENT: u8 = 1;
 pub struct PlayerStart {
     #[deku(bits = 24)]
     pub entity_id: usize,
-    pub range: u16,
+    pub range: usize,
     pub position: (u16, u16),
     pub seed: u32,
 }
@@ -125,6 +125,14 @@ pub struct ServerMessage {
 }
 
 impl ServerMessage {
+    pub fn new(seq_nu: u16, msg: Message) -> Self {
+        return Self {
+            seq_nu,
+            version: VERSION,
+            msg,
+        }
+    }
+
     pub fn deserialize(bytes: &[u8]) -> Result<ServerMessage> {
         let (_, server_msg) = ServerMessage::from_bytes((bytes, 0))?;
         return Ok(server_msg);
@@ -139,7 +147,7 @@ impl ServerMessage {
         version: VERSION,
         msg: Message::Whoami(WHO_AM_I_CLIENT),
     };
-    
+
     pub const SERVER_WHO_AM_I: Self = ServerMessage {
         seq_nu: 0,
         version: VERSION,

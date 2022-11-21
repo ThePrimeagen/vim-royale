@@ -1,120 +1,226 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    sync::{
+        atomic::{AtomicU8, Ordering},
+        Arc,
+    },
+};
 
-use crate::board::Map;
+use crate::{
+    board::Map,
+    connection::{ConnectionMessage, SerializationType},
+    game_comms::{GameComms, GameMessage},
+    player::{Player, PlayerSink, PlayerStream, PlayerWebSink, PlayerWebStream},
+};
 use anyhow::Result;
-use encoding::server::{self, ServerMessage, WHO_AM_I_CLIENT, WHO_AM_I_SERVER};
-use futures::{Sink, SinkExt, Stream, StreamExt};
-use log::error;
-use tokio::sync::mpsc::{Receiver, Sender};
-use tokio_tungstenite::tungstenite;
+use encoding::{
+    server::{self, ServerMessage, WHO_AM_I_CLIENT, WHO_AM_I_SERVER},
+    version::VERSION,
+};
+use futures::{
+    sink,
+    stream::{SplitSink, SplitStream},
+    Sink, SinkExt, Stream, StreamExt,
+};
+use log::{error, info, warn};
+use tokio::{
+    net::TcpStream,
+    sync::mpsc::{Receiver, Sender},
+};
+use tokio_tungstenite::{tungstenite, WebSocketStream};
 
-const ENTITY_RANGE: u16 = 500;
+const FPS: u128 = 16_666;
+const ENTITY_RANGE: usize = 500;
 
-pub struct Player {
-    entity_start: u16,
-    position: (u16, u16),
-}
-
-enum GameMessage {
-    Close(usize),
-}
-
-pub struct Game {
+struct Game {
+    seed: u32,
     map: Map,
     players: Vec<Option<Player>>,
-    player_id: u32,
+    player_count: Arc<AtomicU8>,
     game_id: u32,
 }
 
-type GameStreamItem = Result<tungstenite::Message, tungstenite::Error>;
 impl Game {
-    pub fn new(seed: u32, game_id: u32) -> Game {
+    pub fn new(seed: u32, game_id: u32, player_count: Arc<AtomicU8>) -> Game {
+        let players = Vec::from_iter((0..100).map(|_| None));
         return Game {
             map: Map::new(seed),
-            player_id: 0,
-            players: Vec::with_capacity(100),
+            player_count,
+            players,
             game_id,
+            seed,
         };
     }
 
     async fn process_message(&mut self, msg: ServerMessage) {
         match msg.msg {
-            server::Message::Whoami(whoami) => if whoami == WHO_AM_I_CLIENT {},
+            server::Message::Whoami(whoami) => {
+                if whoami == WHO_AM_I_CLIENT {
+                    warn!("[CLIENT]: Whoami received");
+                }
+            }
             _ => {}
         }
     }
 
-    pub async fn run(&mut self) -> Result<()> {
-        /*
+    async fn run(&mut self) -> Result<()> {
+        let start = std::time::Instant::now();
+        let start_of_loop = start.elapsed().as_micros();
+        let mut loop_count = 0;
+
         loop {
-            match self.rx.recv() {
-                Ok(msg) => {
-                    println!("Received message: {:?}", msg);
-                }
-                Err(_) => {
-                    error!("Error receiving message");
-                }
+            if loop_count % 1000 == 0 {
+                info!(
+                    "[GAME]: time={} loop={} {}",
+                    loop_count,
+                    start.elapsed().as_micros(),
+                    self.info_string()
+                );
+            }
+
+            loop_count += 1;
+            let current = start.elapsed().as_micros();
+            let next_frame = loop_count * FPS;
+
+            if current < next_frame {
+                let duration = (next_frame - current) as u64;
+                let duration = std::time::Duration::from_micros(duration);
+                tokio::time::sleep(duration).await;
             }
         }
-        */
+
         return Ok(());
     }
 
-    pub fn is_full(&self) -> bool {
-        return self.player_id == 100;
+    fn is_ready(&self) -> bool {
+        let id = self.player_count.load(Ordering::Relaxed);
+        info!("[Game] Ready check {} == {}", id, 1);
+        return id == 1;
     }
 
-    pub fn add_player(
-        &mut self,
-        stream: impl Stream<Item = GameStreamItem> + Unpin + Send,
-        sink: impl Sink<tungstenite::Message>,
-    ) {
-        let player_id = self.player_id;
-        self.player_id += 1;
+    fn add_player(&mut self, stream: PlayerWebStream, sink: PlayerWebSink) {
+        let player_id = self.player_count.fetch_add(1, Ordering::Relaxed);
 
         let player = Player {
-            entity_start: (self.player_id as u16) * ENTITY_RANGE,
             position: (256, 256),
+            id: player_id,
+            sink: PlayerSink::new(player_id, sink),
+            stream: PlayerStream::new(player_id, stream),
         };
 
         self.players[player_id as usize] = Some(player);
     }
-}
 
-pub struct GameManager {
-    game_id: u32,
-    games: HashMap<u32, Game>,
-    rx: Receiver<GameMessage>,
-    tx: Sender<GameMessage>,
-}
-
-impl GameManager {
-    pub fn new() -> GameManager {
-        let (tx, rx) = tokio::sync::mpsc::channel(10);
-
-        return GameManager {
-            games: HashMap::new(),
-            game_id: 0,
-            rx,
-            tx,
-        };
+    fn create_player_start_msg(player: &Player, seed: u32) -> server::Message {
+        return server::Message::PlayerStart(server::PlayerStart {
+            entity_id: player.id as usize * ENTITY_RANGE,
+            position: player.position,
+            range: ENTITY_RANGE,
+            seed,
+        });
     }
 
-    pub fn add_connection(
-        &mut self,
-        stream: impl Stream<Item = GameStreamItem> + Unpin + Send,
-        sink: impl Sink<tungstenite::Message>,
-    ) {
-        let game = self.games.entry(self.game_id).or_insert_with(|| {
-            return Game::new(self.game_id, self.game_id);
-        });
+    // TODO: this probably has to be more robust to not cause a panic
+    async fn start_game(&mut self) -> Result<()> {
+        let mut handles = vec![];
+        for (idx, player) in self.players.iter_mut().enumerate() {
+            if let Some(player) = player {
+                let msg = Game::create_player_start_msg(player, self.seed);
+                handles.push(player.sink.send(msg));
+            }
+        }
 
-        // TODO: This logic will have to change once i have some sort of game lobby
-        // and time limit.
-        game.add_player(stream, sink);
-        if game.is_full() {
-            self.game_id += 1;
-            self.games.insert(self.game_id, Game::new(self.game_id, self.game_id));
+        let _ = futures::future::join_all(handles).await;
+
+        return Ok(());
+    }
+
+    fn error(&self, msg: &str) {
+        error!(
+            "[GAME]: msg={} id={} player_count={} seed={}",
+            msg,
+            self.game_id,
+            self.player_count.load(Ordering::Relaxed),
+            self.seed
+        );
+    }
+
+    fn warn(&self, msg: &str) {
+        warn!(
+            "[GAME]: msg={} id={} player_count={} seed={}",
+            msg,
+            self.game_id,
+            self.player_count.load(Ordering::Relaxed),
+            self.seed
+        );
+    }
+
+    fn info_string(&self) -> String {
+        return format!(
+            "id={} player_count={} seed={}",
+            self.game_id,
+            self.player_count.load(Ordering::Relaxed),
+            self.seed
+        );
+    }
+}
+
+pub async fn game_run(seed: u32, player_count: Arc<AtomicU8>, game_id: u32, mut comms: GameComms) {
+    let mut game = Game::new(seed, game_id, player_count);
+
+    loop {
+        match comms.receiver.recv().await {
+            Some(GameMessage::Connection(stream, sink)) => {
+                info!(
+                    "[Game#game_run] new player connection for game {}",
+                    game.info_string()
+                );
+                game.add_player(stream, sink);
+                if game.is_ready() {
+                    break;
+                }
+            }
+
+            Some(msg) => {
+                game.error(&format!(
+                    "Game comms channel gave a non connection message {:?}.",
+                    msg
+                ));
+                unreachable!("this should never happen");
+            }
+
+            None => {
+                game.error("Game comms channel closed");
+                unreachable!("this should never happen");
+            }
+        }
+    }
+
+    match comms.sender.send(GameMessage::Start).await {
+        Ok(_) => {
+            game.warn("Game sent start");
+        }
+        Err(_) => {
+            game.error("Game failed to send start");
+            unreachable!("this should never happen in production.");
+        }
+    }
+
+    match game.start_game().await {
+        Ok(_) => {
+            game.warn("started");
+        }
+        Err(e) => {
+            game.error(&format!("faled to start: {:?}", e));
+        }
+    }
+
+    match game.run().await {
+        Ok(_) => {
+            game.warn("finished successfully");
+        }
+        Err(e) => {
+            game.warn(&format!("finished with error {}", e));
         }
     }
 }

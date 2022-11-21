@@ -498,6 +498,7 @@ dependencies = [
  "env_logger",
  "future-utils",
  "futures 0.3.25",
+ "futures-util",
  "log 0.4.17",
  "serde",
  "serde_json",
