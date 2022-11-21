@@ -37,11 +37,12 @@ struct Game {
     map: Map,
     players: Vec<Option<Player>>,
     player_count: Arc<AtomicU8>,
+    ser_type: SerializationType,
     game_id: u32,
 }
 
 impl Game {
-    pub fn new(seed: u32, game_id: u32, player_count: Arc<AtomicU8>) -> Game {
+    pub fn new(seed: u32, game_id: u32, player_count: Arc<AtomicU8>, ser_type: SerializationType) -> Game {
         let players = Vec::from_iter((0..100).map(|_| None));
         return Game {
             map: Map::new(seed),
@@ -49,6 +50,7 @@ impl Game {
             players,
             game_id,
             seed,
+            ser_type,
         };
     }
 
@@ -165,8 +167,8 @@ impl Game {
     }
 }
 
-pub async fn game_run(seed: u32, player_count: Arc<AtomicU8>, game_id: u32, mut comms: GameComms) {
-    let mut game = Game::new(seed, game_id, player_count);
+pub async fn game_run(seed: u32, player_count: Arc<AtomicU8>, game_id: u32, mut comms: GameComms, ser_type: SerializationType) {
+    let mut game = Game::new(seed, game_id, player_count, ser_type);
 
     loop {
         match comms.receiver.recv().await {

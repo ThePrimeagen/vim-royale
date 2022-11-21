@@ -1,14 +1,13 @@
 use anyhow::Result;
-use game::connection::SerializationType;
-use log::{warn, error};
-use tokio::net::TcpListener;
 use clap::Parser;
 use futures_util::StreamExt;
+use game::connection::SerializationType;
+use log::{error, warn};
+use tokio::net::TcpListener;
 
 #[derive(Parser, Debug)]
 #[clap()]
 struct Args {
-
     #[clap(short = 'p', long = "port", default_value_t = 42001)]
     port: u16,
 
@@ -28,7 +27,7 @@ async fn main() -> Result<()> {
 
     warn!("starting the server on {}", args.port);
 
-    let mut game_manager = game::game_manager::GameManager::new(args.serialization);
+    let mut game_manager = game::game_manager::GameManager::new(args.serialization.clone());
 
     loop {
         match server.accept().await {
@@ -36,7 +35,7 @@ async fn main() -> Result<()> {
                 let stream = tokio_tungstenite::accept_async(stream).await?;
                 let (write, read) = stream.split();
                 game_manager.add_connection(read, write).await;
-            },
+            }
 
             Err(e) => {
                 println!("error {}", e);

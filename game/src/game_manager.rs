@@ -56,14 +56,16 @@ pub struct GameManager {
     game_id: u32,
     games: HashMap<u32, GameStub>,
     comms: GameComms,
+    ser_type: SerializationType,
 }
 
 impl GameManager {
-    pub fn new() -> GameManager {
+    pub fn new(ser_type: SerializationType) -> GameManager {
         return GameManager {
             games: HashMap::new(),
             game_id: 0,
             comms: GameComms::new(),
+            ser_type,
         };
     }
 
@@ -72,11 +74,13 @@ impl GameManager {
             .comms
             .take()
             .expect("comms always exist at this point");
+
         let run = game_run(
             game_stub.game_id,
             game_stub.player_count.clone(),
             game_stub.game_id,
             comms,
+            game_stub.ser_type.clone()
         );
 
         game_stub.handle = Some(tokio::spawn(run));
