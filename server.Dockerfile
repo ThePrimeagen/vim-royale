@@ -38,6 +38,7 @@ COPY map /app/map
 COPY game /app/game
 
 WORKDIR /app/vim_royale_server
+RUN pwd
 RUN cargo build --release
 
 FROM debian:latest
