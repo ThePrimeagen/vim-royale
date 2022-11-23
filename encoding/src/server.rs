@@ -159,7 +159,7 @@ impl ServerMessage {
 mod test {
     use anyhow::Result;
 
-    use crate::messages::server::PlayerStart;
+    use crate::server::PlayerStart;
 
     use super::{Message, ServerMessage};
 

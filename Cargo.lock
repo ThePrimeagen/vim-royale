@@ -2454,6 +2454,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "vim_royale_client"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "encoding",
+ "futures 0.3.25",
+ "getrandom",
+ "gloo",
+ "leptos",
+ "map",
+ "reqwasm",
+ "tokio-tungstenite-wasm",
+ "vim_royale_view",
+ "wasm-bindgen-futures",
+]
+
+[[package]]
 name = "vim_royale_server"
 version = "0.1.0"
 dependencies = [
@@ -2467,16 +2484,8 @@ dependencies = [
 name = "vim_royale_view"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "encoding",
- "futures 0.3.25",
- "getrandom",
- "gloo",
  "leptos",
- "map",
- "reqwasm",
- "tokio-tungstenite-wasm",
- "wasm-bindgen-futures",
 ]
 
 [[package]]
