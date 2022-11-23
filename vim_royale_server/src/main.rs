@@ -1,11 +1,11 @@
-use actix_web::{get, web, App, HttpServer, Responder};
-use leptos::*;
-use vim_royale_view::container::{VimRoyale, VimRoyaleProps};
 use cfg_if::cfg_if;
 
 // boilerplate to run in different modes
 cfg_if! {
 if #[cfg(feature = "ssr")] {
+use actix_web::{get, web, App, HttpServer, Responder};
+use leptos::*;
+use vim_royale_view::container::{VimRoyale, VimRoyaleProps};
 
 const HTML: &'static str = r#"
 <!DOCTYPE html>
