@@ -42,8 +42,10 @@ async fn main() -> std::io::Result<()> {
         html: HTML.replace("__STYLE_SHEET__", "style.css")
             .replace("__WASM__", "vim_royale_view_bg.wasm")
             .replace("__JS__", "vim_royale_view.js")
+            /*
             .lines()
             .collect::<String>(),
+            */
     };
 
     HttpServer::new(move || {
