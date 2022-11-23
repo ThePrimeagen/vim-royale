@@ -1,33 +1,21 @@
-use std::{
-    collections::HashMap,
-    sync::{
-        atomic::{AtomicU8, Ordering},
-        Arc,
-    },
+use std::sync::{
+    atomic::{AtomicU8, Ordering},
+    Arc,
 };
 
 use crate::{
-    connection::{ConnectionMessage, SerializationType},
+    connection::SerializationType,
     game_comms::{GameComms, GameMessage},
     player::{Player, PlayerSink, PlayerStream, PlayerWebSink, PlayerWebStream},
 };
 use anyhow::Result;
-use encoding::{
-    server::{self, ServerMessage, WHO_AM_I_CLIENT, WHO_AM_I_SERVER},
-    version::VERSION,
-};
-use futures::{
-    sink,
-    stream::{SplitSink, SplitStream},
-    Sink, SinkExt, Stream, StreamExt,
-};
+use encoding::server::{self, ServerMessage, WHO_AM_I_CLIENT};
+
 use log::{error, info, warn};
 use map::Map;
-use tokio::sync::mpsc::{Receiver, Sender};
-use tokio_tungstenite::{tungstenite, WebSocketStream};
 
 const FPS: u128 = 16_666;
-const ENTITY_RANGE: usize = 500;
+const ENTITY_RANGE: u16 = 500;
 
 struct Game {
     seed: u32,
@@ -93,7 +81,7 @@ impl Game {
             }
         }
 
-        return Ok(());
+        // return Ok(());
     }
 
     fn is_ready(&self) -> bool {
@@ -117,7 +105,7 @@ impl Game {
 
     fn create_player_start_msg(player: &Player, seed: u32) -> server::Message {
         return server::Message::PlayerStart(server::PlayerStart {
-            entity_id: player.id as usize * ENTITY_RANGE,
+            entity_id: player.id as usize * ENTITY_RANGE as usize,
             position: player.position,
             range: ENTITY_RANGE,
             seed,
@@ -127,7 +115,7 @@ impl Game {
     // TODO: this probably has to be more robust to not cause a panic
     async fn start_game(&mut self) -> Result<()> {
         let mut handles = vec![];
-        for (idx, player) in self.players.iter_mut().enumerate() {
+        for player in self.players.iter_mut() {
             if let Some(player) = player {
                 let msg = Game::create_player_start_msg(player, self.seed);
                 handles.push(player.sink.send(msg));

@@ -1,7 +1,6 @@
 import Fastify from "fastify"
 import { renderToString } from "react-dom/server"
 import { VimRoyale } from "./container"
-
 const fastify = Fastify({
   logger: true,
 })

@@ -1,7 +1,9 @@
 *
 
-!src/
-!run
-!client
+!vim_*/
+!vim_*/
+!encoding/
+!map/
+!game/
 !Cargo.lock
 !Cargo.toml

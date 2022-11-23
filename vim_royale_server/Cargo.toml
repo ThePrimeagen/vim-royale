@@ -11,3 +11,6 @@ cfg-if = "1.0.0"
 leptos = { version = "0.0.18", default-features = false, features = ["ssr"] }
 vim_royale_view = {path = "../vim_royale_view", default-features = false, features = ["ssr"] }
 
+#[features]
+#default = ["ssr"]
+

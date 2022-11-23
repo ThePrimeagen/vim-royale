@@ -13,7 +13,7 @@ pub const WHO_AM_I_CLIENT: u8 = 1;
 pub struct PlayerStart {
     #[deku(bits = 24)]
     pub entity_id: usize,
-    pub range: usize,
+    pub range: u16,
     pub position: (u16, u16),
     pub seed: u32,
 }

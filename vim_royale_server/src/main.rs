@@ -1,6 +1,11 @@
 use actix_web::{get, web, App, HttpServer, Responder};
 use leptos::*;
 use vim_royale_view::container::{VimRoyale, VimRoyaleProps};
+use cfg_if::cfg_if;
+
+// boilerplate to run in different modes
+cfg_if! {
+if #[cfg(feature = "ssr")] {
 
 const HTML: &'static str = r#"
 <!DOCTYPE html>
@@ -57,5 +62,12 @@ async fn main() -> std::io::Result<()> {
     .bind(("0.0.0.0", 42069))?
     .run()
     .await
+}
+
+} else {
+    fn main() {
+        unreachable!("this should never be called.");
+    }
+}
 }
 
