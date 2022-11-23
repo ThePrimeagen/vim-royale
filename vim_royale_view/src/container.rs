@@ -15,6 +15,13 @@ pub fn Background(cx: Scope) -> Element {
 
 #[component]
 pub fn VimRoyale(cx: Scope) -> Element {
+    /*
+    let (r, w) = create_signal(cx, true);
+
+    return view! {cx,
+        <div class:connecting={move || r.get()}>
+    */
+
     return view! {cx,
         <div>
             <div>

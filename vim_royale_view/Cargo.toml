@@ -1,5 +1,5 @@
 [package]
-name = "vim_royale_view"
+name = "vim_royale_client"
 version = "0.1.0"
 edition = "2021"
 
@@ -15,11 +15,9 @@ encoding = { path = "../encoding" }
 map = { path = "../map" }
 getrandom = { version = "0.2.8", features = ["js"] }
 tokio-tungstenite-wasm = "0.1.0"
-leptos = { version = "0.0.18", default-features = false, features = ["ssr"] }
+leptos = { version = "0.0.18", default-features = false }
 
 [features]
 default = ["hydrate"]
-ssr = [
-	"leptos/ssr",
-]
+ssr = ["leptos/ssr"]
 hydrate = ["leptos/hydrate"]

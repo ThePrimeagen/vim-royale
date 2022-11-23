@@ -36,7 +36,6 @@ fn TerminalDisplay(cx: Scope) -> Element {
 
 #[component]
 pub fn Terminal(cx: Scope) -> Element {
-    gloo::console::log!("rendering terminal");
     return view! {cx,
         <div class="terminal">
             <TerminalRelativeNu />
@@ -44,5 +43,3 @@ pub fn Terminal(cx: Scope) -> Element {
         </div>
     };
 }
-
-

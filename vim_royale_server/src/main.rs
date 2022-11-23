@@ -1,38 +1,27 @@
-use actix_web::{Responder, HttpServer, App, HttpResponse};
-use cfg_if::cfg_if;
-
-cfg_if! {
-if #[cfg(feature = "ssr")] {
-
+use actix_web::{get, web, App, HttpServer, Responder};
 use leptos::*;
 use vim_royale_view::container::{VimRoyale, VimRoyaleProps};
 
-#[component]
-fn VimRoyaleApp(cx: Scope) -> Element {
-    return view! {cx,
-        <VimRoyale />
-    };
+#[get("/hello/{name}")]
+
+async fn greet(name: web::Path<String>) -> impl Responder {
+    let runtime = create_runtime();
+    let html = run_scope(runtime, |cx| {
+        return view! {cx,
+            <VimRoyale />
+        };
+    });
+
+    return format!("Hello {}", html);
 }
 
-async fn hello() -> impl Responder {
-    let rendered = run_scope(create_runtime(), |cx| view! { cx, <VimRoyaleApp/> });
-    return HttpResponse::Ok().body(rendered);
-}
-
-#[actix_web::main]
+#[actix_web::main] // or #[tokio::main]
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
-        App::new()
-            .service(hello)
+        App::new().service(greet)
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind(("0.0.0.0", 42069))?
     .run()
     .await
 }
 
-} else {
-fn main() {
-    unreachable!("this should never run, please make sure ssr is on");
-}
-}
-}
