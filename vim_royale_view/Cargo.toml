@@ -11,6 +11,15 @@ futures = "0.3.25"
 gloo = { version = "0.8.0", features = ["futures"] }
 reqwasm = "0.5.0"
 wasm-bindgen-futures = "0.4.33"
-yew = "0.19.3"
 encoding = { path = "../encoding" }
-game = { path = "../game" }
+map = { path = "../map" }
+getrandom = { version = "0.2.8", features = ["js"] }
+tokio-tungstenite-wasm = "0.1.0"
+leptos = { version = "0.0.18", default-features = false, features = ["ssr"] }
+
+[features]
+default = ["hydrate"]
+ssr = [
+	"leptos/ssr",
+]
+hydrate = ["leptos/hydrate"]

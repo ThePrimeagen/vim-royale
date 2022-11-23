@@ -58,3 +58,4 @@ impl Map {
         return random_points;
     }
 }
+

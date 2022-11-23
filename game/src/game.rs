@@ -7,7 +7,6 @@ use std::{
 };
 
 use crate::{
-    board::Map,
     connection::{ConnectionMessage, SerializationType},
     game_comms::{GameComms, GameMessage},
     player::{Player, PlayerSink, PlayerStream, PlayerWebSink, PlayerWebStream},
@@ -23,10 +22,8 @@ use futures::{
     Sink, SinkExt, Stream, StreamExt,
 };
 use log::{error, info, warn};
-use tokio::{
-    net::TcpStream,
-    sync::mpsc::{Receiver, Sender},
-};
+use map::Map;
+use tokio::sync::mpsc::{Receiver, Sender};
 use tokio_tungstenite::{tungstenite, WebSocketStream};
 
 const FPS: u128 = 16_666;
@@ -42,7 +39,12 @@ struct Game {
 }
 
 impl Game {
-    pub fn new(seed: u32, game_id: u32, player_count: Arc<AtomicU8>, ser_type: SerializationType) -> Game {
+    pub fn new(
+        seed: u32,
+        game_id: u32,
+        player_count: Arc<AtomicU8>,
+        ser_type: SerializationType,
+    ) -> Game {
         let players = Vec::from_iter((0..100).map(|_| None));
         return Game {
             map: Map::new(seed),
@@ -167,7 +169,13 @@ impl Game {
     }
 }
 
-pub async fn game_run(seed: u32, player_count: Arc<AtomicU8>, game_id: u32, mut comms: GameComms, ser_type: SerializationType) {
+pub async fn game_run(
+    seed: u32,
+    player_count: Arc<AtomicU8>,
+    game_id: u32,
+    mut comms: GameComms,
+    ser_type: SerializationType,
+) {
     let mut game = Game::new(seed, game_id, player_count, ser_type);
 
     loop {

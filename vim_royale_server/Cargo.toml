@@ -1,0 +1,21 @@
+[package]
+name = "vim_royale_server"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-web = "4.2.1"
+cfg-if = "1.0.0"
+leptos = { version = "0.0.18", features = ["ssr"] }
+vim_royale_view = {path = "../vim_royale_view"}
+
+[features]
+default = ["ssr"]
+ssr = [
+	"leptos/ssr",
+]
+hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
+
+

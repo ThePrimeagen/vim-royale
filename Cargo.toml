@@ -3,6 +3,7 @@
 members = [
     "vim_royale",
     "vim_royale_view",
+    "vim_royale_server",
     "encoding",
     "game",
 ]

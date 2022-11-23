@@ -1,0 +1,72 @@
+
+html, body, div {
+    margin: 0;
+    overflow: hidden;
+}
+
+.center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.background {
+    opacity: 0.95;
+    background-color: #1e1e2e;
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+
+.animu {
+    background-color: #1e1e2e;
+    position: absolute;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.status {
+    position: absolute;
+    top: 3vh;
+    height: 3vh;
+}
+
+.terminal {
+    border: 1px solid #2e3e3e;
+    position: absolute;
+    top: 10vh;
+    width: 83vw;
+    height: 72vh;
+    display: flex;
+}
+
+.terminal-relative-nu {
+    display: grid;
+
+    grid-template-rows: repeat(24, 1fr);
+    grid-template-columns: repeat(3, 1fr);
+
+    width: 3vw;
+    gap: 0px;
+    height: 100%;
+
+    border-right: 1px solid #2e3e3e;
+    margin-right: -1px;
+}
+
+.terminal-display {
+    display: grid;
+
+    grid-template-rows: repeat(24, 1fr);
+    grid-template-columns: repeat(80, 1fr);
+
+    gap: 0px;
+    height: 100%;
+    width: 80vw;
+}
+
+.terminal-byte {
+}
+
+.terminal-row {
+}
