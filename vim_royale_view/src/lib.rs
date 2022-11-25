@@ -1,3 +1,4 @@
+pub mod string_scroller;
 pub mod terminal;
 pub mod container;
 pub mod status;

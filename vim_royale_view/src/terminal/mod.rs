@@ -1,5 +1,7 @@
 use leptos::*;
 
+use crate::state::AppState;
+
 #[component]
 fn TerminalRelativeNu(cx: Scope) -> Element {
     let els: Vec<Element> = (0..24).map(|_| {
@@ -17,15 +19,31 @@ fn TerminalRelativeNu(cx: Scope) -> Element {
     };
 }
 
+fn get_class_from_state(signal: RwSignal<usize>) -> String {
+    let state = signal.get();
+
+    match state {
+        0 => return String::from("terminal-byte off"),
+        1 => return String::from("terminal-byte partial"),
+        _ => return String::from("terminal-byte on"),
+    }
+}
+
 #[component]
 fn TerminalDisplay(cx: Scope) -> Element {
-    let els: Vec<Element> = (0..24).map(|_| {
-        return view! {cx,
-            <div class="terminal-column">
-            {(0..80).map(|_| view! {cx, <div class="terminal-byte"> </div>}).collect::<Vec<Element>>()}
-            </div>
-        };
-    }).collect();
+    let state =
+        use_context::<AppState>(cx).expect("consider what to do for SSR if we go that route");
+
+    let mut els: Vec<Element> = vec![];
+
+    for row in &state.terminal_display {
+        for signal in row {
+            let signal = signal.clone();
+            els.push(view! {cx,
+                <div class=move || get_class_from_state(signal)> </div>
+            });
+        }
+    }
 
     return view! {cx,
         <div class="terminal-display">

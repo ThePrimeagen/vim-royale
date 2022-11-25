@@ -1,4 +1,3 @@
-
 use anyhow::Result;
 use encoding::server::ServerMessage;
 use futures::{SinkExt, StreamExt};
@@ -7,13 +6,16 @@ use wasm_bindgen_futures::spawn_local;
 use reqwasm::websocket::futures::WebSocket;
 use reqwasm::websocket::Message;
 
-use vim_royale_view::{container::{VimRoyale, VimRoyaleProps}, state::AppState, message::Msg};
+use vim_royale_view::{
+    container::{VimRoyale, VimRoyaleProps},
+    message::Msg,
+    state::AppState, string_scroller::{scroll_strings, the_primeagen},
+};
 
 use leptos::*;
 
 #[component]
 fn App(cx: Scope) -> Element {
-
     /*
     let state = use_context::<State>(cx).unwrap();
 
@@ -67,7 +69,23 @@ pub fn vim_royale() -> Result<()> {
 
     mount_to_body(move |cx| {
         let (state_read, state_write) = create_signal::<Msg>(cx, Msg::Connecting);
+        provide_context(cx, AppState::new(state_read, cx));
+
         let msg = msg.clone();
+
+        spawn_local(async move {
+            gloo::timers::future::TimeoutFuture::new(1000).await;
+            let mut scroller = scroll_strings(the_primeagen(), 0);
+
+            loop {
+                let state = use_context::<AppState>(cx)
+                    .expect("consider what to do for SSR if we go that route");
+
+                gloo::console::log!("about to scroller");
+                scroller(state, 0);
+                gloo::timers::future::TimeoutFuture::new(200).await;
+            }
+        });
 
         spawn_local(async move {
             // TODO: This needs to be pushed into a place where i can re-initialize
@@ -99,8 +117,7 @@ pub fn vim_royale() -> Result<()> {
             state_write.set(Msg::Closed);
         });
 
-        provide_context(cx, AppState::new(state_read, cx));
-        return view! {cx, <App />}
+        return view! {cx, <App />};
     });
 
     return Ok(());

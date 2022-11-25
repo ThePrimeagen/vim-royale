@@ -11,11 +11,11 @@ html, body, div {
 .tokyonight .terminal-byte.off { }
 
 .tokyonight .terminal-byte.on {
-    background-color: #7dcfff;
+    background-color: #0db9d7;
 }
 
 .tokyonight .terminal-byte.partial {
-    background-color: #0db9d7;
+    background-color: #7dcfff;
 }
 
 .gruvbox .background {
@@ -91,6 +91,9 @@ html, body, div {
 
 .terminal-byte {
 }
+.terminal-byte {
+}
+
 .terminal-byte.solid {
     background-color: #
 }
