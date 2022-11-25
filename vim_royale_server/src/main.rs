@@ -1,4 +1,4 @@
-use actix_web::{get, web, App, HttpServer, Responder};
+use actix_web::{get, web, App, HttpServer, Responder, middleware};
 use leptos::*;
 use vim_royale_view::container::{VimRoyale, VimRoyaleProps};
 
@@ -51,6 +51,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         let state = state.clone();
         App::new()
+            .wrap(middleware::Compress::default())
             .app_data(web::Data::new(state))
             .service(greet)
     })

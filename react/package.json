@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@fastify/compress": "^6.1.1",
     "fastify": "^4.10.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"

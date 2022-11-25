@@ -7,3 +7,8 @@
 !game/
 !Cargo.lock
 !Cargo.toml
+!react/src
+!react/package.json
+!react/pnpm-lock.yaml
+!react/package-lock.json
+!react/tsconfig.json

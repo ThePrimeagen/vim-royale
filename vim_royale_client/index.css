@@ -4,6 +4,28 @@ html, body, div {
     overflow: hidden;
 }
 
+.tokyonight .background {
+    background-color: #1f2335;
+}
+
+.tokyonight .terminal-byte.off { }
+
+.tokyonight .terminal-byte.on {
+    background-color: #7dcfff;
+}
+
+.tokyonight .terminal-byte.partial {
+    background-color: #0db9d7;
+}
+
+.gruvbox .background {
+    background-color: #1d2021;
+}
+
+.catpuccin .background {
+    background-color: #1e1e2e;
+}
+
 .center {
     display: flex;
     justify-content: center;
@@ -12,7 +34,6 @@ html, body, div {
 
 .background {
     opacity: 0.95;
-    background-color: #1e1e2e;
     position: absolute;
     inset: 0;
     overflow: hidden;
@@ -23,12 +44,6 @@ html, body, div {
     position: absolute;
     max-width: 100%;
     overflow: hidden;
-}
-
-.status {
-    position: absolute;
-    top: 3vh;
-    height: 3vh;
 }
 
 .terminal {
@@ -65,7 +80,19 @@ html, body, div {
     width: 80vw;
 }
 
+.status {
+    position: absolute;
+    top: 82vh;
+    width: 83vw;
+    height: 2vh;
+    border-bottom: 1px solid #2e3e3e;
+}
+
+
 .terminal-byte {
+}
+.terminal-byte.solid {
+    background-color: #
 }
 
 .terminal-row {

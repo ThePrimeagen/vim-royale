@@ -22,8 +22,9 @@ pub fn VimRoyale(cx: Scope) -> Element {
         <div class:connecting={move || r.get()}>
     */
 
+    // TODO: State... saving?
     return view! {cx,
-        <div>
+        <div class="tokyonight">
             <div>
                 <Background />
             </div>
