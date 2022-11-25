@@ -49,46 +49,34 @@ pub fn scroll_strings(
     let cols = strings[0].len();
 
     return move |state: AppState, speed: usize| {
-        let cols_in_display = state.terminal_display[0].len();
+        let display_cols = state.terminal_display[0].len();
+
+        offset += 1;
 
         for row in 0..rows {
-            leptos::log!("row: {}", row);
-            if cols_in_display > offset {
-                leptos::log!("blanking row from 0 .. {}", cols - offset);
+            if display_cols > offset {
                 for _ in 0..(cols - offset) {
                     state.terminal_display[row][offset].set(0);
                 }
             }
 
             let row = start_row + row;
-            leptos::log!("row selected is {}", row);
-            for i in 0..=offset {
-                let col = cols_in_display - offset + i - 1;
-                leptos::log!(
-                    "setting value rows={}, display_cols={} cols={} row={} col={} i={}",
-                    rows,
-                    cols_in_display,
-                    cols,
-                    row,
-                    col,
-                    i
-                );
-                if let Some(r) = state.terminal_display.get(row) {
-                    if let Some(signal) = r.get(col) {
-                        leptos::log!("setting signal with {}", strings[row][col]);
-                        signal.set(strings[row][col]);
-                    } else {
-                        leptos::log!("unable to get col {}", col);
-                    }
+            let start = offset.saturating_sub(display_cols);
+
+            let mut display_offset = 0;
+            for i in start..offset {
+                let display_col = (display_cols.saturating_sub(offset) + display_offset).saturating_sub(1);
+                display_offset += 1;
+
+                if i < cols {
+                    state.terminal_display[row][display_col].set(strings[row][i]);
                 } else {
-                    leptos::log!("unable to get row {}", row);
+                    state.terminal_display[row][display_col].set(0);
                 }
-                state.terminal_display[row][col].set(strings[row][i]);
             }
         }
 
-        offset += 1;
-        let still_running = offset < strings[0].len();
+        let still_running = offset < cols + display_cols;
         if !still_running {
             offset = 0;
         }

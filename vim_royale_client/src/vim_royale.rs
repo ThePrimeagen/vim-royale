@@ -81,9 +81,9 @@ pub fn vim_royale() -> Result<()> {
                 let state = use_context::<AppState>(cx)
                     .expect("consider what to do for SSR if we go that route");
 
-                gloo::console::log!("about to scroller");
+
                 scroller(state, 0);
-                gloo::timers::future::TimeoutFuture::new(200).await;
+                gloo::timers::future::TimeoutFuture::new(0).await;
             }
         });
 
@@ -108,6 +108,7 @@ pub fn vim_royale() -> Result<()> {
 
             // TODO: Client side error handling
             while let Some(Ok(Message::Bytes(msg))) = ws.next().await {
+
                 let msg = ServerMessage::deserialize(&msg).unwrap();
                 gloo::console::log!(format!("received {:?}", msg));
                 state_write.set(Msg::Message(msg));
