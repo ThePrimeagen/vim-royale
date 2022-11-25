@@ -14,6 +14,9 @@ use vim_royale_view::{
 
 use leptos::*;
 
+const ART_FILENAME: &str = "vim_royale_client/src/ascii_art/ascii_text.txt";
+
+
 #[component]
 fn App(cx: Scope) -> Element {
     /*
@@ -75,8 +78,8 @@ pub fn vim_royale() -> Result<()> {
 
         spawn_local(async move {
             gloo::timers::future::TimeoutFuture::new(1000).await;
-            let mut scroller = scroll_strings(the_primeagen(), 0);
-            let mut scroller2 = scroll_strings(the_primeagen(), 12);
+            let mut scroller = scroll_strings(the_primeagen(ART_FILENAME), 0);
+            let mut scroller2 = scroll_strings(the_primeagen(ART_FILENAME), 12);
 
             let mut count = 0;
             loop {
