@@ -2,6 +2,11 @@
 
 #######################################################################################################################
 #                                                                                                                     #
+# I need to precise this was a request from Prime in his stream, asking me to do a pull                               #
+# request with this and it'll be merged into main branch. I'll be honoured if that happened.                          #
+# Oh and I almost forgot, Vim long and prosper                                                                        #
+#                                                                                                                     #
+#                                                                                                                     #
 # This is a script that converts a file that contains raw ascii art into                                              #
 # vim royale readable ascii art, with only '0' (empty character), '1' (halfplain character) and '2' (plain character) #
 #                                                                                                                     #
@@ -16,14 +21,29 @@ import argparse
 
 
 class Char(str):
+    """There is no 'char' type in python so just for clarity I made one
+    """
+
     pass
 
 
 class InvalidCharError(Exception):
+    """Invoked when you have some chars in raw ascii art that were not expected
+    """
+
     pass
 
 
 def read_file(filename: str, *args) -> str:
+    """Just reads a file, nothing more
+
+    [Args]:
+        filename (str): file you want to get content
+
+    [Returns]:
+        (str): 'filename' content
+    """
+
     with open(filename, 'r', *args) as f:
         content = f.read()
 
@@ -31,6 +51,12 @@ def read_file(filename: str, *args) -> str:
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse args, just to have clear code
+
+    [Returns]:
+        (argparse.Namespace): args just parsed
+    """
+
     parser = argparse.ArgumentParser(description="Transforms a text file containing ASCII art to 0, 1 and 2 (to put into /vim_royale_view/src/ascii_art/ascii_text.txt)")
 
     parser.add_argument("-f", "--input-file", metavar="input_file", type=str, required=True, help="File that contains raw ascii art")
@@ -50,6 +76,22 @@ def convert_to_vim_royale_readable(
     empty_char: str,
     ignore_errors: bool = False
 ) -> str:
+    """Convert raw ascii art to vim royale readable art
+
+    [Args]:
+        ascii_art (str): the ascii art to be converted to vim royale readable art
+        plain_char (Char | str): plain character in raw ascii art
+        halfplain_char (Char | str): half plain character in raw ascii art
+        empty_char (Char | str): empty character in raw ascii art
+        ignore_errors (bool): if set to True, will set every unexpected chars to 'empty_char'. Defaults to False
+
+    [Returns]:
+        (str): vim royale readable art, to display
+
+    [Raises]:
+        InvalidCharError: if 'ascii_art' contains characters that are neither 'plain_char', 'halfplain_char' or 'empty_char'
+    """
+
     result: str = ""
 
     for char in ascii_art:
