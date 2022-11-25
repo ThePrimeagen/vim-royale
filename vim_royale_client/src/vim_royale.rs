@@ -76,6 +76,7 @@ pub fn vim_royale() -> Result<()> {
         spawn_local(async move {
             gloo::timers::future::TimeoutFuture::new(1000).await;
             let mut scroller = scroll_strings(the_primeagen(), 0);
+
             let mut scroller2 = scroll_strings(the_primeagen(), 12);
 
             let mut count = 0;
@@ -83,10 +84,10 @@ pub fn vim_royale() -> Result<()> {
                 let state = use_context::<AppState>(cx)
                     .expect("consider what to do for SSR if we go that route");
 
+                scroller(&state);
 
-                scroller(&state, 0);
                 if count > 50 {
-                    scroller2(&state, 0);
+                    scroller2(&state);
                 }
 
                 count += 1;
