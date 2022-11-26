@@ -7,12 +7,12 @@ const HTML = `
 <html lang="en">
 <head>
 <link rel="stylesheet" href="style.css">
-<link rel="preload" href="vim_royale_view_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
-<link rel="modulepreload" href="vim_royale_view.js">
 </head>
 <body>
+<div id="root">
 __BODY__
-<script type="module">import init from 'vim_royale_view.js';init('vim_royale_view_bg.wasm');</script>
+</div>
+<script src="client.js"></script>
 </body>
 </html>
 `;

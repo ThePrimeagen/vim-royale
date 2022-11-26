@@ -85,9 +85,19 @@ pub fn vim_royale() -> Result<()> {
             let state = use_context::<&'static AppState>(cx)
                 .expect("should always exist");
 
-            loop {
+            let mut count = 0;
+            let mut now = js_sys::Date::now();
 
-                scroller(state);
+            loop {
+                count += 1;
+
+                if !scroller(state) {
+                    let next_now = js_sys::Date::now();
+                    leptos::log!("count: {} {}", count, next_now - now);
+
+                    now = next_now;
+                    count = 0;
+                }
 
                 if count > 50 {
                     scroller2(state);

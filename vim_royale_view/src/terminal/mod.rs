@@ -31,6 +31,7 @@ fn get_class_from_state(signal: RwSignal<usize>) -> String {
 
 #[component]
 fn TerminalDisplay(cx: Scope) -> Element {
+    leptos::log!("setting state");
     let state =
         use_context::<&'static AppState>(cx).expect("consider what to do for SSR if we go that route");
 
@@ -40,7 +41,13 @@ fn TerminalDisplay(cx: Scope) -> Element {
         for signal in row {
             let signal = signal.clone();
             els.push(view! {cx,
-                <div class=move || get_class_from_state(signal)> </div>
+                <div
+                    class:off={move || signal.get() == 0}
+                    class:partial={move || signal.get() == 1}
+                    class:on={move || signal.get() == 2}
+                    class="terminal-byte"
+                >
+                </div>
             });
         }
     }

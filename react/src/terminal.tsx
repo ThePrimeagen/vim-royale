@@ -27,16 +27,13 @@ function getStr(value: number): string {
 
 function TerminalDisplay(props: {display: number[][]}) {
     let display = props.display;
-    const els = new Array(display.length).fill(0).map((_, i) => {
-        const row = display[i];
-        const items = new Array(display[0].length).
-            fill(0).
-            map((_, i) => <div key={i} className={`terminal-byte`}> </div>)
-        return (
-            <div key={i} className="terminal-column">
-                {}
-            </div>
-        );
+    const els = display.map((row, i) => {
+        const items = row.map((v, i) => {
+            return <div key={i} className={`terminal-byte ${getStr(v)}`}>
+            </div>;
+
+        });
+        return items;
     });
 
     return (
@@ -61,11 +58,12 @@ class Display {
 
 export function Terminal() {
     const [display, setDisplay] = useState(new Display());
-    const [scroller, _] = useState(new Scroller(thePrimeagen(), 0));
+    const [scroller, _s] = useState(new Scroller(thePrimeagen(), 0));
+    const [scroller2, _s2] = useState(new Scroller(thePrimeagen(), 12));
     useEffect(() => {
         const id = setTimeout(() => {
             scroller.run(display.display);
-
+            scroller2.run(display.display);
             // shallow copies of the data
             setDisplay(new Display(display.display));
         }, 0);

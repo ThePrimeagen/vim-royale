@@ -13,7 +13,7 @@ function Background() {
 
 export function VimRoyale() {
     return (
-        <div>
+        <div className="tokyonight">
             <div>
                 <Background />
             </div>

@@ -5,6 +5,8 @@ use crate::message::Msg;
 #[derive(Clone)]
 pub struct AppState {
     pub state: ReadSignal<Msg>,
+
+    pub count: RwSignal<usize>,
     pub terminal_display: [[RwSignal<usize>; 80]; 24],
     pub terminal_lines: [[RwSignal<usize>; 3]; 24],
 }
@@ -18,6 +20,7 @@ impl AppState {
             arr![create_line_row(cx); 24];
 
         return AppState {
+            count: create_rw_signal(cx, 0 as usize),
             state: read,
             terminal_display,
             terminal_lines,
