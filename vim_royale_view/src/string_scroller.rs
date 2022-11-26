@@ -32,12 +32,12 @@ pub fn the_primeagen() -> Vec<Vec<usize>> {
 pub fn scroll_strings(
     strings: Vec<Vec<usize>>,
     start_row: usize,
-) -> impl FnMut(&AppState) -> bool {
+) -> impl FnMut(&'static AppState) -> bool {
     let mut offset: usize = 0;
     let rows = strings.len();
     let cols = strings[0].len();
 
-    return move |state: &AppState| {
+    return move |state: &'static AppState| {
         let display_cols = state.terminal_display[0].len();
 
         offset += 1;

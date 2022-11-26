@@ -32,7 +32,7 @@ fn get_class_from_state(signal: RwSignal<usize>) -> String {
 #[component]
 fn TerminalDisplay(cx: Scope) -> Element {
     let state =
-        use_context::<AppState>(cx).expect("consider what to do for SSR if we go that route");
+        use_context::<&'static AppState>(cx).expect("consider what to do for SSR if we go that route");
 
     let mut els: Vec<Element> = vec![];
 

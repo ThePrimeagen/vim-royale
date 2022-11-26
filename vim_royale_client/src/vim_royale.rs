@@ -69,25 +69,28 @@ pub fn vim_royale() -> Result<()> {
 
     mount_to_body(move |cx| {
         let (state_read, state_write) = create_signal::<Msg>(cx, Msg::Connecting);
-        provide_context(cx, AppState::new(state_read, cx));
+        gloo::console::log!("PRE APP");
+        let app_state: &'static AppState = Box::leak(Box::new(AppState::new(state_read, cx)));
+        gloo::console::log!("DONE APP");
+        provide_context(cx, app_state);
 
         let msg = msg.clone();
 
         spawn_local(async move {
             gloo::timers::future::TimeoutFuture::new(1000).await;
             let mut scroller = scroll_strings(the_primeagen(), 0);
-
             let mut scroller2 = scroll_strings(the_primeagen(), 12);
-
             let mut count = 0;
-            loop {
-                let state = use_context::<AppState>(cx)
-                    .expect("consider what to do for SSR if we go that route");
 
-                scroller(&state);
+            let state = use_context::<&'static AppState>(cx)
+                .expect("should always exist");
+
+            loop {
+
+                scroller(state);
 
                 if count > 50 {
-                    scroller2(&state);
+                    scroller2(state);
                 }
 
                 count += 1;
