@@ -80,7 +80,6 @@ pub fn vim_royale() -> Result<()> {
             gloo::timers::future::TimeoutFuture::new(1000).await;
             let mut scroller = scroll_strings(the_primeagen(), 0);
             let mut scroller2 = scroll_strings(the_primeagen(), 12);
-            let mut count = 0;
 
             let state = use_context::<&'static AppState>(cx)
                 .expect("should always exist");
