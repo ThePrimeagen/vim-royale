@@ -31,7 +31,6 @@ fn get_class_from_state(signal: RwSignal<usize>) -> String {
 
 #[component]
 fn TerminalDisplay(cx: Scope) -> Element {
-    leptos::log!("setting state");
     let state =
         use_context::<&'static AppState>(cx).expect("consider what to do for SSR if we go that route");
 

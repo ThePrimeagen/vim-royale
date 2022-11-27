@@ -16,47 +16,6 @@ use leptos::*;
 
 #[component]
 fn App(cx: Scope) -> Element {
-    /*
-    let state = use_context::<State>(cx).unwrap();
-
-    let AppView = move || {
-        gloo::console::log!("rendering app", format!("{:?}", state.read));
-        return state.read.with(|opt| match opt {
-            Msg::Connecting => {
-                return view! {
-                    cx, <div>"WE ARE CONNECTING"</div>
-                }
-            }
-            Msg::Closed => {
-                return view! {
-                    cx, <div>"WE ARE CLOSED"</div>
-                }
-            }
-            Msg::Connected => {
-                return view! {
-                    cx, <div>"WE ARE CONNECTED"</div>
-                }
-            }
-            Msg::Error(_) => {
-                return view! {
-                    cx, <div>
-                        "Error"
-                    </div>
-                }
-            }
-            Msg::Message(msg) => {
-                let msg = format!("Message {:?}", msg);
-                return view! { cx,
-                    <div>
-                        {msg}
-                    </div>
-                }
-            }
-
-        });
-    };
-    */
-
     return view! {cx,
         <VimRoyale />
     };
@@ -69,15 +28,14 @@ pub fn vim_royale() -> Result<()> {
 
     mount_to_body(move |cx| {
         let (state_read, state_write) = create_signal::<Msg>(cx, Msg::Connecting);
-        gloo::console::log!("PRE APP");
         let app_state: &'static AppState = Box::leak(Box::new(AppState::new(state_read, cx)));
-        gloo::console::log!("DONE APP");
         provide_context(cx, app_state);
 
         let msg = msg.clone();
 
         spawn_local(async move {
             gloo::timers::future::TimeoutFuture::new(1000).await;
+
             let mut scroller = scroll_strings(the_primeagen(), 0);
             let mut scroller2 = scroll_strings(the_primeagen(), 12);
 
@@ -86,8 +44,9 @@ pub fn vim_royale() -> Result<()> {
 
             let mut count = 0;
             let mut now = js_sys::Date::now();
+            let mut run2 = false;
 
-            loop {
+            gloo::timers::callback::Interval::new(0, move || {
                 count += 1;
 
                 if !scroller(state) {
@@ -98,44 +57,14 @@ pub fn vim_royale() -> Result<()> {
                     count = 0;
                 }
 
-                if count > 50 {
+                if run2 {
                     scroller2(state);
                 }
 
-                count += 1;
-                gloo::timers::future::TimeoutFuture::new(0).await;
-            }
-        });
-
-        spawn_local(async move {
-            // TODO: This needs to be pushed into a place where i can re-initialize
-            // everything and run this again.
-            gloo::console::log!("connecting to ws socket");
-            let mut ws = WebSocket::open("ws://vim-royale.theprimeagen.tv:42001").unwrap();
-            gloo::console::log!("connected");
-            match ws.send(Message::Bytes(msg)).await {
-                Err(e) => {
-                    gloo::console::log!("error on connection");
-                    let e = format!("ERROR ON STARTUP: {:?}", e);
-                    state_write.set(Msg::Error(e));
+                if !run2 && count > 50 {
+                    run2 = true;
                 }
-
-                Ok(_) => {
-                    gloo::console::log!("lets go, it worked, rendering application");
-                    state_write.set(Msg::Connected);
-                }
-            }
-
-            // TODO: Client side error handling
-            while let Some(Ok(Message::Bytes(msg))) = ws.next().await {
-
-                let msg = ServerMessage::deserialize(&msg).unwrap();
-                gloo::console::log!(format!("received {:?}", msg));
-                state_write.set(Msg::Message(msg));
-            }
-
-            gloo::console::log!("socket closed");
-            state_write.set(Msg::Closed);
+            }).forget();
         });
 
         return view! {cx, <App />};
@@ -143,3 +72,33 @@ pub fn vim_royale() -> Result<()> {
 
     return Ok(());
 }
+
+// WEBSOCKET STUFF
+// TODO: This needs to be pushed into a place where i can re-initialize
+// everything and run this again.
+/*
+let mut ws = WebSocket::open("ws://vim-royale.theprimeagen.tv:42001").unwrap();
+match ws.send(Message::Bytes(msg)).await {
+    Err(e) => {
+        gloo::console::log!("error on connection");
+        let e = format!("ERROR ON STARTUP: {:?}", e);
+        state_write.set(Msg::Error(e));
+    }
+
+    Ok(_) => {
+        gloo::console::log!("lets go, it worked, rendering application");
+        state_write.set(Msg::Connected);
+    }
+}
+
+// TODO: Client side error handling
+while let Some(Ok(Message::Bytes(msg))) = ws.next().await {
+
+    let msg = ServerMessage::deserialize(&msg).unwrap();
+    gloo::console::log!(format!("received {:?}", msg));
+    state_write.set(Msg::Message(msg));
+}
+
+gloo::console::log!("socket closed");
+state_write.set(Msg::Closed);
+*/
