@@ -16,3 +16,4 @@ tokio = { version = "1.21.2", features = ["full"] }
 tokio-tungstenite = "0.17.2"
 encoding = { path = "../encoding" }
 game = { path = "../game" }
+web-sys = { version = "0.3.60", features = ["MessageChannel", "MessagePort"] }

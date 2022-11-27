@@ -56,27 +56,27 @@ class Display {
     }
 }
 
+let count = 0;
+let now = Date.now();
 export function Terminal() {
     const [display, setDisplay] = useState(new Display());
-    const [count, setCount] = useState(0);
-    const [now, setNow] = useState(Date.now());
     const [scroller, _s] = useState(new Scroller(thePrimeagen(), 0));
     const [scroller2, _s2] = useState(new Scroller(thePrimeagen(), 12));
 
     useEffect(() => {
-        const id = setTimeout(() => {
-            setCount(count + 1);
-            if (!scroller.run(display.display)) {
-                console.log("count", count, "taken", Date.now() - now);
-                setCount(0);
-                setNow(Date.now());
-            }
+        //const id = setInterval(() => { TODO: This slows down react to be in sync with wasm
+        count++;
+        if (!scroller.run(display.display)) {
+            console.log("count", count, "taken", Date.now() - now);
+            count = 0;
+            now = Date.now();
+        }
 
-            scroller2.run(display.display);
-            // shallow copies of the data
-            setDisplay(new Display(display.display));
-        }, 0);
-        return () => clearTimeout(id);
+        scroller2.run(display.display);
+        // shallow copies of the data
+        setDisplay(new Display(display.display));
+        //}, 0);
+        //return () => clearTimeout(id);
     }, [display]);
 
     return (

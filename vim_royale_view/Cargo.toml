@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 arr_macro = "0.1.3"
 encoding = { path = "../encoding" }
-leptos = { version = "0.0.18", default-features = false }
+leptos = { version = "0.0.19", default-features = false }
 
 [features]
 default = ["hydrate"]

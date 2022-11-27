@@ -1,15 +1,12 @@
 use anyhow::Result;
 use encoding::server::ServerMessage;
-use futures::{SinkExt, StreamExt};
+use futures::{SinkExt, StreamExt, channel::mpsc::{Sender, Receiver}};
 use wasm_bindgen_futures::spawn_local;
-
-use reqwasm::websocket::futures::WebSocket;
-use reqwasm::websocket::Message;
 
 use vim_royale_view::{
     container::{VimRoyale, VimRoyaleProps},
     message::Msg,
-    state::AppState, string_scroller::{scroll_strings, the_primeagen},
+    state::AppState, utils::string_scroller::{scroll_strings, the_primeagen},
 };
 
 use leptos::*;
@@ -19,6 +16,38 @@ fn App(cx: Scope) -> Element {
     return view! {cx,
         <VimRoyale />
     };
+}
+
+struct Tick {
+    rx: Receiver<()>,
+    channel: web_sys::MessageChannel,
+}
+
+impl Tick {
+    pub fn new() -> Result<Tick> {
+        let (tx, rx) = futures::channel::mpsc::channel(1);
+        let channel = web_sys::MessageChannel::new().unwrap();
+        let closure = Tick::closure(tx.clone());
+        channel.port1().set_onmessage(Some(
+            closure.into_js_value().unchecked_ref(),
+        ));
+
+        return Ok(Tick {
+            rx,
+            channel,
+        });
+    }
+
+    fn closure(mut tx: Sender<()>) -> wasm_bindgen::closure::Closure<dyn FnMut(web_sys::MessageEvent)> {
+        return wasm_bindgen::closure::Closure::wrap(Box::new(move |_| {
+            let _ = tx.try_send(());
+        }) as Box<dyn FnMut(_)>);
+    }
+
+    pub async fn tick(&mut self) {
+        let _ = self.channel.port2().post_message(&wasm_bindgen::JsValue::NULL);
+        let _ = self.rx.next().await;
+    }
 }
 
 pub fn vim_royale() -> Result<()> {
@@ -32,6 +61,9 @@ pub fn vim_royale() -> Result<()> {
         provide_context(cx, app_state);
 
         let msg = msg.clone();
+        let channel_size = 2;
+        let (tx, rx) = futures::channel::mpsc::channel(channel_size);
+        let mut ticker = Tick::new().unwrap();
 
         spawn_local(async move {
             gloo::timers::future::TimeoutFuture::new(1000).await;
@@ -44,9 +76,9 @@ pub fn vim_royale() -> Result<()> {
 
             let mut count = 0;
             let mut now = js_sys::Date::now();
-            let mut run2 = false;
 
-            gloo::timers::callback::Interval::new(0, move || {
+            loop {
+                ticker.tick().await;
                 count += 1;
 
                 if !scroller(state) {
@@ -56,16 +88,22 @@ pub fn vim_royale() -> Result<()> {
                     now = next_now;
                     count = 0;
                 }
-
-                if run2 {
-                    scroller2(state);
-                }
-
-                if !run2 && count > 50 {
-                    run2 = true;
-                }
-            }).forget();
+                scroller2(state);
+            }
+            //}).forget();
         });
+
+        for _ in 0..channel_size * 3 {
+            let tx = tx.clone();
+            spawn_local(async move {
+                let mut tx = tx;
+                loop {
+                    gloo::timers::future::TimeoutFuture::new(0).await;
+                    tx.send(0).await.ok();
+                }
+            });
+        }
+
 
         return view! {cx, <App />};
     });
