@@ -16,7 +16,7 @@ vim_royale_view = { path = "../vim_royale_view" }
 map = { path = "../map" }
 getrandom = { version = "0.2.8", features = ["js"] }
 tokio-tungstenite-wasm = "0.1.0"
-leptos = { version = "0.0.19", default-features = false }
+leptos = { version = "0.0.19", default-features = false, features = ["interning",]}
 web-sys = { version = "0.3", features = ["MessageChannel", "MessagePort"] }
 
 [features]

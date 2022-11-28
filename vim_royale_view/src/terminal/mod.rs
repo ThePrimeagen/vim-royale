@@ -41,10 +41,7 @@ fn TerminalDisplay(cx: Scope) -> Element {
             let signal = signal.clone();
             els.push(view! {cx,
                 <div
-                    class:off={move || signal.get() == 0}
-                    class:partial={move || signal.get() == 1}
-                    class:on={move || signal.get() == 2}
-                    class="terminal-byte"
+                    class={move || get_class_from_state(signal)}
                 >
                 </div>
             });

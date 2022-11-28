@@ -84,6 +84,7 @@ pub fn vim_royale() -> Result<()> {
                 if !scroller(state) {
                     let next_now = js_sys::Date::now();
                     leptos::log!("count: {} {}", count, next_now - now);
+                    let next_now = js_sys::Date::now();
 
                     now = next_now;
                     count = 0;
