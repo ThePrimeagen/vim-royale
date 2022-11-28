@@ -2586,8 +2586,10 @@ dependencies = [
 name = "vim_royale_view"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "arr_macro",
  "encoding",
+ "futures 0.3.25",
  "leptos",
 ]
 

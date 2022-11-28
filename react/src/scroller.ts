@@ -67,15 +67,3 @@ export class Scroller {
         return running;
     }
 }
-
-if (require.main === module) {
-    const numbers = new Array(24).fill(0).map(() => new Array(80).fill(0));
-    const scroller = new Scroller(thePrimeagen(), 0);
-    for (let i = 0; i < 1000; ++i) {
-        console.log(numbers.map(x => JSON.stringify(x)));
-        scroller.run(numbers);
-    }
-    console.log(numbers.map(x => JSON.stringify(x)));
-}
-
-

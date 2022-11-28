@@ -40,9 +40,7 @@ fn TerminalDisplay(cx: Scope) -> Element {
         for signal in row {
             let signal = signal.clone();
             els.push(view! {cx,
-                <div
-                    class={move || get_class_from_state(signal)}
-                >
+                <div class=move || get_class_from_state(signal)>
                 </div>
             });
         }
