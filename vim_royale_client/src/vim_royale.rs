@@ -56,13 +56,11 @@ pub fn vim_royale() -> Result<()> {
     let msg = msg.serialize()?;
 
     mount_to_body(move |cx| {
-        let (state_read, state_write) = create_signal::<Msg>(cx, Msg::Connecting);
+        let (state_read, _state_write) = create_signal::<Msg>(cx, Msg::Connecting);
         let app_state: &'static AppState = Box::leak(Box::new(AppState::new(state_read, cx)));
         provide_context(cx, app_state);
 
-        let msg = msg.clone();
-        let channel_size = 2;
-        let (tx, rx) = futures::channel::mpsc::channel(channel_size);
+        let _msg = msg.clone();
         let mut ticker = Tick::new().unwrap();
 
         spawn_local(async move {
@@ -91,20 +89,7 @@ pub fn vim_royale() -> Result<()> {
                 }
                 scroller2(state);
             }
-            //}).forget();
         });
-
-        for _ in 0..channel_size * 3 {
-            let tx = tx.clone();
-            spawn_local(async move {
-                let mut tx = tx;
-                loop {
-                    gloo::timers::future::TimeoutFuture::new(0).await;
-                    tx.send(0).await.ok();
-                }
-            });
-        }
-
 
         return view! {cx, <App />};
     });
