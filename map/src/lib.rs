@@ -1,3 +1,7 @@
+use window::{SubWindow, Window};
+
+pub mod window;
+
 fn mulberry32(a: u32) -> impl FnMut() -> u32 {
     let mut state = a;
     return move || {
@@ -14,20 +18,21 @@ fn mulberry32(a: u32) -> impl FnMut() -> u32 {
     };
 }
 
-pub const MAP_SIZE: usize = 512;
+pub const MAP_SIZE_SIDE: usize = 256;
+pub const MAP_SIZE: usize = MAP_SIZE_SIDE * MAP_SIZE_SIDE;
 pub const BUILDING_SIZE: usize = 10;
 pub const BUILDING_COUNT: usize = 25;
 
 pub struct Map {
     pub seed: u32,
-    board: [[u8; MAP_SIZE]; MAP_SIZE],
+    board: Window<usize>,
 }
 
 impl Map {
     pub fn new(seed: u32) -> Map {
         let mut map = Map {
             seed,
-            board: [[0; MAP_SIZE]; MAP_SIZE],
+            board: Window::new(MAP_SIZE_SIDE, vec![0; MAP_SIZE]),
         };
 
         map.generate();
@@ -41,18 +46,26 @@ impl Map {
             .map(|_| {
                 (
                     // TODO: This should be cleaned up
-                    (m32() % (MAP_SIZE - BUILDING_SIZE) as u32) as usize,
-                    (m32() % (MAP_SIZE - BUILDING_SIZE) as u32) as usize,
+                    (m32() % (MAP_SIZE_SIDE - BUILDING_SIZE) as u32) as usize,
+                    (m32() % (MAP_SIZE_SIDE - BUILDING_SIZE) as u32) as usize,
                 )
             })
             .collect();
 
+
         for (x, y) in &random_points {
-            for x in *x..*x + BUILDING_SIZE {
-                for y in *y..*y + BUILDING_SIZE {
-                    self.board[x][y] = 1;
-                }
-            }
+            let sub_window = SubWindow {
+                x: *x,
+                y: *y,
+                width: BUILDING_SIZE,
+                height: BUILDING_SIZE,
+            };
+
+            self.board.iter_mut_subwindow_rows(sub_window).for_each(|row| {
+                row.iter_mut().for_each(|cell| {
+                    *cell = 1;
+                });
+            });
         }
 
         return random_points;
