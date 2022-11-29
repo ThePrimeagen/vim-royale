@@ -11,7 +11,6 @@ map = { path = "../map" }
 leptos = { version = "0.0.19", default-features = false, features = ["interning",] }
 futures = "0.3.25"
 anyhow = "1.0.66"
-array-macro = "2.1.5"
 
 [features]
 default = ["hydrate"]

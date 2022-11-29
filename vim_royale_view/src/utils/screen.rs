@@ -27,8 +27,8 @@ impl Screen
         for row in 0..ROWS {
             leptos::log!("HELLO WORLD {}", row);
             for cols in 0..COLS {
-                //let index = row * COLS + cols;
-                // render_state.terminal_display[index].set(self.map.data[row][cols]);
+                let index = row * COLS + cols;
+                render_state.terminal_display[index].set(self.map.data[row][cols]);
             }
         }
     }

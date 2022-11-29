@@ -74,6 +74,7 @@ impl<const R: usize, const C: usize> Window<R, C> {
             }
         }
     }
+
 }
 
 /*
