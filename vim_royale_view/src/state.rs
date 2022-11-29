@@ -1,39 +1,71 @@
-use anyhow::Result;
-use futures::{StreamExt, channel::mpsc::{Sender, Receiver}};
-
 use array_macro::array;
 use leptos::*;
-use crate::message::Msg;
+use map::window::Window;
 
-pub const WIDTH: usize = 80;
-pub const HEIGHT: usize = 24;
-pub const TOTAL: usize = WIDTH * HEIGHT;
+use crate::{message::Msg, utils::screen::Screen};
 
-pub const WIDTH_RELATIVE: usize = 3;
-pub const TOTAL_RELATIVE: usize = WIDTH_RELATIVE * HEIGHT;
+pub const COLS: usize = 80;
+pub const ROWS: usize = 24;
+pub const TOTAL: usize = COLS * ROWS;
+
+pub const COLS_RELATIVE: usize = 3;
+pub const TOTAL_RELATIVE: usize = COLS_RELATIVE * ROWS;
 
 #[derive(Clone)]
-pub struct AppState {
+pub struct RenderState
+{
     pub state: ReadSignal<Msg>,
-
-    pub count: RwSignal<usize>,
     pub terminal_display: [RwSignal<usize>; TOTAL],
     pub terminal_lines: [RwSignal<usize>; TOTAL_RELATIVE],
 }
 
-impl AppState {
-    pub fn new(read: ReadSignal<Msg>, cx: Scope) -> AppState {
+impl RenderState
+{
+    pub fn new(read: ReadSignal<Msg>, cx: Scope) -> Self {
         let terminal_display: [RwSignal<usize>; TOTAL] =
-            array![create_rw_signal(cx, 0); TOTAL];
+            array![create_rw_signal(cx, usize::default()); TOTAL];
 
         let terminal_lines: [RwSignal<usize>; TOTAL_RELATIVE] =
-            array![create_rw_signal(cx, 0); TOTAL_RELATIVE];
+            array![create_rw_signal(cx, usize::default()); TOTAL_RELATIVE];
 
-        return AppState {
-            count: create_rw_signal(cx, 0 as usize),
+        return RenderState {
             state: read,
             terminal_display,
             terminal_lines,
         };
+    }
+}
+
+pub struct AppState
+{
+    screen: Screen,
+}
+
+impl AppState
+{
+    pub fn new() -> Self {
+        return AppState {
+            screen: Screen::new(),
+        };
+    }
+
+    pub fn update_state(&mut self, cx: Scope, msg: Msg) {
+        leptos::log!("app_state#update_state");
+        match msg {
+            Msg::Closed => todo!(),
+            Msg::Connecting => {
+                leptos::log!("app_state#update_state#connecting");
+                let window: Window<10, 10> = Window::new();
+                self.screen.draw(&window, None);
+
+                let state = use_context::<&'static RenderState>(cx)
+                    .expect("consider what to do for SSR if we go that route");
+                self.screen.render(state);
+
+            }
+            Msg::Connected => todo!(),
+            Msg::Error(_) => todo!(),
+            Msg::Message(_) => todo!(),
+        }
     }
 }

@@ -2570,6 +2570,7 @@ dependencies = [
  "encoding",
  "futures 0.3.25",
  "leptos",
+ "map",
 ]
 
 [[package]]

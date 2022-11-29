@@ -1,13 +1,13 @@
 use anyhow::Result;
 use encoding::server::ServerMessage;
-use futures::{SinkExt, StreamExt, channel::mpsc::{Sender, Receiver}};
+use futures::{SinkExt, StreamExt};
 use reqwasm::websocket::{futures::WebSocket, Message};
 use wasm_bindgen_futures::spawn_local;
 
 use vim_royale_view::{
     container::{VimRoyale, VimRoyaleProps},
     message::Msg,
-    state::AppState, utils::string_scroller::{scroll_strings, the_primeagen},
+    state::{RenderState, AppState}
 };
 
 use leptos::*;
@@ -26,14 +26,19 @@ pub fn vim_royale() -> Result<()> {
 
     mount_to_body(move |cx| {
         let (state_read, state_write) = create_signal::<Msg>(cx, Msg::Connecting);
-        let app_state: &'static AppState = Box::leak(Box::new(AppState::new(state_read, cx)));
-        provide_context(cx, app_state);
+        let render_state: &'static RenderState = Box::leak(Box::new(RenderState::new(state_read, cx)));
+        let mut app_state = AppState::new();
+        provide_context(cx, render_state);
 
         let msg = msg.clone();
         // let mut ticker = Tick::new().unwrap();
 
         spawn_local(async move {
 
+            leptos::log!("setting connecting");
+            app_state.update_state(cx, Msg::Connecting);
+
+            /*
             let mut ws = WebSocket::open("ws://vim-royale.theprimeagen.tv:42001").unwrap();
             match ws.send(Message::Bytes(msg)).await {
                 Err(e) => {
@@ -53,11 +58,11 @@ pub fn vim_royale() -> Result<()> {
 
                 let msg = ServerMessage::deserialize(&msg).unwrap();
                 gloo::console::log!(format!("received {:?}", msg));
-                state_write.set(Msg::Message(msg));
             }
 
             gloo::console::log!("socket closed");
             state_write.set(Msg::Closed);
+            */
         });
 
         return view! {cx, <App />};
