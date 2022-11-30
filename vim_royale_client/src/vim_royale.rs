@@ -28,7 +28,8 @@ pub fn vim_royale() -> Result<()> {
         let (state_read, state_write) = create_signal::<Msg>(cx, Msg::Connecting);
         let render_state: &'static RenderState = Box::leak(Box::new(RenderState::new(state_read, cx)));
         let mut app_state = AppState::new();
-        provide_context(cx, render_state);
+
+        provide_context::<&'static RenderState>(cx, render_state);
 
         let msg = msg.clone();
         // let mut ticker = Tick::new().unwrap();
@@ -38,7 +39,6 @@ pub fn vim_royale() -> Result<()> {
             leptos::log!("setting connecting");
             app_state.update_state(cx, Msg::Connecting);
 
-            /*
             let mut ws = WebSocket::open("ws://vim-royale.theprimeagen.tv:42001").unwrap();
             match ws.send(Message::Bytes(msg)).await {
                 Err(e) => {
@@ -57,12 +57,11 @@ pub fn vim_royale() -> Result<()> {
             while let Some(Ok(Message::Bytes(msg))) = ws.next().await {
 
                 let msg = ServerMessage::deserialize(&msg).unwrap();
-                gloo::console::log!(format!("received {:?}", msg));
+                app_state.update_state(cx, Msg::Message(msg));
             }
 
             gloo::console::log!("socket closed");
             state_write.set(Msg::Closed);
-            */
         });
 
         return view! {cx, <App />};

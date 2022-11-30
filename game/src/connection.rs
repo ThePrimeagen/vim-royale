@@ -16,7 +16,7 @@ use tokio::{
     net::tcp::{OwnedReadHalf, OwnedWriteHalf},
 };
 
-#[derive(clap::ValueEnum, Clone, Debug)]
+#[derive(clap::ValueEnum, Clone, Debug, Copy)]
 pub enum SerializationType {
     JSON = 0,
     Deku = 1,
@@ -31,6 +31,6 @@ pub enum ConnectionError {
 pub enum ConnectionMessage {
     Close,
     ControlMessage,
-    Msg(ServerMessage),
+    Msg(Result<ServerMessage, anyhow::Error>),
     Error(ConnectionError),
 }

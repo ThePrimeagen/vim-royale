@@ -1,10 +1,13 @@
-use tokio::net::TcpStream;
-use anyhow::{Result, Context};
-use encoding::server::{ServerMessage, self};
-use tokio_tungstenite::{tungstenite, tungstenite::Error, WebSocketStream};
-use futures::{SinkExt, StreamExt, stream::{SplitSink, SplitStream}};
+use anyhow::{Context, Result};
+use encoding::server::{self, ServerMessage};
+use futures::{
+    stream::{SplitSink, SplitStream},
+    SinkExt, StreamExt,
+};
+use tokio::{net::TcpStream, sync::mpsc::Sender};
+use tokio_tungstenite::{tungstenite, WebSocketStream};
 
-use crate::connection::{ConnectionMessage, SerializationType};
+use crate::connection::{ConnectionError, ConnectionMessage, SerializationType};
 
 pub type PlayerWebStream = SplitStream<WebSocketStream<TcpStream>>;
 pub type PlayerWebSink = SplitSink<WebSocketStream<TcpStream>, tungstenite::Message>;
@@ -16,12 +19,6 @@ pub struct PlayerSink {
     pub ser_type: SerializationType,
 }
 
-pub struct PlayerStream {
-    pub id: u8,
-    pub stream: PlayerWebStream,
-    pub ser_type: SerializationType,
-}
-
 fn deserialize(vec: Vec<u8>, ser: &SerializationType) -> Result<ServerMessage> {
     if let SerializationType::JSON = ser {
         return serde_json::from_slice(&vec).context("error while decoding json");
@@ -30,43 +27,42 @@ fn deserialize(vec: Vec<u8>, ser: &SerializationType) -> Result<ServerMessage> {
     return ServerMessage::deserialize(&vec);
 }
 
-impl PlayerStream {
-    pub fn new(id: u8, stream: PlayerWebStream) -> Self {
-        return Self {
-            id,
-            stream,
-            ser_type: SerializationType::Deku,
-        };
-    }
+pub fn spawn_player_stream(
+    id: u8,
+    mut stream: PlayerWebStream,
+    ser_type: SerializationType,
+    tx: Sender<ConnectionMessage>,
+) {
+    // TODO: Sorry benny, i am positive you are sad by this.
+    tokio::spawn(async move {
+        loop {
+            match stream.next().await {
+                Some(Ok(tungstenite::Message::Binary(msg))) => {
+                    let msg =
+                        deserialize(msg, &ser_type).context("error while deserializing message");
 
-    pub async fn next_message(&mut self) -> Result<ConnectionMessage> {
-        /*
-        match self.stream.next().await {
-            Some(Ok(Message::Binary(msg))) => {
-                return Ok(ConnectionMessage::Msg(deserialize(msg, &ser)?));
-            }
+                    _ = tx.send(ConnectionMessage::Msg(msg)).await;
+                }
 
-            Some(Ok(Message::Text(msg))) => {
-                return Ok(ConnectionMessage::Error(ConnectionError::Text));
-            }
+                Some(Ok(tungstenite::Message::Text(_))) => {
+                    _ = tx.send(ConnectionMessage::Error(ConnectionError::Text))
+                        .await;
+                    break;
+                }
 
-            // control frames
-            Some(Ok(_)) => {
-                return Ok(ConnectionMessage::ControlMessage);
-            }
+                // control frames
+                Some(Ok(_)) => {}
 
-            Some(Err(e)) => {
-                let e = ConnectionMessage::Error(ConnectionError::WebSocketError(e));
-                return Ok(e);
-            }
+                Some(Err(e)) => {
+                    _ = tx.send(ConnectionMessage::Error(ConnectionError::WebSocketError(e)));
+                }
 
-            None => {
-                return Ok(ConnectionMessage::Close);
-            }
-        };
-        */
-        todo!("me daddy");
-    }
+                None => {
+                    _ = tx.send(ConnectionMessage::Close);
+                }
+            };
+        }
+    });
 }
 
 impl PlayerSink {
@@ -83,7 +79,12 @@ impl PlayerSink {
         self.seq_nu += 1;
 
         let msg = ServerMessage::new(self.seq_nu, msg);
-        let msg = msg.serialize()?;
+
+        let msg = if let SerializationType::JSON = self.ser_type {
+            serde_json::to_vec(&msg).context("error while encoding json")?
+        } else {
+            msg.serialize().context("error while encoding deku")?
+        };
 
         // TODO: Somehow i got into this situation where i don't know how to
         // write.  i really hate this trait thing.
@@ -100,5 +101,4 @@ pub struct Player {
     pub id: u8,
     pub position: (u16, u16),
     pub sink: PlayerSink,
-    pub stream: PlayerStream,
 }

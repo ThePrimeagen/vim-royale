@@ -113,11 +113,11 @@ impl GameManager {
             GameManager::start_game_stub(&mut stub);
 
             info!("[GIM] sending connection message id={}", game_id);
-            stub.sender.send(conn_message).await;
+            _ = stub.sender.send(conn_message).await;
             self.games.insert(game_id, stub);
         } else {
             info!("[GIM] connection message sent id={}", game_id);
-            game.sender.send(conn_message).await;
+            _ = game.sender.send(conn_message).await;
         }
     }
 
