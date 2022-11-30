@@ -1,19 +1,12 @@
 use std::collections::HashMap;
 
+const FONTS_PATH: &str = "vim_royale_view/src/ascii_art/arts";
+const VALID_CHARS: [char; 53] = [
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+    ' ',
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+];
 
-/* [TO DO]
-    - generate ascii art from raw classic text:
-        1) convert classic text to ascii art (need to make a function for this, just iterating through
-            chars and convert each chars with 'get_fonts.get("font name").chars.get(&char))
-        2) convert ascii art to vim royale readable format (with 'raw_ascii_art_to_vim_royale_readable')
-        3) convert it to Vec<Vec<char>> (with 'string_to_matrix')
- *
- *
- * [ERROR] error line '142' when getting chars
-*/
-
-
-const FONTS_PATH: &str = "/home/archeus/Code/Github/vim-royale/vim_royale_view/src/ascii_art/arts";
 
 struct Font {
     name: String,
@@ -21,7 +14,7 @@ struct Font {
     plain_chars: Vec<char>,
     halfplain_chars: Vec<char>,
     empty_chars: Vec<char>,
-    dimensions: (u8, u8),   // (width, height)
+    dimensions: (u8, u8),   // (width, height), the max dimensions
     chars: HashMap<char, String>,
 }
 
@@ -41,12 +34,12 @@ impl Font {
 
 
 
-fn get_fonts() -> HashMap<String, Font> {
+pub fn get_fonts() -> HashMap<String, Font> {
     let mut fonts: HashMap<String, Font> = HashMap::new();
 
-    fonts.insert(String::from("ansi_regular"), Font::new("ansi_regular", vec!['█'], vec![' '], vec![' '], (7, 5)));
+    fonts.insert(String::from("ansi_regular"), Font::new("ansi_regular", vec!['█'], vec![' '], vec![' '], (10, 5)));
     
-    // ! TODO: complete fonts dimensions, findable on
+    // ! TODO: complete fonts dimensions, findable on, will do it later
     // 'https://www.patorjk.com/software/taag/#p=display&f=Graffiti&t=Type%20Something%20'
     //
     // fonts.insert(String::from("ansi_shadow"), Font::new("ansi_shadow", vec!['█'], vec!['═', '╝', '╗', '╚', '║'], vec![' '], (?, ?)));
@@ -56,7 +49,7 @@ fn get_fonts() -> HashMap<String, Font> {
 }
 
 
-fn is_valid_font(fontname: &str) -> bool {
+pub fn is_valid_font(fontname: &str) -> bool {
     for (font_name, _) in get_fonts() {
         if fontname == font_name { return true; }
     }
@@ -66,69 +59,50 @@ fn is_valid_font(fontname: &str) -> bool {
 
 
 
-fn load_font(fontname: &str) -> HashMap<char, String> {
+pub fn load_font(fontname: &str) -> HashMap<char, String> {
     // Does a infinite recursion with 'get_fonts()' and the 'Font::new()' so I comment this until I
     // find a way to check clearly if the font exists or not, for the moment if font is not
     // loadable, Rust will panic when trying to read the file, maybe fix this with a 'match Ok() Err()'
     //
     // if !is_valid_font(fontname) { panic!("font '{}' unknown (not in AVAILIBLE_FONTS)", fontname); }
 
+
     let font_fullpath = format!("{}/{}.txt", FONTS_PATH, &fontname);
 
     let tmp: _ = std::fs::read_to_string(font_fullpath).expect("unable to load font");
-    let ascii_chars = tmp.split("\n\n").collect::<Vec<_>>();
+    let ascii_chars = tmp.split("\n\n\n").collect::<Vec<_>>();
 
     let mut result: HashMap<char, String> = HashMap::new();
 
     // from 'A' to 'Z'
-    for i in 65..91 {
-        result.insert((i as u8) as char, ascii_chars[i - 65].to_string());
-    }
+    for i in 65..91 { result.insert((i as u8) as char, ascii_chars[i - 65].to_string()); }
 
     result
 }
 
 
-fn string_to_matrix(s: &str) -> Vec<Vec<char>> {
-    let mut result: Vec<Vec<char>> = vec![];
-    let mut actual_line: Vec<char> = vec![];
+pub fn generate_fullchar(c: char, dimensions: (u8, u8)) -> String {
+    let mut result: String = String::from("");
 
-    for line in s.lines() {
-        for c in line.chars() { actual_line.push(c); }
-        result.push(actual_line);
-        actual_line = vec![];
-    }
-
-    result
-}
-
-
-// * Will probably never be used, will delete it when done
-fn raw_ascii_art_to_vim_royale_readable(raw_ascii_art: Vec<Vec<char>>, font: Font) -> Vec<Vec<usize>> {
-    let mut result: Vec<Vec<usize>> = vec![];
-    let mut actual_line: Vec<usize> = vec![];
-
-    for line in raw_ascii_art {
-        for c in line {
-            if font.plain_chars.contains(&c) { actual_line.push(2); }
-            else if font.halfplain_chars.contains(&c) { actual_line.push(1); }
-            else if font.empty_chars.contains(&c) { actual_line.push(0); }
-            else { panic!("character in raw_ascii_art ('{}') is neither 'plain_char', 'halfplain_char' or 'empty_char'", c); }
+    for i in 0..dimensions.0 {
+        for _j in 0..dimensions.1 {
+            result += &String::from(c.to_string());
         }
 
-        result.push(actual_line);
-        actual_line = vec![];
+        if i != dimensions.0 - 1 { result += &String::from("\n"); }
     }
 
     result
 }
 
 
-fn create_sentence_from_string(text: String, fontname: &str) -> Vec<Vec<usize>> {
+
+// ! YOU ONLY CAN ADD CHARS FROM THE ALPHABET AND SPACE, SEE LINE 7
+pub fn create_sentence_from_string(text: String, fontname: &str) -> Vec<Vec<usize>> {
     return create_sentence(text.as_str(), fontname);
 }
 
-fn create_sentence(text: &str, fontname: &str) -> Vec<Vec<usize>> {
+pub fn create_sentence(text: &str, fontname: &str) -> Vec<Vec<usize>> {
     let fonts = get_fonts();
     let font = fonts.get(&String::from(fontname)).expect("could not load font while creating sentence");
 
@@ -137,9 +111,9 @@ fn create_sentence(text: &str, fontname: &str) -> Vec<Vec<usize>> {
 
     let mut ascii_text_splitted: Vec<String> = vec![];
     let mut ascii_char: Option<String> = Some(String::from(""));
-    for c in text.chars() {
-        // Can't get char
+    for c in text.to_uppercase().chars() {
         ascii_char = font.chars.get(&c).cloned();
+        if &c == &' ' { ascii_char = Some(generate_fullchar(' ', font.dimensions)); }
 
         match ascii_char {
             Some(art) => ascii_text_splitted.push(art),
@@ -152,10 +126,15 @@ fn create_sentence(text: &str, fontname: &str) -> Vec<Vec<usize>> {
         for ascii_letter in &ascii_text_splitted {
             for c in ascii_letter.lines().collect::<Vec<&str>>()[i as usize].chars() {
                 if font.plain_chars.contains(&c) { actual_line.push(2); }
-                else if font.halfplain_chars.contains(&c) { actual_line.push(1); }
-                else if font.empty_chars.contains(&c) { actual_line.push(0); }
+                else if font.halfplain_chars.contains(&c) {
+                    if font.empty_chars.contains(&c) && &c == &' ' { actual_line.push(0); }
+                    else { actual_line.push(1); }
+                } else if font.empty_chars.contains(&c) { actual_line.push(0); }
                 else { panic!("character in raw_ascii_art ('{}') is neither 'plain_char', 'halfplain_char' or 'empty_char'", c); }
             }
+
+            // Add a space between each letter
+            actual_line.push(0);
         }
 
         result.push(actual_line);
@@ -163,17 +142,4 @@ fn create_sentence(text: &str, fontname: &str) -> Vec<Vec<usize>> {
     }
 
     result
-}
-
-
-fn main() {
-    // [TO FIX]
-    // This code works, but the code below (non commented) does not
-    //
-    // for (k, _v) in &p {
-    //     println!("{}\n{}\n\n", k, p.get(&k).expect("prout"));
-    // }
-
-    // Gives a runtime error
-    println!("{:?}", create_sentence("a", "ansi_regular"));
 }
