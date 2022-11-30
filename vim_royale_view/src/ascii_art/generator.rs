@@ -97,7 +97,7 @@ pub fn generate_fullchar(c: char, dimensions: (u8, u8)) -> String {
 
 
 
-// ! YOU ONLY CAN ADD CHARS FROM THE ALPHABET AND SPACE, SEE LINE 7
+// ! YOU ONLY CAN ADD CHARS FROM THE ALPHABET AND SPACE, SEE LINE 4
 pub fn create_sentence_from_string(text: String, fontname: &str) -> Vec<Vec<usize>> {
     return create_sentence(text.as_str(), fontname);
 }
