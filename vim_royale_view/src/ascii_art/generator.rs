@@ -9,7 +9,7 @@ use std::collections::HashMap;
         3) convert it to Vec<Vec<char>> (with 'string_to_matrix')
  *
  *
- * [ERROR] error line '' when getting chars
+ * [ERROR] error line '142' when getting chars
 */
 
 
