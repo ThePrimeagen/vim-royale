@@ -1,6 +1,5 @@
 use encoding::server::{ServerMessage, Message};
 use leptos::*;
-use map::window::Window;
 
 use crate::{message::Msg, utils::screen::Screen};
 
@@ -8,14 +7,10 @@ pub const COLS: usize = 80;
 pub const ROWS: usize = 24;
 pub const TOTAL: usize = COLS * ROWS;
 
-pub const COLS_RELATIVE: usize = 3;
-pub const TOTAL_RELATIVE: usize = COLS_RELATIVE * ROWS;
-
 #[derive(Clone)]
 pub struct RenderState {
     pub state: ReadSignal<Msg>,
     pub terminal_display: [RwSignal<usize>; TOTAL],
-    pub terminal_lines: [RwSignal<usize>; TOTAL_RELATIVE],
     pub player_position: RwSignal<(usize, usize)>,
 }
 
@@ -25,15 +20,10 @@ impl RenderState {
             create_rw_signal(cx, usize::default())
         });
 
-        let terminal_lines = std::array::from_fn::<RwSignal<usize>, TOTAL_RELATIVE, _>(|_| {
-            create_rw_signal(cx, usize::default())
-        });
-
         return RenderState {
             player_position: create_rw_signal(cx, (0, 0)),
             state: read,
             terminal_display,
-            terminal_lines,
         };
     }
 }

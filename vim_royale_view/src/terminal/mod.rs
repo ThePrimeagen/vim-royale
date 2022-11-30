@@ -4,10 +4,21 @@ use crate::state::RenderState;
 
 #[component]
 fn TerminalRelativeNu(cx: Scope) -> Element {
-    let els: Vec<Element> = (0..24).map(|_| {
+    let state = use_context::<&'static RenderState>(cx)
+        .expect("consider what to do for SSR if we go that route");
+
+
+    let els: Vec<Element> = (0..24).map(|i: usize| {
         return view! {cx,
             <div class="terminal-column">
-            {(0..3).map(|_| view! {cx, <div class="terminal-byte"> </div>}).collect::<Vec<Element>>()}
+                <div class="terminal-byte">
+                    {move || {
+                         if i == 12 {
+                            return state.player_position.get().1.to_string();
+                         }
+                         return i.abs_diff(12).to_string();
+                    }}
+                </div>
             </div>
         };
     }).collect();
@@ -25,7 +36,9 @@ fn get_class_from_state(signal: RwSignal<usize>) -> String {
     match state {
         0 => return String::from("terminal-byte off"),
         1 => return String::from("terminal-byte partial"),
-        _ => return String::from("terminal-byte on"),
+        2 => return String::from("terminal-byte on"),
+        3 => return String::from("terminal-byte player"),
+        _ => return String::from("terminal-byte off"),
     }
 }
 
