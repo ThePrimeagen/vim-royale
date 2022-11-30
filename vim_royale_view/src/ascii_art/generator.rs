@@ -8,11 +8,12 @@ use std::collections::HashMap;
         2) convert ascii art to vim royale readable format (with 'raw_ascii_art_to_vim_royale_readable')
         3) convert it to Vec<Vec<char>> (with 'string_to_matrix')
  *
+ *
+ * [ERROR] error line '' when getting chars
 */
 
 
-const FONTS_PATH: &str = "vim_royale_view/src/ascii_art/arts";
-
+const FONTS_PATH: &str = "/home/archeus/Code/Github/vim-royale/vim_royale_view/src/ascii_art/arts";
 
 struct Font {
     name: String,
@@ -20,7 +21,7 @@ struct Font {
     plain_chars: Vec<char>,
     halfplain_chars: Vec<char>,
     empty_chars: Vec<char>,
-    dimensions: (u8, u8),
+    dimensions: (u8, u8),   // (width, height)
     chars: HashMap<char, String>,
 }
 
@@ -102,15 +103,16 @@ fn string_to_matrix(s: &str) -> Vec<Vec<char>> {
 }
 
 
-fn raw_ascii_art_to_vim_royale_readable(raw_ascii_art: Vec<Vec<char>>, font: Font) -> Vec<Vec<char>> {
-    let mut result: Vec<Vec<char>> = vec![];
-    let mut actual_line: Vec<char> = vec![];
+// * Will probably never be used, will delete it when done
+fn raw_ascii_art_to_vim_royale_readable(raw_ascii_art: Vec<Vec<char>>, font: Font) -> Vec<Vec<usize>> {
+    let mut result: Vec<Vec<usize>> = vec![];
+    let mut actual_line: Vec<usize> = vec![];
 
     for line in raw_ascii_art {
         for c in line {
-            if font.plain_chars.contains(&c) { actual_line.push('2'); }
-            else if font.halfplain_chars.contains(&c) { actual_line.push('1'); }
-            else if font.empty_chars.contains(&c) { actual_line.push('0'); }
+            if font.plain_chars.contains(&c) { actual_line.push(2); }
+            else if font.halfplain_chars.contains(&c) { actual_line.push(1); }
+            else if font.empty_chars.contains(&c) { actual_line.push(0); }
             else { panic!("character in raw_ascii_art ('{}') is neither 'plain_char', 'halfplain_char' or 'empty_char'", c); }
         }
 
@@ -119,4 +121,59 @@ fn raw_ascii_art_to_vim_royale_readable(raw_ascii_art: Vec<Vec<char>>, font: Fon
     }
 
     result
+}
+
+
+fn create_sentence_from_string(text: String, fontname: &str) -> Vec<Vec<usize>> {
+    return create_sentence(text.as_str(), fontname);
+}
+
+fn create_sentence(text: &str, fontname: &str) -> Vec<Vec<usize>> {
+    let fonts = get_fonts();
+    let font = fonts.get(&String::from(fontname)).expect("could not load font while creating sentence");
+
+    let mut actual_line: Vec<usize> = vec![];
+    let mut result: Vec<Vec<usize>> = vec![];
+
+    let mut ascii_text_splitted: Vec<String> = vec![];
+    let mut ascii_char: Option<String> = Some(String::from(""));
+    for c in text.chars() {
+        // Can't get char
+        ascii_char = font.chars.get(&c).cloned();
+
+        match ascii_char {
+            Some(art) => ascii_text_splitted.push(art),
+            None => panic!("didnt got representation of char '{}'", c),
+        }
+    }
+
+    // From 0 to ascii art char height
+    for i in 0..font.dimensions.1 {
+        for ascii_letter in &ascii_text_splitted {
+            for c in ascii_letter.lines().collect::<Vec<&str>>()[i as usize].chars() {
+                if font.plain_chars.contains(&c) { actual_line.push(2); }
+                else if font.halfplain_chars.contains(&c) { actual_line.push(1); }
+                else if font.empty_chars.contains(&c) { actual_line.push(0); }
+                else { panic!("character in raw_ascii_art ('{}') is neither 'plain_char', 'halfplain_char' or 'empty_char'", c); }
+            }
+        }
+
+        result.push(actual_line);
+        actual_line = vec![];
+    }
+
+    result
+}
+
+
+fn main() {
+    // [TO FIX]
+    // This code works, but the code below (non commented) does not
+    //
+    // for (k, _v) in &p {
+    //     println!("{}\n{}\n\n", k, p.get(&k).expect("prout"));
+    // }
+
+    // Gives a runtime error
+    println!("{:?}", create_sentence("a", "ansi_regular"));
 }
