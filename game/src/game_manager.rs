@@ -39,8 +39,8 @@ impl GameStub {
 }
 
 pub struct GameConfig {
-    ser_type: SerializationType,
-    max_players: usize,
+    pub ser_type: SerializationType,
+    pub max_players: usize,
 }
 
 impl GameConfig {

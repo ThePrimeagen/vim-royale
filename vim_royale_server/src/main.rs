@@ -37,7 +37,6 @@ async fn greet(data: web::Data<AppState>) -> impl Responder {
 
 #[actix_web::main] // or #[tokio::main]
 async fn main() -> std::io::Result<()> {
-
     let state = AppState {
         html: HTML.replace("__STYLE_SHEET__", "style.css")
             .replace("__WASM__", "vim_royale_view_bg.wasm")

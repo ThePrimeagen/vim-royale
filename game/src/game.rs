@@ -4,16 +4,18 @@ use std::sync::{
 };
 
 use crate::{
-    connection::{SerializationType, ConnectionMessage},
+    connection::{ConnectionMessage, SerializationType},
     game_comms::{GameComms, GameMessage},
-    player::{Player, PlayerSink, PlayerWebSink, PlayerWebStream, spawn_player_stream},
+    player::{spawn_player_stream, Player, PlayerSink, PlayerWebSink, PlayerWebStream},
 };
-use anyhow::Result;
-use encoding::server::{self, ServerMessage, WHO_AM_I_CLIENT};
+use anyhow::{Result, anyhow};
+use encoding::server::{self, ServerMessage, WHO_AM_I_CLIENT, WHO_AM_I_UNKNOWN};
 
+use futures::StreamExt;
 use log::{error, info, warn};
 use map::map::Map;
 use tokio::sync::mpsc::{Receiver, Sender};
+use tokio_tungstenite::tungstenite::Message;
 
 const PLAYER_COUNT: usize = 100;
 const FPS: u128 = 16_666;
@@ -21,7 +23,7 @@ const ENTITY_RANGE: u16 = 500;
 
 struct Game<const P: usize> {
     seed: u32,
-    map: Map,
+    _map: Map,
     players: [Option<Player>; P],
     player_count: Arc<AtomicU8>,
     ser_type: SerializationType,
@@ -29,6 +31,7 @@ struct Game<const P: usize> {
     rx: Receiver<ConnectionMessage>,
     tx: Sender<ConnectionMessage>,
 }
+
 fn create_player_start_msg(player: &Player, seed: u32) -> server::Message {
     return server::Message::PlayerStart(server::PlayerStart {
         entity_id: player.id as usize * ENTITY_RANGE as usize,
@@ -49,7 +52,7 @@ impl<const P: usize> Game<P> {
         let (tx, rx) = tokio::sync::mpsc::channel(100);
 
         return Game {
-            map: Map::new(seed),
+            _map: Map::new(seed),
             player_count,
             players,
             game_id,
@@ -60,7 +63,7 @@ impl<const P: usize> Game<P> {
         };
     }
 
-    async fn process_message(&mut self, msg: ServerMessage) {
+    async fn _process_message(&mut self, msg: ServerMessage) {
         match msg.msg {
             server::Message::Whoami(whoami) => {
                 if whoami == WHO_AM_I_CLIENT {
@@ -131,18 +134,28 @@ impl<const P: usize> Game<P> {
         return id == 1;
     }
 
-    fn add_player(&mut self, stream: PlayerWebStream, sink: PlayerWebSink) {
+    async fn add_player(
+        &mut self,
+        mut stream: PlayerWebStream,
+        mut sink: PlayerWebSink,
+    ) -> Result<()> {
         let player_id = self.player_count.fetch_add(1, Ordering::Relaxed);
+
+        let clock_diff = Player::sync_clock(10, &mut stream, &mut sink).await.unwrap_or(0);
+        error!("synced clock with offset {}", clock_diff);
 
         let player = Player {
             position: (256, 256),
             id: player_id,
             sink: PlayerSink::new(player_id, sink),
+            clock_diff,
         };
 
         spawn_player_stream(player_id, stream, self.ser_type, self.tx.clone());
 
         self.players[player_id as usize] = Some(player);
+
+        return Ok(());
     }
 
     // TODO: this probably has to be more robust to not cause a panic
@@ -190,6 +203,23 @@ impl<const P: usize> Game<P> {
     }
 }
 
+fn whoami<T>(msg: Option<Result<Message, T>>) -> Result<u8> {
+    match msg {
+        Some(Ok(Message::Binary(msg))) => {
+            let msg = ServerMessage::deserialize(&msg)?;
+            match msg.msg {
+                server::Message::Whoami(whoami) => {
+                    return Ok(whoami);
+                }
+                _ => {
+                    return Err(anyhow!("expected whoami message"));
+                }
+            }
+        }
+        _ => return Ok(WHO_AM_I_UNKNOWN),
+    }
+}
+
 pub async fn game_run(
     seed: u32,
     player_count: Arc<AtomicU8>,
@@ -201,14 +231,24 @@ pub async fn game_run(
 
     loop {
         match comms.receiver.recv().await {
-            Some(GameMessage::Connection(stream, sink)) => {
+            Some(GameMessage::Connection(mut stream, sink)) => {
                 info!(
                     "[Game#game_run] new player connection for game {}",
                     game.info_string()
                 );
-                game.add_player(stream, sink);
-                if game.is_ready() {
-                    break;
+
+                let msg = whoami(stream.next().await);
+
+                if let Ok(WHO_AM_I_CLIENT) = msg {
+                    _ = game.add_player(stream, sink).await;
+                    if game.is_ready() {
+                        break;
+                    }
+                } else {
+                    _ = sink.reunite(stream).map(|mut x| {
+                        _ = x.close(None)
+                    });
+                    continue;
                 }
             }
 

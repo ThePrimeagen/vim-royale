@@ -1,12 +1,40 @@
 use anyhow::Result;
 use deku::prelude::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::convert::TryInto;
 
 use crate::version::VERSION;
 
 pub const WHO_AM_I_SERVER: u8 = 0;
 pub const WHO_AM_I_CLIENT: u8 = 1;
+pub const WHO_AM_I_UNKNOWN: u8 = 2;
+
+#[derive(Clone, Debug, PartialEq, DekuRead, DekuWrite, Serialize, Deserialize)]
+#[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
+pub struct ClockSyncRequest {}
+
+#[derive(Clone, Debug, PartialEq, DekuRead, DekuWrite, Serialize, Deserialize)]
+#[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
+pub struct ClockSyncResponse {
+    pub client_time: i64,
+}
+
+impl ClockSyncResponse {
+    pub fn new(client_time: i64) -> Self {
+        // return the current std::time monotonic time
+        return ClockSyncResponse {
+            client_time
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, DekuRead, DekuWrite, Serialize, Deserialize)]
+#[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
+pub struct VolkmiresWall {
+    #[deku(bits = 24)]
+    pub top: (u8, u8),
+    pub bottom: (u8, u8),
+}
 
 #[derive(Clone, Debug, PartialEq, DekuRead, DekuWrite, Serialize, Deserialize)]
 #[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
@@ -85,20 +113,10 @@ pub enum Message {
     PlayerPositionUpdate(PlayerPositionUpdate),
 
     #[deku(id = "3")]
-    CreateEntity(CreateEntity),
+    ClockSyncRequest(ClockSyncRequest),
 
     #[deku(id = "4")]
-    DeleteEntity(DeleteEntity),
-
-    #[deku(id = "5")]
-    HealthUpdate(HealthUpdate),
-
-    #[deku(id = "6")]
-    CirclePosition(CirclePosition),
-
-    // TODO: This is definitely wrong
-    #[deku(id = "7")]
-    CircleStart(CircleStart),
+    ClockSyncResponse(ClockSyncResponse),
 
     #[deku(id = "8")]
     PlayerCount(u8),
@@ -116,6 +134,16 @@ pub enum Message {
     GameCountResult(u16),
 }
 
+impl Message {
+    pub fn clock_request() -> Self {
+        return Self::ClockSyncRequest(ClockSyncRequest {});
+    }
+
+    pub fn clock_response(time: i64) -> Self {
+        return Self::ClockSyncResponse(ClockSyncResponse::new(time));
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, DekuRead, DekuWrite, Serialize, Deserialize)]
 #[deku(endian = "big")]
 pub struct ServerMessage {
@@ -130,7 +158,7 @@ impl ServerMessage {
             seq_nu,
             version: VERSION,
             msg,
-        }
+        };
     }
 
     pub fn deserialize(bytes: &[u8]) -> Result<ServerMessage> {
@@ -159,24 +187,8 @@ impl ServerMessage {
 mod test {
     use anyhow::Result;
 
-    use crate::server::PlayerStart;
-
-    use super::{Message, ServerMessage};
-
     #[test]
     fn test_serialization() -> Result<()> {
-        let msg = ServerMessage {
-            seq_nu: 2,
-            version: 3,
-            msg: Message::PlayerStart(PlayerStart {
-                entity_id: 5,
-                position: 6,
-                range: 7,
-            }),
-        };
-
-        println!("codes: {:x?}", msg.serialize());
-
         return Ok(());
     }
 }

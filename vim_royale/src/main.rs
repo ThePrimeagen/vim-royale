@@ -15,6 +15,9 @@ struct Args {
     serialization: SerializationType,
 }
 
+fn foo(x: usize, y: usize) {
+}
+
 // #[tokio::main(flavor = "current_thread")]
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -24,6 +27,7 @@ async fn main() -> Result<()> {
 
     error!("args {:?}", args);
     let server = TcpListener::bind(format!("0.0.0.0:{}", args.port)).await?;
+
 
     warn!("starting the server on {}", args.port);
 
