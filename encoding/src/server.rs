@@ -30,10 +30,10 @@ impl ClockSyncResponse {
 
 #[derive(Clone, Debug, PartialEq, DekuRead, DekuWrite, Serialize, Deserialize)]
 #[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
-pub struct VolkmiresWall {
-    #[deku(bits = 24)]
-    pub top: (u8, u8),
-    pub bottom: (u8, u8),
+pub struct VolkmiresObject {
+    pub width: u8,
+    pub height: u8,
+    pub cps: f32,
 }
 
 #[derive(Clone, Debug, PartialEq, DekuRead, DekuWrite, Serialize, Deserialize)]
@@ -54,44 +54,14 @@ pub struct PlayerPositionUpdate {
     pub position: (u16, u16),
 }
 
-#[derive(Clone, Debug, PartialEq, DekuRead, DekuWrite, Serialize, Deserialize)]
-#[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
-pub struct CreateEntity {
-    #[deku(bits = 24)]
-    pub entity_id: usize,
-    pub position: (u16, u16),
-    pub info: u8,
-}
+const KEY_PRESS_STATE_DOWN: u8= 0;
+const KEY_PRESS_STATE_UP: u8 = 0;
 
 #[derive(Clone, Debug, PartialEq, DekuRead, DekuWrite, Serialize, Deserialize)]
 #[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
-pub struct DeleteEntity {
-    #[deku(bits = 24)]
-    pub entity_id: usize,
-}
-
-#[derive(Clone, Debug, PartialEq, DekuRead, DekuWrite, Serialize, Deserialize)]
-#[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
-pub struct HealthUpdate {
-    #[deku(bits = 24)]
-    pub entity_id: usize,
-    pub health: u16,
-}
-
-#[derive(Clone, Debug, PartialEq, DekuRead, DekuWrite, Serialize, Deserialize)]
-#[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
-pub struct CirclePosition {
-    pub size: u16,
-    pub position: (u16, u16),
-    pub seconds: u8,
-}
-
-// TODO: i think i am wrong completely on this.  probably needs to be circleupdate
-// with a new position and time to move to that point
-#[derive(Clone, Debug, PartialEq, DekuRead, DekuWrite, Serialize, Deserialize)]
-#[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
-pub struct CircleStart {
-    pub seconds: u8,
+pub struct KeyPress {
+    pub key: u8,
+    pub state: u8,
 }
 
 // Here's an alternative, we can include `typ` in the enum and get rid of the context passing
@@ -118,6 +88,12 @@ pub enum Message {
     #[deku(id = "4")]
     ClockSyncResponse(ClockSyncResponse),
 
+    #[deku(id = "5")]
+    VolkmiresObject(VolkmiresObject),
+
+    #[deku(id = "6")]
+    KeyPressEvent(KeyPress),
+
     #[deku(id = "8")]
     PlayerCount(u8),
 
@@ -141,6 +117,13 @@ impl Message {
 
     pub fn clock_response(time: i64) -> Self {
         return Self::ClockSyncResponse(ClockSyncResponse::new(time));
+    }
+
+    pub fn key_press(key: u8, state: u8) -> Self {
+        return Message::KeyPressEvent(KeyPress {
+            key,
+            state,
+        });
     }
 }
 

@@ -95,7 +95,6 @@ impl<const P: usize> Game<P> {
 
     async fn run(&mut self) -> Result<()> {
         let start = std::time::Instant::now();
-        let start_of_loop = start.elapsed().as_micros();
         let mut tick = 0;
 
         loop {
@@ -142,7 +141,7 @@ impl<const P: usize> Game<P> {
         let player_id = self.player_count.fetch_add(1, Ordering::Relaxed);
 
         let clock_diff = Player::sync_clock(10, &mut stream, &mut sink).await.unwrap_or(0);
-        error!("synced clock with offset {}", clock_diff);
+        self.error(&format!("creating player({}): synced clock with offset {}", player_id, clock_diff));
 
         let player = Player {
             position: (256, 256),
@@ -161,6 +160,8 @@ impl<const P: usize> Game<P> {
     // TODO: this probably has to be more robust to not cause a panic
     async fn start_game(&mut self) -> Result<()> {
         let mut handles = vec![];
+
+        self.warn("starting game");
         for player in self.players.iter_mut() {
             if let Some(player) = player {
                 let msg = create_player_start_msg(player, self.seed);
@@ -169,6 +170,8 @@ impl<const P: usize> Game<P> {
         }
 
         let _ = futures::future::join_all(handles).await;
+
+        // TODO: Close any connections that errored and get rid of them.
 
         return Ok(());
     }
