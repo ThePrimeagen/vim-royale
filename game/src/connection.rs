@@ -1,20 +1,6 @@
-use anyhow::{Context, Result};
-use encoding::server::{self, PlayerStart, ServerMessage};
-use encoding::version::VERSION;
-use futures::stream::{SplitSink, SplitStream};
-use futures::{StreamExt, AsyncWrite, Sink, SinkExt, Stream};
-use log::{error, warn};
-use tokio::sync::mpsc::Sender;
-use tokio_tungstenite::tungstenite::Message;
-use tokio_tungstenite::{tungstenite, WebSocketStream};
-
-use std::io::ErrorKind;
-use tokio::io::{AsyncRead, BufReader, BufWriter};
-
-use tokio::{
-    io::{AsyncReadExt, AsyncWriteExt},
-    net::tcp::{OwnedReadHalf, OwnedWriteHalf},
-};
+use anyhow::Result;
+use encoding::server::ServerMessage;
+use tokio_tungstenite::tungstenite;
 
 #[derive(clap::ValueEnum, Clone, Debug, Copy)]
 pub enum SerializationType {
@@ -29,8 +15,8 @@ pub enum ConnectionError {
 }
 
 pub enum ConnectionMessage {
-    Close,
+    Close(u8),
     ControlMessage,
-    Msg(Result<ServerMessage, anyhow::Error>),
-    Error(ConnectionError),
+    Msg((u8, Result<ServerMessage, anyhow::Error>)),
+    Error((u8, ConnectionError)),
 }

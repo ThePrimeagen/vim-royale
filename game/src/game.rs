@@ -74,13 +74,13 @@ impl<const P: usize> Game<P> {
         }
     }
 
-    fn get_messages(&mut self) -> Vec<ServerMessage> {
+    fn get_messages(&mut self) -> Vec<(u8, ServerMessage)> {
         let mut msgs = vec![];
         while let Ok(msg) = self.rx.try_recv() {
             match msg {
                 ConnectionMessage::Msg(msg) => {
-                    if let Ok(msg) = msg {
-                        msgs.push(msg);
+                    if let (id, Ok(msg)) = msg {
+                        msgs.push((id, msg));
                     }
                 }
 
