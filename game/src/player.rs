@@ -44,12 +44,12 @@ pub fn spawn_player_stream(
                     let msg =
                         deserialize(msg, &ser_type).context("error while deserializing message");
 
-                    _ = tx.send(ConnectionMessage::Msg(msg)).await;
+                    _ = tx.send(ConnectionMessage::Msg((id, msg))).await;
                 }
 
                 Some(Ok(tungstenite::Message::Text(_))) => {
                     _ = tx
-                        .send(ConnectionMessage::Error(ConnectionError::Text))
+                        .send(ConnectionMessage::Error((id, ConnectionError::Text)))
                         .await;
                     break;
                 }
@@ -58,11 +58,11 @@ pub fn spawn_player_stream(
                 Some(Ok(_)) => {}
 
                 Some(Err(e)) => {
-                    _ = tx.send(ConnectionMessage::Error(ConnectionError::WebSocketError(e)));
+                    _ = tx.send(ConnectionMessage::Error((id, ConnectionError::WebSocketError(e))));
                 }
 
                 None => {
-                    _ = tx.send(ConnectionMessage::Close);
+                    _ = tx.send(ConnectionMessage::Close(id));
                 }
             };
         }

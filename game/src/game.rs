@@ -6,7 +6,7 @@ use std::sync::{
 use crate::{
     connection::{ConnectionMessage, SerializationType},
     game_comms::{GameComms, GameMessage},
-    player::{spawn_player_stream, Player, PlayerSink, PlayerWebSink, PlayerWebStream},
+    player::{spawn_player_stream, Player, PlayerSink, PlayerWebSink, PlayerWebStream}, sub_games::loop_runner,
 };
 use anyhow::{Result, anyhow};
 use encoding::server::{self, ServerMessage, WHO_AM_I_CLIENT, WHO_AM_I_UNKNOWN};
@@ -18,8 +18,8 @@ use tokio::sync::mpsc::{Receiver, Sender};
 use tokio_tungstenite::tungstenite::Message;
 
 const PLAYER_COUNT: usize = 100;
-const FPS: u128 = 16_666;
 const ENTITY_RANGE: u16 = 500;
+const FPS: usize = 16_666;
 
 struct Game<const P: usize> {
     seed: u32,
@@ -95,17 +95,24 @@ impl<const P: usize> Game<P> {
 
     async fn run(&mut self) -> Result<()> {
         let start = std::time::Instant::now();
-        let mut tick = 0;
+        let mut tick = 0usize;
+        let mut prev_frame_time = 0usize;
 
         loop {
             tick += 1;
+
+            let current = start.elapsed().as_micros() as usize;
+            let next_frame = tick * FPS;
+            let delta = current - prev_frame_time;
+
+            prev_frame_time = current;
 
             // 1. get every message sent to the sink
             // 2. process and update game state
             // 3. respond to any players with msgs
             // 4. sleep some amount of time
 
-            // 1.
+            // 1. get every message sent to the sink
             let msgs = self.get_messages();
             if !msgs.is_empty() {
                 info!("got {} messages", msgs.len());
@@ -114,17 +121,15 @@ impl<const P: usize> Game<P> {
                 }
             }
 
-            let current = start.elapsed().as_micros();
-            let next_frame = tick * FPS;
+            // 2. process and update game state
 
             if current < next_frame {
-                let duration = (next_frame - current) as u64;
-                let duration = std::time::Duration::from_micros(duration);
+                let duration = next_frame - current;
+                let duration = std::time::Duration::from_micros(duration as u64);
                 tokio::time::sleep(duration).await;
             }
-        }
 
-        // return Ok(());
+        }
     }
 
     fn is_ready(&self) -> bool {
