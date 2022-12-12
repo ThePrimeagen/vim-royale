@@ -87,6 +87,10 @@ impl GameManager {
         game_stub.started = true;
     }
 
+    // TODO: I know how to improve this.
+    //
+    // I need to treat the Server, Game Manager, Game Lobby, Game Runner, and Subgame likely
+    // as individual threads
     pub async fn add_connection(&mut self, stream: PlayerWebStream, sink: PlayerWebSink) {
         let game_id = self.game_id;
         info!("[GIM] add connection at {}", game_id);
@@ -114,10 +118,12 @@ impl GameManager {
 
             info!("[GIM] sending connection message id={}", game_id);
             _ = stub.sender.send(conn_message).await;
+            info!("[GIM] sent connection message id={}", game_id);
             self.games.insert(game_id, stub);
         } else {
             info!("[GIM] connection message sent id={}", game_id);
             _ = game.sender.send(conn_message).await;
+            info!("[GIM] sent connection message id={}", game_id);
         }
     }
 
@@ -133,48 +139,4 @@ impl GameManager {
         return game_status;
     }
 }
-
-/*
-self.games(self.game_id).or_insert_with(|| {
-    let mut stub = GameStub::new(self.comms.sender.clone());
-    stub.handle = Some(tokio::spawn(game_run(
-        self.game_id, // TODO: Seed generation
-        stub.player_count.clone(),
-        self.game_id,
-        stub.comms.take().expect("comms should exist at this point"),
-    )));
-    self.games.insert(self.game_id, stub);
-});
-*/
-
-/*
-self.games
-
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

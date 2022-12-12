@@ -63,37 +63,31 @@ impl<const P: usize> Game<P> {
         };
     }
 
-    async fn _process_message(&mut self, msg: ServerMessage) {
-        match msg.msg {
-            server::Message::Whoami(whoami) => {
-                if whoami == WHO_AM_I_CLIENT {
-                    warn!("[CLIENT]: Whoami received");
-                }
-            }
-            _ => {}
+    fn process_message(&mut self, msg: ConnectionMessage) {
+        match msg {
+            ConnectionMessage::Msg(msg) => info!("[GAME]: ServerMessage {:?}", msg),
+
+            ConnectionMessage::Close(id) => {
+                info!("[GAME]: ConnectionClosed {:?}", id);
+                self.players[id as usize] = None;
+                self.player_count.fetch_sub(1, Ordering::Relaxed);
+            },
+
+            x => info!("[GAME]: ConnectionMessage {:?}", x),
         }
     }
 
-    fn get_messages(&mut self) -> Vec<(u8, ServerMessage)> {
+    fn get_messages(&mut self) -> Vec<ConnectionMessage> {
         let mut msgs = vec![];
         while let Ok(msg) = self.rx.try_recv() {
-            match msg {
-                ConnectionMessage::Msg(msg) => {
-                    if let (id, Ok(msg)) = msg {
-                        msgs.push((id, msg));
-                    }
-                }
-
-                _ => {
-                    todo!("handle other connection messages");
-                }
-            }
+            msgs.push(msg);
         }
 
         return msgs;
     }
 
     async fn run(&mut self) -> Result<()> {
+        error!("[GAME]: game run game_id={}, seed={}", self.game_id, self.seed);
         let start = std::time::Instant::now();
         let mut tick = 0;
 
@@ -108,9 +102,8 @@ impl<const P: usize> Game<P> {
             // 1.
             let msgs = self.get_messages();
             if !msgs.is_empty() {
-                info!("got {} messages", msgs.len());
                 for msg in msgs {
-                    info!("got msg: {:?}", msg);
+                    self.process_message(msg);
                 }
             }
 
@@ -122,14 +115,20 @@ impl<const P: usize> Game<P> {
                 let duration = std::time::Duration::from_micros(duration);
                 tokio::time::sleep(duration).await;
             }
+
+            // check leave conditions.
+            if self.player_count.load(Ordering::Relaxed) == 0 {
+                break;
+            }
         }
 
-        // return Ok(());
+        self.error("Game Completed");
+        return Ok(());
     }
 
     fn is_ready(&self) -> bool {
         let id = self.player_count.load(Ordering::Relaxed);
-        info!("[Game] Ready check {} == {}", id, 1);
+        info!("[GAME] Ready check {} == {}", id, 1);
         return id == 1;
     }
 
@@ -231,12 +230,13 @@ pub async fn game_run(
     ser_type: SerializationType,
 ) {
     let mut game = Game::<PLAYER_COUNT>::new(seed, game_id, player_count, ser_type);
+    error!("[GAME-RUNNER]: New game started game_id={}, seed={}", game_id, seed);
 
     loop {
         match comms.receiver.recv().await {
             Some(GameMessage::Connection(mut stream, sink)) => {
                 info!(
-                    "[Game#game_run] new player connection for game {}",
+                    "[GAME-RUNNER] new player connection for game {}",
                     game.info_string()
                 );
 
@@ -270,6 +270,7 @@ pub async fn game_run(
         }
     }
 
+    /*
     match comms.sender.send(GameMessage::Start).await {
         Ok(_) => {
             game.warn("Game sent start");
@@ -279,6 +280,7 @@ pub async fn game_run(
             unreachable!("this should never happen in production.");
         }
     }
+    */
 
     match game.start_game().await {
         Ok(_) => {
@@ -297,4 +299,8 @@ pub async fn game_run(
             game.warn(&format!("finished with error {}", e));
         }
     }
+
+    /*
+    _ = comms.sender.send(GameMessage::Close(game.game_id as usize)).await;
+    */
 }

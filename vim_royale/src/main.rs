@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::Parser;
 use futures_util::StreamExt;
 use game::connection::SerializationType;
-use log::{error, warn};
+use log::{error, warn, info};
 use tokio::net::TcpListener;
 
 #[derive(Parser, Debug)]
@@ -13,9 +13,6 @@ struct Args {
 
     #[clap(short = 's', long = "serialization", value_enum, default_value_t = SerializationType::Deku)]
     serialization: SerializationType,
-}
-
-fn foo(x: usize, y: usize) {
 }
 
 // #[tokio::main(flavor = "current_thread")]
@@ -33,11 +30,14 @@ async fn main() -> Result<()> {
 
     let mut game_manager = game::game_manager::GameManager::new(args.serialization.clone());
 
+    let mut connection_count = 0;
     loop {
         match server.accept().await {
             Ok((stream, _)) => {
                 let stream = tokio_tungstenite::accept_async(stream).await?;
                 let (write, read) = stream.split();
+                connection_count += 1;
+                info!("[SERVER]: sending game manage new connection {}", connection_count);
                 game_manager.add_connection(read, write).await;
             }
 

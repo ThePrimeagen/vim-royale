@@ -8,12 +8,14 @@ pub enum SerializationType {
     Deku = 1,
 }
 
+#[derive(Debug)]
 pub enum ConnectionError {
     Data,
     Text,
     WebSocketError(tungstenite::Error),
 }
 
+#[derive(Debug)]
 pub enum ConnectionMessage {
     Close(u8),
     ControlMessage,
