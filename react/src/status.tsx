@@ -10,11 +10,5 @@ export function Status() {
     };
     */
 
-    return (
-        <div className="status">
-            {"NOT HERE"}
-        </div>
-    );
+    return <div className="status">{"NOT HERE"}</div>;
 }
-
-

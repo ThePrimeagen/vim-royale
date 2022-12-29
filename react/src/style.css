@@ -1,5 +1,6 @@
-
-html, body, div {
+html,
+body,
+div {
     margin: 0;
     overflow: hidden;
 }
@@ -8,7 +9,8 @@ html, body, div {
     background-color: #1f2335;
 }
 
-.tokyonight .terminal-byte.off { }
+.tokyonight .terminal-byte.off {
+}
 
 .tokyonight .terminal-byte.on {
     background-color: #0db9d7;
@@ -88,14 +90,13 @@ html, body, div {
     border-bottom: 1px solid #2e3e3e;
 }
 
-
 .terminal-byte {
 }
 .terminal-byte {
 }
 
 .terminal-byte.solid {
-    background-color: #
+    background-color: #;
 }
 
 .terminal-row {
