@@ -54,7 +54,7 @@ function TerminalDisplay() {
     useEffect(() => {
         let prevCount = count
         if (!scroller.run(display.display)) {
-            console.log("count", 0, "taken", Date.now() - now);
+            console.log("count", prevCount, "taken", Date.now() - now);
             prevCount = 0;
             now = Date.now();
         }
