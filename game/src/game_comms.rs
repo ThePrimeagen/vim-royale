@@ -3,14 +3,14 @@ use tokio::sync::mpsc;
 use crate::player::{PlayerWebSink, PlayerWebStream};
 
 #[derive(Debug)]
-pub enum GameMessage {
-    Start,
+pub enum GameInstanceMessage {
+    StartGame(usize),
+    EndGame(usize),
     Connection(PlayerWebStream, PlayerWebSink),
-    Close(usize),
 }
 
-pub type GameSender = mpsc::Sender<GameMessage>;
-pub type GameReceiver = mpsc::Receiver<GameMessage>;
+pub type GameSender = mpsc::Sender<GameInstanceMessage>;
+pub type GameReceiver = mpsc::Receiver<GameInstanceMessage>;
 
 pub struct GameComms {
     pub sender: GameSender,

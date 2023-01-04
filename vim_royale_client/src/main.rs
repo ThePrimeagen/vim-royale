@@ -7,4 +7,5 @@ use anyhow::Result;
 fn main() -> Result<()> {
     vim_royale()?;
     return Ok(());
+
 }

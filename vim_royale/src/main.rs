@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
 use futures_util::StreamExt;
-use game::connection::SerializationType;
+use game::{connection::SerializationType, game_manager::game_instance_manager_spawn};
 use log::{error, warn, info};
 use tokio::net::TcpListener;
 
@@ -29,6 +29,7 @@ async fn main() -> Result<()> {
     warn!("starting the server on {}", args.port);
 
     let mut game_manager = game::game_manager::GameManager::new(args.serialization.clone());
+    game_instance_manager_spawn(rx, tx.clone());
 
     let mut connection_count = 0;
     loop {
@@ -38,11 +39,11 @@ async fn main() -> Result<()> {
                 let (write, read) = stream.split();
                 connection_count += 1;
                 info!("[SERVER]: sending game manage new connection {}", connection_count);
-                game_manager.add_connection(read, write).await;
+                tx.send(G...)
             }
 
             Err(e) => {
-                println!("error {}", e);
+                error!("error {}", e);
                 break;
             }
         }

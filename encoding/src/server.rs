@@ -125,6 +125,7 @@ impl Message {
             state,
         });
     }
+
 }
 
 #[derive(Clone, Debug, PartialEq, DekuRead, DekuWrite, Serialize, Deserialize)]
