@@ -72,7 +72,6 @@ pub async fn game(game_id: usize, mut comms: GameComms, mut stub: GameStub) -> R
     let mut last_tick = start;
 
     loop {
-        info!("comms({}).receiver.recv()", game_id);
         let current = start.elapsed().as_micros();
         let next_frame = tick * FPS;
         let duration = if next_frame == 0 {

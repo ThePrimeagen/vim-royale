@@ -1,6 +1,6 @@
 use leptos::*;
 
-use crate::{message::Msg, utils::screen::Screen};
+use crate::message::Msg;
 
 pub const COLS: usize = 80;
 pub const ROWS: usize = 24;

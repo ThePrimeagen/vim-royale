@@ -15,6 +15,10 @@ struct Args {
     serialization: SerializationType,
 }
 
+struct Foo {
+    prop: Option<usize>
+}
+
 // #[tokio::main(flavor = "current_thread")]
 #[tokio::main]
 async fn main() -> Result<()> {

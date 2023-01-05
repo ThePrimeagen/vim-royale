@@ -81,3 +81,28 @@ function oneMore(): string[] {
 }
 
 
+
+async function one() {
+}
+
+async function two() {
+}
+
+async function three() {
+    (await (await one))
+
+}
+
+function foo() {
+
+    try {
+        JSON.parse("{}");
+    } catch (e) {
+        onetuhonteuh
+        return
+    }
+}
+
+
+if true {
+}
