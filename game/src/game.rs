@@ -1,11 +1,165 @@
 use std::sync::{
+    atomic::{AtomicUsize, Ordering},
+    Arc,
+};
+
+use anyhow::Result;
+use futures::StreamExt;
+use log::{error, info, warn};
+use tokio::sync::mpsc::channel;
+
+use crate::{
+    connection::ConnectionMessage,
+    game_comms::{GameComms, GameInstanceMessage, GameReceiver, GameSender},
+    player::{next_player_msg, PlayerWebSink, PlayerWebStream},
+};
+
+pub const PLAYER_COUNT: usize = 1;
+pub const FPS: u128 = 16_666;
+pub const WAITING_FOR_CONNECTIONS: usize = 0;
+pub const PLAYING: usize = 1;
+pub const FINISHED: usize = 2;
+
+#[derive(Clone, Debug)]
+pub struct GameStub {
+    pub player_count: Arc<AtomicUsize>,
+    pub game_state: Arc<AtomicUsize>,
+}
+
+async fn handle_player_connection(
+    id: u8,
+    mut stream: PlayerWebStream,
+    tx_to_game: GameSender,
+    _sink: PlayerWebSink,
+) -> Result<()> {
+    loop {
+        error!("player({}): waiting for message", id);
+        let msg =
+            next_player_msg(id, &mut stream, crate::connection::SerializationType::Deku).await;
+
+        error!("player({}): message received: {:?}", id, msg);
+        match msg {
+            Ok(msg) => _ = tx_to_game.send(GameInstanceMessage::Msg(msg)).await,
+            Err(_) => {
+                _ = tx_to_game
+                    .send(GameInstanceMessage::PlayerConnectionFailed(id))
+                    .await
+            }
+        }
+    }
+
+    return Ok(());
+}
+
+fn get_messages(rx: &mut GameReceiver) -> Vec<ConnectionMessage> {
+    let mut msgs = vec![];
+    while let Ok(msg) = rx.try_recv() {
+        if let GameInstanceMessage::Msg(msg) = msg {
+            msgs.push(msg);
+        }
+    }
+
+    return msgs;
+}
+
+fn process_messages(msg: ConnectionMessage, stub: &mut GameStub) {}
+
+pub async fn game(game_id: usize, mut comms: GameComms, mut stub: GameStub) -> Result<()> {
+    let mut player_id: u8 = 0;
+    let (tx, mut rx) = tokio::sync::mpsc::channel(100);
+    let start = std::time::Instant::now();
+    let mut tick = 0;
+    let mut last_tick = start;
+
+    loop {
+        info!("comms({}).receiver.recv()", game_id);
+        let current = start.elapsed().as_micros();
+        let next_frame = tick * FPS;
+        let duration = if next_frame == 0 {
+            0
+        } else {
+            next_frame - current
+        } as u64;
+        let duration = std::time::Duration::from_micros(duration);
+
+        tokio::select! {
+
+            msg = comms.receiver.recv() => {
+                info!("game({}) comms receive: {:?}", game_id, msg);
+
+                if let Some(GameInstanceMessage::Connection(stream, sink)) = msg {
+                    info!("game({}) connection received", game_id);
+                    tokio::spawn(handle_player_connection(player_id, stream, tx.clone(), sink));
+                    player_id += 1;
+                }
+            }
+
+
+            _ = tokio::time::sleep(duration) => {
+
+                tick += 1;
+                if tick % 10000 == 0 {
+                    info!("game({}) tick {}", game_id, tick);
+                }
+
+                // 1. get every message sent to the sink
+                // 2. process and update game state
+                // 3. respond to any players with msgs
+                // 4. sleep some amount of time
+
+                // 1.
+                let msgs = get_messages(&mut rx);
+                for msg in msgs {
+
+                    // could clone out stub, but i don't think that is great
+                    // i could also implement copy to make things feel nicer.
+                    process_messages(msg, &mut stub);
+                }
+
+                // check leave conditions.
+                let player_count = stub.player_count.load(Ordering::Relaxed);
+                let state = stub.game_state.load(Ordering::Relaxed);
+                if  player_count == 0 && state > WAITING_FOR_CONNECTIONS {
+                    break;
+                }
+            }
+        }
+    }
+
+    info!("comms({}) has finished", game_id);
+
+    return Ok(());
+}
+
+pub fn spawn_new_game(game_id: usize, comms: GameComms) -> GameStub {
+    error!("[GAME] new game spawned");
+    let stub = GameStub {
+        player_count: Arc::new(AtomicUsize::new(0)),
+        game_state: Arc::new(AtomicUsize::new(WAITING_FOR_CONNECTIONS)),
+    };
+
+    let inner_stub = stub.clone();
+    tokio::spawn(async move {
+        error!("[GAME]: Creating new game thread");
+        if let Err(e) = game(game_id, comms, inner_stub).await {
+            error!("[GAME] game failed while running {:?}", e);
+        } else {
+            warn!("[GAME] game {} successfully ended", game_id);
+        }
+    });
+
+    return stub;
+}
+
+/*
+use std::sync::{
     atomic::{AtomicU8, Ordering},
     Arc,
 };
 
 use crate::{
     connection::{ConnectionMessage, SerializationType},
-    game_comms::{GameComms, GameMessage},
+    game_comms::{GameComms, GameInstanceMessage},
     player::{spawn_player_stream, Player, PlayerSink, PlayerWebSink, PlayerWebStream},
 };
 use anyhow::{Result, anyhow};
@@ -18,8 +172,6 @@ use tokio::sync::mpsc::{Receiver, Sender};
 use tokio_tungstenite::tungstenite::Message;
 
 const PLAYER_COUNT: usize = 100;
-const FPS: u128 = 16_666;
-const ENTITY_RANGE: u16 = 500;
 
 struct Game<const P: usize> {
     seed: u32,
@@ -234,7 +386,7 @@ pub async fn game_run(
 
     loop {
         match comms.receiver.recv().await {
-            Some(GameMessage::Connection(mut stream, sink)) => {
+            Some(GameInstanceMessage::Connection(mut stream, sink)) => {
                 info!(
                     "[GAME-RUNNER] new player connection for game {}",
                     game.info_string()
@@ -304,3 +456,4 @@ pub async fn game_run(
     _ = comms.sender.send(GameMessage::Close(game.game_id as usize)).await;
     */
 }
+*/

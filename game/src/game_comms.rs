@@ -1,11 +1,14 @@
+use encoding::server::ServerMessage;
 use tokio::sync::mpsc;
 
-use crate::player::{PlayerWebSink, PlayerWebStream};
+use crate::{player::{PlayerWebSink, PlayerWebStream}, connection::ConnectionMessage};
 
 #[derive(Debug)]
 pub enum GameInstanceMessage {
     StartGame(usize),
     EndGame(usize),
+    PlayerConnectionFailed(u8),
+    Msg(ConnectionMessage),
     Connection(PlayerWebStream, PlayerWebSink),
 }
 

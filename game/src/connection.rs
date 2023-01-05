@@ -19,6 +19,6 @@ pub enum ConnectionError {
 pub enum ConnectionMessage {
     Close(u8),
     ControlMessage,
-    Msg((u8, Result<ServerMessage, anyhow::Error>)),
-    Error((u8, ConnectionError)),
+    Msg(u8, ServerMessage),
+    Error(u8, ConnectionError),
 }

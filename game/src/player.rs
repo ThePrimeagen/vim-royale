@@ -10,7 +10,7 @@ use futures::{
 use tokio::{net::TcpStream, sync::mpsc::Sender};
 use tokio_tungstenite::{tungstenite, WebSocketStream};
 
-use crate::connection::{ConnectionError, ConnectionMessage, SerializationType};
+use crate::{connection::{ConnectionError, ConnectionMessage, SerializationType}, game_comms::GameSender};
 
 pub type PlayerWebStream = SplitStream<WebSocketStream<TcpStream>>;
 pub type PlayerWebSink = SplitSink<WebSocketStream<TcpStream>, tungstenite::Message>;
@@ -30,49 +30,38 @@ fn deserialize(vec: Vec<u8>, ser: &SerializationType) -> Result<ServerMessage> {
     return ServerMessage::deserialize(&vec);
 }
 
-pub fn spawn_player_stream(
+pub async fn next_player_msg(
     id: u8,
-    mut stream: PlayerWebStream,
+    stream: &mut PlayerWebStream,
     ser_type: SerializationType,
-    tx: Sender<ConnectionMessage>,
-) {
-    // TODO: Sorry benny, i am positive you are sad by this.
-    tokio::spawn(async move {
-        loop {
-            match stream.next().await {
-                Some(Ok(tungstenite::Message::Binary(msg))) => {
-                    let msg =
-                        deserialize(msg, &ser_type).context("error while deserializing message");
+) -> Result<ConnectionMessage> {
 
-                    _ = tx.send(ConnectionMessage::Msg((id, msg))).await;
-                }
+    match stream.next().await {
+        Some(Ok(tungstenite::Message::Binary(msg))) => {
+            // TODO: I should probably change that...
+            let msg =
+                deserialize(msg, &ser_type).context("error while deserializing message")?;
 
-                Some(Ok(tungstenite::Message::Text(_))) => {
-                    _ = tx
-                        .send(ConnectionMessage::Error((id, ConnectionError::Text)))
-                        .await;
-                    break;
-                }
-
-                // control frames
-                Some(Ok(_)) => {}
-
-                Some(Err(e)) => {
-                    _ = tx
-                        .send(ConnectionMessage::Error((
-                            id,
-                            ConnectionError::WebSocketError(e),
-                        )))
-                        .await;
-                }
-
-                None => {
-                    _ = tx.send(ConnectionMessage::Close(id)).await;
-                    break;
-                }
-            };
+            return Ok(ConnectionMessage::Msg(id, msg));
         }
-    });
+
+        Some(Ok(tungstenite::Message::Text(_))) => {
+            return Ok(ConnectionMessage::Error(id, ConnectionError::Text));
+        }
+
+        // control frames
+        Some(Ok(_)) => {
+            return Ok(ConnectionMessage::ControlMessage);
+        }
+
+        Some(Err(e)) => {
+            return Ok(ConnectionMessage::Error(id, ConnectionError::WebSocketError(e)));
+        }
+
+        None => {
+            return Ok(ConnectionMessage::Close(id));
+        }
+    };
 }
 
 impl PlayerSink {
