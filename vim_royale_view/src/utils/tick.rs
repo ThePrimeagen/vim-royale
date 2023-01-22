@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use leptos::*;
 use anyhow::Result;
 use futures::{StreamExt, channel::mpsc::{Sender, Receiver}};
@@ -5,6 +7,12 @@ use futures::{StreamExt, channel::mpsc::{Sender, Receiver}};
 pub struct Tick {
     rx: Receiver<()>,
     channel: web_sys::MessageChannel,
+}
+
+fn get_file_size(path: PathBuf) -> Result<usize> {
+    let md = std::fs::metadata(path)?;
+
+    return Ok(0);
 }
 
 impl Tick {

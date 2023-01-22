@@ -17,3 +17,4 @@ tokio-tungstenite = "0.17.2"
 encoding = { path = "../encoding" }
 game = { path = "../game" }
 web-sys = { version = "0.3.60", features = ["MessageChannel", "MessagePort"] }
+async-trait = "0.1.61"

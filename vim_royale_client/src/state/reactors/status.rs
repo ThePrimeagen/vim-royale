@@ -18,7 +18,7 @@ fn to_message(msg: &Msg) -> Option<&PlayerStart> {
 
 impl Reactor<RenderState, Msg, ServerMessage> for Status {
     fn should(&self, msg: &Msg) -> bool {
-        return to_message(msg).is_some();
+        return msg.is_player_start();
     }
 
     fn call(&mut self, state: &'static RenderState, msg: &Msg, _: Sender<ServerMessage>) {

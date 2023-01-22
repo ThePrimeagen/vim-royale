@@ -39,11 +39,7 @@ pub struct VolkmiresObject {
 #[derive(Clone, Debug, PartialEq, DekuRead, DekuWrite, Serialize, Deserialize)]
 #[deku(endian = "parent_endian", ctx = "parent_endian: deku::ctx::Endian")]
 pub struct PlayerStart {
-    #[deku(bits = 24)]
-    pub entity_id: usize,
-    pub range: u16,
     pub position: (u16, u16),
-    pub seed: u32,
 }
 
 #[derive(Clone, Debug, PartialEq, DekuRead, DekuWrite, Serialize, Deserialize)]

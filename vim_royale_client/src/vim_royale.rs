@@ -1,9 +1,12 @@
+use std::{cell::RefCell, rc::Rc, borrow::BorrowMut};
+
 use anyhow::Result;
 use encoding::{
     self,
     server::{self, ServerMessage},
 };
 use futures::{channel::mpsc::{Sender, channel}, SinkExt, StreamExt, stream::SplitStream};
+use game_core::player::Player;
 use reqwasm::websocket::{futures::WebSocket, Message};
 use wasm_bindgen_futures::spawn_local;
 
@@ -16,7 +19,7 @@ use vim_royale_view::{
 use leptos::*;
 use web_sys::Event;
 
-use crate::state::{state::StateReactor, reactors::status::Status};
+use crate::state::{state::StateReactor, reactors::{status::Status, debug::DebugMessages, player_position::PlayerPosition}};
 
 #[component]
 fn App(cx: Scope) -> Element {
@@ -25,7 +28,7 @@ fn App(cx: Scope) -> Element {
     };
 }
 
-async fn read_ws(cx: Scope, mut reactor: Sender<Msg>, mut ws: SplitStream<WebSocket>, mut tx: Sender<ServerMessage>) -> Result<()> {
+async fn read_ws(_cx: Scope, mut reactor: Sender<Msg>, mut ws: SplitStream<WebSocket>, mut tx: Sender<ServerMessage>) -> Result<()> {
     loop {
         match ws.next().await {
             Some(Ok(Message::Bytes(msg))) => {
@@ -62,20 +65,22 @@ async fn read_ws(cx: Scope, mut reactor: Sender<Msg>, mut ws: SplitStream<WebSoc
 }
 
 // a function that returns a function
-fn on_keypress(tx: Sender<ServerMessage>) -> impl Fn(Event) {
-    let inner_tx = tx.clone();
+fn on_keypress(ws_tx: Sender<ServerMessage>, reactor_tx: Sender<Msg>) -> impl Fn(Event) {
     return move |k: Event| {
-        let mut tx = inner_tx.clone();
+        let mut ws_tx = ws_tx.clone();
+        let mut reactor_tx = reactor_tx.clone();
         let k = k.dyn_into::<web_sys::KeyboardEvent>().unwrap();
         leptos::log!("here is my key: {:?}", k);
 
         k.prevent_default();
         k.stop_propagation();
 
+
         spawn_local(async move {
+            _ = reactor_tx.send(Msg::KeyStroke(k.key())).await;
             let msg =
                 ServerMessage::new(0, server::Message::key_press(k.key_code() as u8, 0));
-            let _ = tx.send(msg).await;
+            let _ = ws_tx.send(msg).await;
         });
 
         return;
@@ -98,6 +103,8 @@ pub fn vim_royale() -> Result<()> {
 
         let mut reactor: StateReactor<RenderState, Msg, ServerMessage> = StateReactor::new(cx, ws_tx.clone());
         reactor.register_callback(Box::new(Status {}));
+        reactor.register_callback(Box::new(DebugMessages {}));
+        reactor.register_callback(Box::new(PlayerPosition {}));
 
         provide_context::<&'static RenderState>(cx, render_state);
 
@@ -131,7 +138,7 @@ pub fn vim_royale() -> Result<()> {
                 }
             });
 
-            window_event_listener("keydown", on_keypress(ws_tx.clone()));
+            window_event_listener("keydown", on_keypress(ws_tx.clone(), reactor.tx.clone()));
 
             match read_ws(cx, reactor.tx.clone(), stream, ws_tx).await {
                 Ok(_) => {

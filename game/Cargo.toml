@@ -9,6 +9,7 @@ edition = "2021"
 anyhow = "1.0.66"
 clap = { version = "4.0.26", features = ["derive"] }
 encoding = { path = "../encoding" }
+game_core = { path = "../crates/game_core" }
 env_logger = "0.9.3"
 future-utils = "0.12.1"
 futures = "0.3.25"

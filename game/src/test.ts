@@ -1,3 +1,7 @@
+import fs from "fs";
+import path from "path";
+
+const data = JSON.parse(fs.readFileSync(path.join(__dirname, "ntoehuntoehuntoehunt")).toString());
 
 // quicksort
 function quicksort(arr: number[]): number[] {
@@ -71,7 +75,31 @@ function push(arr : Array<string | number>) {
 const foo2 : Array<string> = ['foo'];
 push(foo2);
 
-function oneMore(): string[] {
+function foo(): Promise<{foo: number}> {
+    return Promise.resolve({foo: 5});
+}
+
+type Thing = { foo: string, } | { bar: string, } | { baz: string };
+function thing() {
+    const thing = {} as Thing;
+
+    if ("bar" in thing) {
+        thing.
+    }
+}
+
+async function oneMore(): string[] {
+
+    const foo: readonly number[] = [];
+    foo.push(45);
+
+    let thing;
+    try {
+        thing = JSON.parse("{}");
+    } catch (e) {
+        // handle error
+    }
+
     const out = [];
     for (let i = 0; i < 10; ++i) {
         out.push(i.toString());

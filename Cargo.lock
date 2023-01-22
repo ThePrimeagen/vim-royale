@@ -236,9 +236,9 @@ checksum = "d301b3b94cb4b2f23d7917810addbbaff90738e0ca2be692bd027e70d7e0330c"
 
 [[package]]
 name = "async-trait"
-version = "0.1.59"
+version = "0.1.61"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "31e6e93155431f3931513b243d371981bb2770112b370c82745a1d19d2f99364"
+checksum = "705339e0e4a9690e2908d2b3d049d85682cf19fbd5782494498fbf7003a6a282"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -848,12 +848,20 @@ dependencies = [
  "future-utils",
  "futures 0.3.25",
  "futures-util",
+ "game_core",
  "log 0.4.17",
  "map",
  "serde",
  "serde_json",
  "tokio 1.22.0",
  "tokio-tungstenite 0.17.2",
+]
+
+[[package]]
+name = "game_core"
+version = "0.1.0"
+dependencies = [
+ "leptos",
 ]
 
 [[package]]
@@ -2525,6 +2533,7 @@ name = "vim_royale"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "clap",
  "encoding",
  "env_logger",
@@ -2546,6 +2555,7 @@ dependencies = [
  "anyhow",
  "encoding",
  "futures 0.3.25",
+ "game_core",
  "getrandom",
  "gloo",
  "leptos",

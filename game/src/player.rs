@@ -7,10 +7,10 @@ use futures::{
     SinkExt, StreamExt,
 };
 
-use tokio::{net::TcpStream, sync::mpsc::Sender};
+use tokio::net::TcpStream;
 use tokio_tungstenite::{tungstenite, WebSocketStream};
 
-use crate::{connection::{ConnectionError, ConnectionMessage, SerializationType}, game_comms::GameSender};
+use crate::connection::{ConnectionError, ConnectionMessage, SerializationType};
 
 pub type PlayerWebStream = SplitStream<WebSocketStream<TcpStream>>;
 pub type PlayerWebSink = SplitSink<WebSocketStream<TcpStream>, tungstenite::Message>;
@@ -35,12 +35,10 @@ pub async fn next_player_msg(
     stream: &mut PlayerWebStream,
     ser_type: SerializationType,
 ) -> Result<ConnectionMessage> {
-
     match stream.next().await {
         Some(Ok(tungstenite::Message::Binary(msg))) => {
             // TODO: I should probably change that...
-            let msg =
-                deserialize(msg, &ser_type).context("error while deserializing message")?;
+            let msg = deserialize(msg, &ser_type).context("error while deserializing message")?;
 
             return Ok(ConnectionMessage::Msg(id, msg));
         }
@@ -55,7 +53,10 @@ pub async fn next_player_msg(
         }
 
         Some(Err(e)) => {
-            return Ok(ConnectionMessage::Error(id, ConnectionError::WebSocketError(e)));
+            return Ok(ConnectionMessage::Error(
+                id,
+                ConnectionError::WebSocketError(e),
+            ));
         }
 
         None => {
@@ -96,63 +97,54 @@ impl PlayerSink {
     }
 }
 
-pub struct Player {
-    pub id: u8,
-    pub position: (u16, u16),
-    pub sink: PlayerSink,
-    pub clock_diff: i64,
-}
+pub async fn sync_clock(
+    count: usize,
+    stream: &mut PlayerWebStream,
+    sink: &mut PlayerWebSink,
+) -> Result<i64> {
+    let mut clock_diffs: Vec<i64> = vec![];
 
-impl Player {
-    pub async fn sync_clock(
-        count: usize,
-        stream: &mut PlayerWebStream,
-        sink: &mut PlayerWebSink,
-    ) -> Result<i64> {
-        let mut clock_diffs: Vec<i64> = vec![];
+    for _ in 0..count {
+        let rtt = std::time::Instant::now();
+        let then = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_micros() as i64;
 
-        for _ in 0..count {
-            let rtt = std::time::Instant::now();
-            let then = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_micros() as i64;
+        let msg = Message::clock_request();
+        let msg = ServerMessage::new(0, msg).serialize()?;
 
-            let msg = Message::clock_request();
-            let msg = ServerMessage::new(0, msg).serialize()?;
-
-            sink.send(tungstenite::Message::Binary(msg)).await?;
-            let msg = loop {
-                match stream.next().await {
-                    Some(Ok(tungstenite::Message::Binary(msg))) => {
-                        break msg;
-                    }
-                    Some(Ok(tungstenite::Message::Ping(_))) => {}
-                    Some(Ok(tungstenite::Message::Pong(_))) => {}
-
-                    Some(Err(e)) => {
-                        return Err(anyhow::anyhow!("error while syncing clock: {:?}", e));
-                    }
-
-                    _ => {
-                        return Err(anyhow::anyhow!("error while syncing clock"));
-                    }
+        sink.send(tungstenite::Message::Binary(msg)).await?;
+        let msg = loop {
+            match stream.next().await {
+                Some(Ok(tungstenite::Message::Binary(msg))) => {
+                    break msg;
                 }
-            };
+                Some(Ok(tungstenite::Message::Ping(_))) => {}
+                Some(Ok(tungstenite::Message::Pong(_))) => {}
 
-            let msg = ServerMessage::deserialize(&msg)?;
-            let msg = match msg.msg {
-                Message::ClockSyncResponse(resp) => resp,
+                Some(Err(e)) => {
+                    return Err(anyhow::anyhow!("error while syncing clock: {:?}", e));
+                }
+
                 _ => {
                     return Err(anyhow::anyhow!("error while syncing clock"));
                 }
-            };
+            }
+        };
 
-            let rtt = rtt.elapsed().as_micros() as i64;
-            let clock_diff = (then + rtt / 2) - msg.client_time * 1000;
-            clock_diffs.push(clock_diff);
-        }
+        let msg = ServerMessage::deserialize(&msg)?;
+        let msg = match msg.msg {
+            Message::ClockSyncResponse(resp) => resp,
+            _ => {
+                return Err(anyhow::anyhow!("error while syncing clock"));
+            }
+        };
 
-        return Ok(clock_diffs.iter().sum::<i64>() / clock_diffs.len() as i64);
+        let rtt = rtt.elapsed().as_micros() as i64;
+        let clock_diff = (then + rtt / 2) - msg.client_time * 1000;
+        clock_diffs.push(clock_diff);
     }
+
+    return Ok(clock_diffs.iter().sum::<i64>() / clock_diffs.len() as i64);
 }

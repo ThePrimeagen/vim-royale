@@ -1,4 +1,5 @@
 use std::sync::{Arc, Mutex};
+use std::fmt::Debug;
 
 use futures::{channel::mpsc::{Sender, Receiver}, StreamExt};
 use leptos::{spawn_local, use_context, Scope};
@@ -24,7 +25,7 @@ where
 impl<S, T, Out> StateReactor<S, T, Out>
 where
     S: 'static,
-    T: Clone + 'static,
+    T: Clone + 'static + Debug,
     Out: Clone + 'static,
 {
     pub fn new(cx: Scope, out: Sender<Out>) -> Self {
@@ -42,6 +43,8 @@ where
                 let mut callbacks = callbacks
                     .lock()
                     .expect("i am unsure how this would ever fail.");
+
+                leptos::log!("help me tom cruise {:?}", msg);
 
                 for callback in callbacks.iter_mut() {
                     if callback.should(&msg) {

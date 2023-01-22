@@ -1,4 +1,4 @@
-use encoding::server::ServerMessage;
+use encoding::server::{ServerMessage, self};
 
 #[derive(Debug, Clone)]
 pub enum Msg {
@@ -7,7 +7,7 @@ pub enum Msg {
     Connected,
     Error(String),
     Message(ServerMessage),
-    KeyStroke(u64),
+    KeyStroke(String),
 }
 
 impl Msg {
@@ -20,5 +20,23 @@ impl Msg {
             Msg::KeyStroke(_) => "key_stroke",
             Msg::Message(_) => "message",
         };
+    }
+
+    pub fn is_player_start(&self) -> bool {
+        if let Msg::Message(msg) = self {
+            if let server::Message::PlayerStart(_) = &msg.msg {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    pub fn is_player_position_update(&self) -> bool {
+        if let Msg::Message(msg) = self {
+            if let server::Message::PlayerPositionUpdate(_) = &msg.msg {
+                return true;
+            }
+        }
+        return false;
     }
 }

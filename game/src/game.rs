@@ -1,12 +1,18 @@
-use std::sync::{
-    atomic::{AtomicUsize, Ordering},
-    Arc,
+use std::{
+    collections::HashMap,
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    },
 };
 
+//use game_core;
+
 use anyhow::Result;
-use futures::StreamExt;
+use encoding::server::{self, ServerMessage};
+use futures::SinkExt;
+use game_core::player::{Player, PLAYER_START_POS};
 use log::{error, info, warn};
-use tokio::sync::mpsc::channel;
 
 use crate::{
     connection::ConnectionMessage,
@@ -24,26 +30,25 @@ pub const FINISHED: usize = 2;
 pub struct GameStub {
     pub player_count: Arc<AtomicUsize>,
     pub game_state: Arc<AtomicUsize>,
+    pub game_id: usize,
 }
 
 async fn handle_player_connection(
     id: u8,
     mut stream: PlayerWebStream,
     tx_to_game: GameSender,
-    _sink: PlayerWebSink,
 ) -> Result<()> {
     loop {
-        error!("player({}): waiting for message", id);
         let msg =
             next_player_msg(id, &mut stream, crate::connection::SerializationType::Deku).await;
 
-        error!("player({}): message received: {:?}", id, msg);
         match msg {
             Ok(msg) => _ = tx_to_game.send(GameInstanceMessage::Msg(msg)).await,
             Err(_) => {
                 _ = tx_to_game
                     .send(GameInstanceMessage::PlayerConnectionFailed(id))
-                    .await
+                    .await;
+                break;
             }
         }
     }
@@ -64,12 +69,46 @@ fn get_messages(rx: &mut GameReceiver) -> Vec<ConnectionMessage> {
 
 fn process_messages(msg: ConnectionMessage, stub: &mut GameStub) {}
 
-pub async fn game(game_id: usize, mut comms: GameComms, mut stub: GameStub) -> Result<()> {
+async fn start_game(
+    stub: &GameStub,
+    players_to_sink: &mut HashMap<u8, (PlayerWebSink, Player)>,
+) -> Result<()> {
+    error!("starting game {}", stub.game_id);
+
+    stub.game_state.store(PLAYING, Ordering::Relaxed);
+
+    let player_start = server::PlayerStart { position: PLAYER_START_POS };
+
+    let start_game = ServerMessage::new(0, server::Message::PlayerStart(player_start));
+    let msg = start_game
+        .serialize()
+        .expect("this to always work. if it doesn't we are screwed");
+    let msg = tokio_tungstenite::tungstenite::Message::Binary(msg);
+
+    // TODO: Is starting positions importart?
+    for (id, (sink, _)) in players_to_sink.iter_mut() {
+        error!("starting game for {}", id);
+        match sink.send(msg.clone()).await {
+            Ok(_) => {
+                info!("sent start to {}", id);
+            }
+            Err(e) => {
+                error!("sent start to {} and it errored with {:?}", id, e);
+                unreachable!("HANDLE ME DADDY");
+            }
+        }
+    }
+
+    return Ok(());
+}
+
+pub async fn game(mut comms: GameComms, mut stub: GameStub) -> Result<()> {
     let mut player_id: u8 = 0;
     let (tx, mut rx) = tokio::sync::mpsc::channel(100);
     let start = std::time::Instant::now();
     let mut tick = 0;
     let mut last_tick = start;
+    let mut players_to_sink = HashMap::new();
 
     loop {
         let current = start.elapsed().as_micros();
@@ -84,21 +123,43 @@ pub async fn game(game_id: usize, mut comms: GameComms, mut stub: GameStub) -> R
         tokio::select! {
 
             msg = comms.receiver.recv() => {
-                info!("game({}) comms receive: {:?}", game_id, msg);
+                info!("game({}) comms receive: {:?}", stub.game_id, msg);
 
                 if let Some(GameInstanceMessage::Connection(stream, sink)) = msg {
-                    info!("game({}) connection received", game_id);
-                    tokio::spawn(handle_player_connection(player_id, stream, tx.clone(), sink));
+                    info!("game({}) connection received", stub.game_id);
+
+                    // TODO: Sync the clock to the player
+
+                    let player = Player::new(player_id, 0);
+
+                    players_to_sink.insert(player_id, (sink, player));
+
+                    tokio::spawn(handle_player_connection(player_id, stream, tx.clone()));
+
                     player_id += 1;
+
+                    let players = stub.player_count.fetch_add(1, Ordering::Relaxed);
+                    error!("current player count {}, expected to start {}", players + 1, PLAYER_COUNT);
+                    if players + 1 >= PLAYER_COUNT {
+                        error!("STARTING GAME???");
+                        // I want this to be a function
+                        // but for some odd reason passing &mut ... makes me feel bad
+                        match start_game(&stub, &mut players_to_sink).await {
+                            Ok(_) => {},
+                            Err(e) => {
+                                error!("start_game call failed {:?}", e);
+                            }
+                        }
+                    }
+
                 }
             }
-
 
             _ = tokio::time::sleep(duration) => {
 
                 tick += 1;
                 if tick % 10000 == 0 {
-                    info!("game({}) tick {}", game_id, tick);
+                    info!("game({}) tick {}", stub.game_id, tick);
                 }
 
                 // 1. get every message sent to the sink
@@ -125,7 +186,7 @@ pub async fn game(game_id: usize, mut comms: GameComms, mut stub: GameStub) -> R
         }
     }
 
-    info!("comms({}) has finished", game_id);
+    info!("comms({}) has finished", stub.game_id);
 
     return Ok(());
 }
@@ -135,12 +196,13 @@ pub fn spawn_new_game(game_id: usize, comms: GameComms) -> GameStub {
     let stub = GameStub {
         player_count: Arc::new(AtomicUsize::new(0)),
         game_state: Arc::new(AtomicUsize::new(WAITING_FOR_CONNECTIONS)),
+        game_id,
     };
 
     let inner_stub = stub.clone();
     tokio::spawn(async move {
         error!("[GAME]: Creating new game thread");
-        if let Err(e) = game(game_id, comms, inner_stub).await {
+        if let Err(e) = game(comms, inner_stub).await {
             error!("[GAME] game failed while running {:?}", e);
         } else {
             warn!("[GAME] game {} successfully ended", game_id);
