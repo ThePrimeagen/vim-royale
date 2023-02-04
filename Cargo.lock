@@ -15,7 +15,7 @@ dependencies = [
  "log 0.4.17",
  "memchr",
  "pin-project-lite",
- "tokio 1.22.0",
+ "tokio 1.24.2",
  "tokio-util",
 ]
 
@@ -86,7 +86,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ea16c295198e958ef31930a6ef37d0fb64e9ca3b6116e6b93a8bdae96ee1000"
 dependencies = [
  "futures-core",
- "tokio 1.22.0",
+ "tokio 1.24.2",
 ]
 
 [[package]]
@@ -103,7 +103,7 @@ dependencies = [
  "mio 0.8.5",
  "num_cpus",
  "socket2",
- "tokio 1.22.0",
+ "tokio 1.24.2",
  "tracing",
 ]
 
@@ -853,7 +853,7 @@ dependencies = [
  "map",
  "serde",
  "serde_json",
- "tokio 1.22.0",
+ "tokio 1.24.2",
  "tokio-tungstenite 0.17.2",
 ]
 
@@ -1089,7 +1089,7 @@ dependencies = [
  "http",
  "indexmap",
  "slab",
- "tokio 1.22.0",
+ "tokio 1.24.2",
  "tokio-util",
  "tracing",
 ]
@@ -1319,7 +1319,7 @@ dependencies = [
  "serde_json",
  "slotmap",
  "thiserror",
- "tokio 1.22.0",
+ "tokio 1.24.2",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
@@ -2146,9 +2146,9 @@ dependencies = [
 
 [[package]]
 name = "tokio"
-version = "1.22.0"
+version = "1.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d76ce4a75fb488c605c54bf610f221cea8b0dafb53333c1a67e8ee199dcd2ae3"
+checksum = "597a12a59981d9e3c38d216785b0c37399f6e415e8d0712047620f189371b0bb"
 dependencies = [
  "autocfg",
  "bytes 1.2.1",
@@ -2161,7 +2161,7 @@ dependencies = [
  "signal-hook-registry",
  "socket2",
  "tokio-macros",
- "winapi 0.3.9",
+ "windows-sys",
 ]
 
 [[package]]
@@ -2308,7 +2308,7 @@ checksum = "e80b39df6afcc12cdf752398ade96a6b9e99c903dfdc36e53ad10b9c366bca72"
 dependencies = [
  "futures-util",
  "log 0.4.17",
- "tokio 1.22.0",
+ "tokio 1.24.2",
  "tungstenite 0.16.0",
 ]
 
@@ -2320,7 +2320,7 @@ checksum = "f714dd15bead90401d77e04243611caec13726c2408afd5b31901dfcdcb3b181"
 dependencies = [
  "futures-util",
  "log 0.4.17",
- "tokio 1.22.0",
+ "tokio 1.24.2",
  "tungstenite 0.17.3",
 ]
 
@@ -2336,7 +2336,7 @@ dependencies = [
  "httparse",
  "js-sys",
  "thiserror",
- "tokio 1.22.0",
+ "tokio 1.24.2",
  "tokio-tungstenite 0.16.1",
  "wasm-bindgen",
  "web-sys",
@@ -2385,7 +2385,7 @@ dependencies = [
  "futures-core",
  "futures-sink",
  "pin-project-lite",
- "tokio 1.22.0",
+ "tokio 1.24.2",
  "tracing",
 ]
 
@@ -2543,7 +2543,7 @@ dependencies = [
  "log 0.4.17",
  "serde",
  "serde_json",
- "tokio 1.22.0",
+ "tokio 1.24.2",
  "tokio-tungstenite 0.17.2",
  "web-sys",
 ]
